@@ -177,3 +177,9 @@ Every item from the founder's review, built in one pass:
   sticky now sits on the <aside> flex item itself with self-start).
 - Category groups in the main content are collapsible accordions too;
   jumping from the index auto-opens a collapsed group first.
+
+## 2026-10-11 — Screenshot lightbox
+
+Founder feedback: the full-width crop stretched and looked ugly. Crop now
+renders at natural size; clicking it opens a lightbox (dimmed page, closer
+look, Escape/backdrop/X to close).
