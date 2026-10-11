@@ -220,6 +220,112 @@ function PatternBox({
   );
 }
 
+/**
+ * Icon findings lead with the symbol itself: the rendered glyph, its exact
+ * name, and a copy button for the code — not a paragraph describing it.
+ */
+function IconBox({
+  platformLabel,
+  iconName,
+  iconSrc,
+  copyText,
+  copyLabel,
+  pattern,
+  cite,
+  closest,
+  tone,
+}: {
+  platformLabel: string;
+  iconName?: string;
+  iconSrc?: string;
+  copyText?: string;
+  copyLabel?: string;
+  pattern: string;
+  cite?: { label: string; url: string } | null;
+  /** True when this is the model's closest-equivalent recommendation. */
+  closest?: boolean;
+  tone: "source" | "target";
+}) {
+  const [copied, setCopied] = useState(false);
+  const [imgOk, setImgOk] = useState(true);
+  const copy = async () => {
+    if (!copyText) return;
+    try {
+      await navigator.clipboard.writeText(copyText);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch {
+      // Clipboard unavailable — no-op.
+    }
+  };
+  return (
+    <div
+      className={
+        tone === "source"
+          ? "rounded-xl bg-stone-50 p-3.5"
+          : "rounded-xl bg-teal-50/60 p-3.5"
+      }
+    >
+      <div className="flex items-center justify-between gap-2">
+        <p
+          className={
+            tone === "source"
+              ? "text-[11px] font-semibold uppercase tracking-wider text-stone-400"
+              : "text-[11px] font-semibold uppercase tracking-wider text-teal-800/70"
+          }
+        >
+          {platformLabel}
+        </p>
+        {closest && (
+          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800">
+            Closest match
+          </span>
+        )}
+      </div>
+      {iconName ? (
+        <div className="mt-2 flex items-center gap-3">
+          {iconSrc && imgOk && (
+            <img
+              src={iconSrc}
+              alt={`${iconName} icon`}
+              className="h-7 w-7 shrink-0 object-contain"
+              onError={() => setImgOk(false)}
+            />
+          )}
+          <code className="rounded bg-white/70 px-2 py-1 font-mono text-sm font-semibold text-stone-900">
+            {iconName}
+          </code>
+          {copyText && (
+            <button
+              type="button"
+              onClick={copy}
+              className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2.5 py-1.5 text-xs font-medium text-stone-600 transition-colors hover:bg-stone-50"
+            >
+              {copied ? "Copied" : copyLabel}
+            </button>
+          )}
+        </div>
+      ) : (
+        <p className="mt-2 text-sm italic text-stone-400">
+          Icon not identified — see the pattern below.
+        </p>
+      )}
+      <p className="mt-2 text-[13px] leading-relaxed text-stone-500">{pattern}</p>
+      {cite && (
+        <a
+          href={cite.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          title={cite.label}
+          className="mt-1.5 inline-block text-xs font-medium text-teal-700 underline decoration-teal-200 underline-offset-2 hover:decoration-teal-500"
+        >
+          source
+        </a>
+      )}
+    </div>
+  );
+}
+
 export default function FindingCard({
   finding,
   direction,
@@ -259,6 +365,15 @@ export default function FindingCard({
       : undefined;
   const [showShot, setShowShot] = useState(false);
   const [lightbox, setLightbox] = useState(false);
+  // Icon findings name the exact symbols instead of describing them.
+  const isIconFinding =
+    finding.id === "icon-symbols" || finding.id === "a2i-icon-symbols";
+  const sfName =
+    direction === "ios-to-android" ? finding.detail : finding.counterpartName;
+  const materialName =
+    direction === "ios-to-android" ? finding.counterpartName : finding.detail;
+  const closestCounterpart =
+    finding.counterpartExact === false && !!finding.counterpartName;
 
   return (
     <article
@@ -315,21 +430,85 @@ export default function FindingCard({
         </p>
       </div>
 
-      {/* Pattern boxes, stacked vertically */}
+      {/* Pattern boxes, stacked vertically — icon findings lead with the symbols */}
       <div className="mt-3 space-y-3">
-        <PatternBox
-          platformLabel={meta.sourcePlatform}
-          pattern={finding.sourcePattern}
-          cite={sourceKey === "material" ? materialCite : platformSource(finding.sources, "ios")}
-          tone="source"
-        />
-        <PatternBox
-          platformLabel={meta.targetPlatform}
-          pattern={finding.targetPattern}
-          cite={targetKey === "material" ? materialCite : platformSource(finding.sources, "ios")}
-          tone="target"
-          note={iosBoxNote}
-        />
+        {isIconFinding ? (
+          <>
+            <IconBox
+              platformLabel={meta.sourcePlatform}
+              iconName={sourceKey === "ios" ? sfName : materialName}
+              iconSrc={
+                sourceKey === "ios"
+                  ? sfName
+                    ? `/icons/sf/${sfName}.svg`
+                    : undefined
+                  : materialName
+                    ? `/icons/material/${materialName}.svg`
+                    : undefined
+              }
+              copyText={
+                sourceKey === "ios"
+                  ? sfName
+                    ? `Image(systemName: "${sfName}")`
+                    : undefined
+                  : (materialName ?? undefined)
+              }
+              copyLabel={sourceKey === "ios" ? "Copy SwiftUI" : "Copy name"}
+              pattern={finding.sourcePattern}
+              cite={
+                sourceKey === "material"
+                  ? materialCite
+                  : platformSource(finding.sources, "ios")
+              }
+              tone="source"
+            />
+            <IconBox
+              platformLabel={meta.targetPlatform}
+              iconName={targetKey === "ios" ? sfName : materialName}
+              iconSrc={
+                targetKey === "ios"
+                  ? sfName
+                    ? `/icons/sf/${sfName}.svg`
+                    : undefined
+                  : materialName
+                    ? `/icons/material/${materialName}.svg`
+                    : undefined
+              }
+              copyText={
+                targetKey === "ios"
+                  ? sfName
+                    ? `Image(systemName: "${sfName}")`
+                    : undefined
+                  : (materialName ?? undefined)
+              }
+              copyLabel={targetKey === "ios" ? "Copy SwiftUI" : "Copy name"}
+              pattern={finding.targetPattern}
+              cite={
+                targetKey === "material"
+                  ? materialCite
+                  : platformSource(finding.sources, "ios")
+              }
+              closest={closestCounterpart}
+              tone="target"
+            />
+          </>
+        ) : (
+          <>
+            <PatternBox
+              platformLabel={meta.sourcePlatform}
+              pattern={finding.sourcePattern}
+              cite={sourceKey === "material" ? materialCite : platformSource(finding.sources, "ios")}
+              tone="source"
+            />
+            <PatternBox
+              platformLabel={meta.targetPlatform}
+              pattern={finding.targetPattern}
+              cite={targetKey === "material" ? materialCite : platformSource(finding.sources, "ios")}
+              tone="target"
+              note={iosBoxNote}
+            />
+          </>
+        )}
       </div>
 
       {/* Screenshot crop, collapsed by default */}
