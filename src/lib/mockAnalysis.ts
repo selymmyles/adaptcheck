@@ -16,6 +16,19 @@ import type {
 // Re-exported so UI components import all analysis types from one place.
 export type { Severity, AnalysisDirection, DirectionRequest };
 
+export interface FindingSource {
+  label: string;
+  url: string;
+}
+
+/** Bounding box in 0–1000 normalized screenshot coordinates. */
+export interface FindingRegion {
+  x_min: number;
+  y_min: number;
+  x_max: number;
+  y_max: number;
+}
+
 export interface Finding {
   id: string;
   severity: Severity;
@@ -24,6 +37,14 @@ export interface Finding {
   sourcePattern: string;
   targetPattern: string;
   rationale: string;
+  /** Official-doc citations grounding this finding. */
+  sources: FindingSource[];
+  /** True when grounded in community convention, not official docs. */
+  unverified?: boolean;
+  /** One-line note explaining why the finding is unverified. */
+  unverifiedNote?: string;
+  /** Optional bounding box around the flagged UI element. */
+  region?: FindingRegion;
 }
 
 export interface AnalysisResult {

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type {
   AnalysisResult,
   Finding,
@@ -7,10 +7,12 @@ import type {
 } from "../lib/mockAnalysis";
 import { DIRECTION_META } from "../lib/taxonomy";
 import FindingCard, { SeverityBadge } from "./FindingCard";
+import ScreenshotMap, { type MapMarker } from "./ScreenshotMap";
 
 interface ResultsScreenProps {
   result: AnalysisResult;
   fileName: string;
+  imageUrl: string | null;
   onReset: () => void;
 }
 
@@ -64,6 +66,15 @@ function toMarkdown(
       lines.push(`  - ${meta.sourcePatternLabel}: ${f.sourcePattern}`);
       lines.push(`  - ${meta.targetPatternLabel}: ${f.targetPattern}`);
       lines.push(`  - Why: ${f.rationale}`);
+      if (f.unverified) {
+        lines.push(
+          `  - Note: community convention, not an explicit platform guideline${f.unverifiedNote ? ` — ${f.unverifiedNote}` : ""}`,
+        );
+      } else {
+        for (const s of f.sources) {
+          lines.push(`  - Source: [${s.label}](${s.url})`);
+        }
+      }
     }
     lines.push("");
   }
@@ -73,15 +84,56 @@ function toMarkdown(
 export default function ResultsScreen({
   result,
   fileName,
+  imageUrl,
   onReset,
 }: ResultsScreenProps) {
   const [copied, setCopied] = useState(false);
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  const mapWrapRef = useRef<HTMLDivElement>(null);
   const direction = result.direction;
   const meta = DIRECTION_META[direction];
   const groups = groupsFor(direction);
 
   const counts = (severity: Severity) =>
     result.findings.filter((f) => f.severity === severity).length;
+
+  // Stable 1..N numbering across severity groups (must → should → nice).
+  const numberById = new Map<string, number>();
+  {
+    let n = 0;
+    (["must", "should", "nice"] as Severity[]).forEach((sev) => {
+      result.findings
+        .filter((f) => f.severity === sev)
+        .forEach((f) => {
+          n += 1;
+          numberById.set(f.id, n);
+        });
+    });
+  }
+
+  const markers: MapMarker[] = result.findings.flatMap((f) =>
+    f.region
+      ? [
+          {
+            key: f.id,
+            number: numberById.get(f.id) ?? 0,
+            region: f.region,
+            highlighted: highlightedId === f.id,
+          },
+        ]
+      : [],
+  );
+
+  const locateFinding = (id: string) => {
+    setHighlightedId(id);
+    mapWrapRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+    });
+    window.setTimeout(() => {
+      setHighlightedId((cur) => (cur === id ? null : cur));
+    }, 1800);
+  };
 
   const copyChecklist = async () => {
     try {
@@ -149,6 +201,17 @@ export default function ResultsScreen({
         </div>
       </section>
 
+      {/* Screenshot with region markers */}
+      {imageUrl && markers.length > 0 && (
+        <div ref={mapWrapRef} className="mt-8 scroll-mt-6">
+          <ScreenshotMap
+            imageUrl={imageUrl}
+            markers={markers}
+            onSelectMarker={locateFinding}
+          />
+        </div>
+      )}
+
       {/* Grouped findings */}
       {groups.map((group) => {
         const findings: Finding[] = result.findings.filter(
@@ -168,7 +231,14 @@ export default function ResultsScreen({
             <p className="mb-4 text-sm text-stone-500">{group.blurb}</p>
             <div className="space-y-3">
               {findings.map((f) => (
-                <FindingCard key={f.id} finding={f} direction={direction} />
+                <FindingCard
+                  key={f.id}
+                  finding={f}
+                  direction={direction}
+                  number={numberById.get(f.id) ?? 0}
+                  active={highlightedId === f.id}
+                  onLocate={f.region ? () => locateFinding(f.id) : null}
+                />
               ))}
             </div>
           </section>

@@ -17,6 +17,7 @@ const delay = (ms: number) =>
 export default function App() {
   const [phase, setPhase] = useState<Phase>("upload");
   const [fileName, setFileName] = useState("");
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [directionRequest, setDirectionRequest] =
@@ -24,6 +25,7 @@ export default function App() {
 
   const handleAnalyze = async (file: File) => {
     setFileName(file.name);
+    setImageUrl(URL.createObjectURL(file));
     setError(null);
     setPhase("analyzing");
     try {
@@ -47,6 +49,10 @@ export default function App() {
     setPhase("upload");
     setResult(null);
     setFileName("");
+    setImageUrl((url) => {
+      if (url) URL.revokeObjectURL(url);
+      return null;
+    });
   };
 
   return (
@@ -116,6 +122,7 @@ export default function App() {
           <ResultsScreen
             result={result}
             fileName={fileName}
+            imageUrl={imageUrl}
             onReset={handleReset}
           />
         )}

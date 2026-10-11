@@ -27,9 +27,18 @@ import {
 // vision on the free tier the same day. DO NOT revert to 2.5-flash.
 export const GEMINI_MODEL = "gemini-3.8-flash";
 
+export interface ModelRegion {
+  x_min: number;
+  y_min: number;
+  x_max: number;
+  y_max: number;
+}
+
 export interface ModelFinding {
   check_id: string;
   severity: Severity;
+  /** Optional bounding box (0–1000 normalized) around the flagged element. */
+  region?: ModelRegion;
 }
 
 interface ModelResult {
@@ -76,8 +85,13 @@ export function buildSystemPrompt(request: DirectionRequest): string {
     'Return a JSON object with exactly three keys: "detected_direction", "summary", and "findings".',
     '"detected_direction" is "ios-to-android" when the screenshot shows an iOS design to adapt for Android, or "android-to-ios" when it shows an Android design to adapt for iOS.',
     '"summary" is one sentence describing the overall adaptation state of the screen for the detected direction.',
-    '"findings" is an array of objects, each with "check_id" and "severity".',
+    '"findings" is an array of objects, each with "check_id" and "severity", and optionally a "region" bounding box (see REGION).',
     'Severity meanings: "must" = the issue would read as broken or wrong on the target platform; "should" = the issue would read as an obvious port and is worth fixing; "nice" = polish that would make it feel native.',
+    "",
+    "REGION",
+    'Each finding MAY include a "region": {"x_min", "y_min", "x_max", "y_max"} — integer coordinates in a 0–1000 normalized space where (0,0) is the screenshot\'s top-left corner. Draw the box TIGHTLY around the specific UI element the finding refers to (e.g. the tab bar, the back chevron, the switch).',
+    'OMIT "region" for global checks that apply to the whole screen (e.g. a font swap affecting all text) — never box the entire screenshot.',
+    "Coordinates must satisfy 0 <= x_min < x_max <= 1000 and 0 <= y_min < y_max <= 1000.",
     "",
     "RULES",
     "- FIRST identify the screenshot's platform, then evaluate ONLY that direction's checks.",
@@ -130,6 +144,15 @@ const RESPONSE_SCHEMA = {
         properties: {
           check_id: { type: "string" },
           severity: { type: "string", enum: ["must", "should", "nice"] },
+          region: {
+            type: "object",
+            properties: {
+              x_min: { type: "integer", minimum: 0, maximum: 1000 },
+              y_min: { type: "integer", minimum: 0, maximum: 1000 },
+              x_max: { type: "integer", minimum: 0, maximum: 1000 },
+              y_max: { type: "integer", minimum: 0, maximum: 1000 },
+            },
+          },
         },
         required: ["check_id", "severity"],
       },
@@ -152,6 +175,36 @@ export interface ResolvedFinding {
   sourcePattern: string;
   targetPattern: string;
   rationale: string;
+  sources: { label: string; url: string }[];
+  unverified?: boolean;
+  unverifiedNote?: string;
+  /** Validated bounding box (0–1000 normalized) around the flagged element. */
+  region?: ModelRegion;
+}
+
+/**
+ * Validate a model-supplied region. Positional only — never trusted for
+ * display content. Invalid regions are dropped silently.
+ */
+function validRegion(value: unknown): value is ModelRegion {
+  if (!value || typeof value !== "object") return false;
+  const r = value as Record<string, unknown>;
+  const nums = [r.x_min, r.y_min, r.x_max, r.y_max];
+  if (
+    !nums.every(
+      (v) => typeof v === "number" && Number.isFinite(v) && v >= 0 && v <= 1000,
+    )
+  )
+    return false;
+  const x_min = Math.round(r.x_min as number);
+  const y_min = Math.round(r.y_min as number);
+  const x_max = Math.round(r.x_max as number);
+  const y_max = Math.round(r.y_max as number);
+  if (x_min >= x_max || y_min >= y_max) return false;
+  const area = (x_max - x_min) * (y_max - y_min);
+  if (area < 100) return false; // too small to be meaningful
+  if (area > 950_000) return false; // whole-screen box = global check
+  return true;
 }
 
 export interface BackendAnalysisResult {
@@ -253,6 +306,14 @@ export async function analyzeWithGemini(
     const check = checkMap[f.check_id];
     if (!check || !VALID_SEVERITIES.has(f.severity)) continue;
     seen.add(f.check_id);
+    const region = validRegion(f.region)
+      ? {
+          x_min: Math.round(f.region.x_min),
+          y_min: Math.round(f.region.y_min),
+          x_max: Math.round(f.region.x_max),
+          y_max: Math.round(f.region.y_max),
+        }
+      : undefined;
     findings.push({
       id: check.id,
       severity: f.severity,
@@ -261,6 +322,11 @@ export async function analyzeWithGemini(
       sourcePattern: check.sourcePattern,
       targetPattern: check.targetPattern,
       rationale: check.rationale,
+      sources: check.sources,
+      ...(check.unverified
+        ? { unverified: true, unverifiedNote: check.unverifiedNote }
+        : {}),
+      ...(region ? { region } : {}),
     });
   }
 
