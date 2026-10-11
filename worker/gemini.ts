@@ -82,7 +82,7 @@ export function buildSystemPrompt(request: DirectionRequest): string {
     "OUTPUT",
     'Return a JSON object with exactly three keys: "detected_direction", "summary", and "findings".',
     '"detected_direction" is "ios-to-android" when the screenshot shows an iOS design to adapt for Android, or "android-to-ios" when it shows an Android design to adapt for iOS.',
-    '"summary" is one sentence describing the overall adaptation state of the screen for the detected direction.',
+    '"summary" is one sentence describing the overall adaptation state of the screen for the detected direction. It must mention ONLY checks that appear in the findings array — never describe a check you did not include.',
     '"findings" is an array of objects, each with "check_id" and a "region" bounding box (see REGION). Every finding matters — the goal is for the design to look fully native on the target platform, so include every check you can see evidence for.',
     "",
     "REGION",
@@ -94,6 +94,7 @@ export function buildSystemPrompt(request: DirectionRequest): string {
     "- FIRST identify the screenshot's platform, then evaluate ONLY that direction's checks.",
     "- Include ONLY checks you can see evidence for in the screenshot. Do not guess.",
     "- Use only the check ids listed below, copied verbatim. Never invent ids.",
+    "- The phone's own OS chrome is never a finding: the system status bar (time, battery, signal/wifi icons), the home indicator, and the system navigation bar/gestures belong to the device, not the app. Ignore them completely.",
     "- If the image is not an app UI screenshot, or no checks apply, return an empty findings array and say so in the summary.",
     "- Order findings in the same order the checks appear below (they are grouped by category).",
     "",
@@ -374,11 +375,120 @@ function averageRegion(regions: ModelRegion[]): ModelRegion {
   };
 }
 
+const JUDGE_SCHEMA = {
+  type: "object",
+  properties: {
+    decisions: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          check_id: { type: "string" },
+          keep: { type: "boolean" },
+          why: { type: "string" },
+        },
+        required: ["check_id", "keep"],
+      },
+    },
+  },
+  required: ["decisions"],
+} as const;
+
 /**
- * Run the analysis several times in parallel and keep only findings a
- * majority of runs agree on (2 of 3). Temperature 0 alone does NOT make
- * Gemini deterministic — borderline checks still flip between identical
- * requests — so consensus is what actually stabilizes the output.
+ * Tie-breaker for split votes: the checks the parallel runs disagreed on
+ * get one focused review pass that makes the final call. A narrow yes/no on
+ * a single check is a far more reliable judgment than the full 46-check
+ * scan, so this is what actually settles borderline items. On judge
+ * failure the caller falls back to the majority vote (safe default).
+ */
+async function judgeContested(
+  apiKey: string,
+  mimeType: string,
+  imageBase64: string,
+  direction: AnalysisDirection,
+  contested: { id: string; votesFor: number; votesTotal: number }[],
+): Promise<Map<string, boolean> | null> {
+  const checkMap = CHECKS_BY_DIRECTION[direction];
+  const lines = contested.map((c) => {
+    const check = checkMap[c.id];
+    return [
+      `- ${c.id} (flagged by ${c.votesFor}/${c.votesTotal} passes): ${check?.check ?? c.id}`,
+      `  Current: ${check?.sourcePattern ?? ""}`,
+      `  Expected: ${check?.targetPattern ?? ""}`,
+    ].join("\n");
+  });
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`,
+      {
+        method: "POST",
+        headers: {
+          "x-goog-api-key": apiKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          systemInstruction: {
+            parts: [
+              {
+                text: [
+                  "You are a decisive UI review judge. Other analysts disagreed on whether the checks below apply to the attached app screenshot.",
+                  "For EACH check, examine the screenshot and give a final YES (keep) or NO (drop) with one sentence of visual evidence.",
+                  "Be strict: a finding must earn its place with clearly visible evidence. If it is genuinely ambiguous, say NO.",
+                  'Return JSON: {"decisions": [{"check_id": "...", "keep": true, "why": "..."}]}.',
+                  "",
+                  "CONTESTED CHECKS:",
+                  ...lines,
+                ].join("\n"),
+              },
+            ],
+          },
+          contents: [
+            {
+              role: "user",
+              parts: [{ inlineData: { mimeType, data: imageBase64 } }],
+            },
+          ],
+          generationConfig: {
+            temperature: 0,
+            responseMimeType: "application/json",
+            responseSchema: JUDGE_SCHEMA,
+          },
+        }),
+      },
+    );
+    if (!res.ok) return null;
+    const data = (await res.json()) as {
+      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+      usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number };
+    };
+    const text =
+      data.candidates?.[0]?.content?.parts
+        ?.map((p) => p.text ?? "")
+        .join("") ?? "";
+    const parsed = JSON.parse(text) as {
+      decisions?: Array<{ check_id: string; keep: boolean }>;
+    };
+    const out = new Map<string, boolean>();
+    for (const d of parsed.decisions ?? []) {
+      if (typeof d.check_id === "string" && typeof d.keep === "boolean")
+        out.set(d.check_id, d.keep);
+    }
+    (judgeContested as { lastUsage?: { promptTokens: number; candidateTokens: number } }).lastUsage = {
+      promptTokens: data.usageMetadata?.promptTokenCount ?? 0,
+      candidateTokens: data.usageMetadata?.candidatesTokenCount ?? 0,
+    };
+    return out;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Run the analysis several times in parallel. Unanimous findings stand;
+ * split votes go to a tie-breaker judge for a final call. Temperature 0
+ * alone does NOT make Gemini deterministic — borderline checks still flip
+ * between identical requests — so vote + adjudication is what actually
+ * stabilizes the output.
  */
 export async function analyzeWithGemini(
   apiKey: string,
@@ -406,7 +516,12 @@ export async function analyzeWithGemini(
     throw first ? first.reason : new Error("Analysis failed. Please try again.");
   }
 
-  const threshold = Math.ceil(ok.length / 2);
+  // Direction first: the judge needs it to look up check definitions.
+  const dirVotes = new Map<AnalysisDirection, number>();
+  for (const run of ok)
+    dirVotes.set(run.direction, (dirVotes.get(run.direction) ?? 0) + 1);
+  const direction = [...dirVotes.entries()].sort((a, b) => b[1] - a[1])[0][0];
+
   const votes = new Map<
     string,
     { count: number; regions: ModelRegion[]; finding: ResolvedFinding }
@@ -419,8 +534,27 @@ export async function analyzeWithGemini(
       votes.set(f.id, v);
     }
   }
+
+  // Split votes go to the judge; unanimous verdicts stand as-is.
+  const total = ok.length;
+  const contested = [...votes.entries()]
+    .filter(([, v]) => v.count > 0 && v.count < total)
+    .map(([id, v]) => ({ id, votesFor: v.count, votesTotal: total }));
+  let verdicts: Map<string, boolean> | null = null;
+  if (contested.length > 0) {
+    verdicts = await judgeContested(apiKey, mimeType, imageBase64, direction, contested);
+  }
+  const judgeUsage = (
+    judgeContested as { lastUsage?: { promptTokens: number; candidateTokens: number } }
+  ).lastUsage ?? { promptTokens: 0, candidateTokens: 0 };
+
+  const threshold = Math.ceil(total / 2);
   const findings = [...votes.values()]
-    .filter((v) => v.count >= threshold)
+    .filter((v) => {
+      if (v.count === total) return true; // unanimous keep
+      if (verdicts?.has(v.finding.id)) return verdicts.get(v.finding.id)!;
+      return v.count >= threshold; // judge unavailable: majority fallback
+    })
     .map((v) => ({
       ...v.finding,
       region: v.regions.length ? averageRegion(v.regions) : undefined,
@@ -440,14 +574,12 @@ export async function analyzeWithGemini(
   }
 
   const usage = {
-    promptTokens: ok.reduce((s, r) => s + r.usage.promptTokens, 0),
-    candidateTokens: ok.reduce((s, r) => s + r.usage.candidateTokens, 0),
+    promptTokens:
+      ok.reduce((s, r) => s + r.usage.promptTokens, 0) + judgeUsage.promptTokens,
+    candidateTokens:
+      ok.reduce((s, r) => s + r.usage.candidateTokens, 0) +
+      judgeUsage.candidateTokens,
   };
-  // Direction should agree across runs; majority wins, first run breaks ties.
-  const dirVotes = new Map<AnalysisDirection, number>();
-  for (const run of ok)
-    dirVotes.set(run.direction, (dirVotes.get(run.direction) ?? 0) + 1);
-  const direction = [...dirVotes.entries()].sort((a, b) => b[1] - a[1])[0][0];
 
   return {
     summary,
