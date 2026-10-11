@@ -239,3 +239,17 @@ Material git repo. Model names each icon; worker maps SF<->Material names
 (search URL = robust target) in the Material box. Apple has no per-symbol web
 pages, so the iOS box shows the exact SF Symbol name as copyable text.
 PIPELINE_VERSION 6 (cache invalidated).
+
+## 2026-10-11 — Holistic bottom input cluster (founder feedback)
+
+Founder on the Notion AI screen: (1) back-gesture fix linked Top App Bar docs
+— citation didn't match the fix; (2) FAB finding treated one button atomically
+when the bottom cluster (FAB + prompt bar + FAB) wants a holistic answer;
+(3) asked for Material best-practice research on that pattern.
+Research: not a nav bar (destinations only) and not a bottom app bar (no text
+fields) — the Material-native answer is the M3 Search Bar (56dp, leading icon
+slot, supporting text, up to two trailing icons; mic is the canonical
+trailing example). comp-fab now carries the exception: input-adjacent
+floating buttons -> convert the cluster to a Search Bar, region around the
+whole group. Source orders fixed (predictive-back first; m3 icons overview
+before the github repo). PIPELINE_VERSION 8.
