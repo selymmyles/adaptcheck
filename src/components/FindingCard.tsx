@@ -107,6 +107,15 @@ export default function FindingCard({
             {finding.title}
           </h3>
 
+          <div className="mt-3 rounded-xl bg-teal-700/[0.07] p-3.5">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-teal-800/70">
+              Fix
+            </p>
+            <p className="mt-1 text-sm font-medium leading-relaxed text-stone-800">
+              {finding.fix}
+            </p>
+          </div>
+
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <div className="rounded-xl bg-stone-50 p-3.5">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-stone-400">

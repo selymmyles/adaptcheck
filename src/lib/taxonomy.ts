@@ -39,6 +39,8 @@ export interface TaxonomyCheck {
   /** What it must become on the target platform. */
   targetPattern: string;
   rationale: string;
+  /** One-line fix in plain language: Change X to Y. Shown as the FIX line. */
+  fix: string;
   /** Official-doc citations (Apple HIG / Material 3 / Android docs). */
   sources: TaxonomySource[];
   /**
@@ -108,6 +110,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
         targetPattern:
           "System predictive back (Android 14+) that previews the previous destination; back applies to the whole task stack.",
         rationale: "Android relies on the system back gesture with predictive-back previews. A duplicate iOS-style edge-swipe pop gesture and per-screen chevrons duplicate affordances; only non-standard custom back interception (not a normal leading back arrow) disables predictive-back animations.",
+        fix:
+          "Change the in-app back chevron and edge-swipe pop to the system predictive back gesture.",
         sources: [
           { label: "Material 3 — Top app bar guidelines", url: "https://m3.material.io/components/app-bars/guidelines" },
           { label: "Android Developers — Predictive back gesture", url: "https://developer.android.com/guide/navigation/custom-back/predictive-back-gesture" },
@@ -124,6 +128,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
           "Material navigation bar on a tonal surface container with an active-indicator pill behind the selected icon.",
         rationale:
           "An iOS-styled tab bar reads as a port. The active-indicator pill is the platform signal for selection on Android.",
+        fix:
+          "Change the translucent iOS tab bar to the Material navigation bar with the active-indicator pill.",
         sources: [
           { label: "Material 3 — Navigation bar guidelines", url: "https://m3.material.io/components/navigation-bar/guidelines" },
           { label: "Material 3 — Navigation bar overview", url: "https://m3.material.io/components/navigation-bar/overview" },
@@ -139,6 +145,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
         targetPattern: "Material top app bar (small, center-aligned, medium flexible, or large flexible) matched to the screen's hierarchy; medium flexible and large flexible compress to the small bar on scroll",
         rationale:
           "iOS large titles don't collapse the Material way. A medium or large top app bar gives the same hierarchy without looking ported.",
+        fix:
+          "Change the collapsing large title to a Material top app bar (medium or large flexible).",
         sources: [
           { label: "Material 3 — Top app bar guidelines", url: "https://m3.material.io/components/app-bars/guidelines" },
           { label: "Apple HIG — Toolbars", url: "https://developer.apple.com/design/human-interface-guidelines/toolbars" },
@@ -153,6 +161,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
         targetPattern:
           "Modal bottom sheet with a drag handle and scrim, or a full-screen dialog for complex flows.",
         rationale: "Material's analog is a modal bottom sheet (scrim + optional drag handle) or a full-screen dialog for complex flows. Swipe-down dismissal does exist in Material — a modal bottom sheet can be dismissed by swiping it down — but the drag handle and scrim are the expected affordances.",
+        fix:
+          "Change the card-style swipe-to-dismiss modal to a Material bottom sheet with a drag handle.",
         sources: [
           { label: "Material 3 — Bottom sheets guidelines", url: "https://m3.material.io/components/bottom-sheets/guidelines" },
           { label: "Material 3 — Dialogs guidelines", url: "https://m3.material.io/components/dialogs/guidelines" },
@@ -169,6 +179,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
           "Explicit back chevron in the navigation bar on every pushed screen, plus iOS edge-swipe-to-go-back. There is no system back to fall back on.",
         rationale:
           "Android-first designs frequently omit back affordances entirely. On iOS that strands the user — every pushed screen needs its own chevron.",
+        fix:
+          "Change the system-back-only navigation to an explicit back chevron plus iOS edge-swipe on every pushed screen.",
         sources: [
           { label: "Apple HIG — Toolbars", url: "https://developer.apple.com/design/human-interface-guidelines/toolbars" },
           { label: "Apple HIG — Navigation", url: "https://developer.apple.com/design/human-interface-guidelines/navigation" },
@@ -183,6 +195,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
         targetPattern: "Tab bar with about five or fewer primary destinations; do not overflow into a 'More' tab — restructure the IA (use a sidebar for complex hierarchies on larger layouts). iOS has no iPhone drawer convention; hamburger-hidden navigation strands users.",
         rationale:
           "Drawers don't exist in iOS conventions — iOS users won't look behind a hamburger. Promote destinations to a tab bar.",
+        fix:
+          "Change the hamburger navigation drawer to a tab bar with five or fewer destinations.",
         sources: [
           { label: "Apple HIG — Tab bars", url: "https://developer.apple.com/design/human-interface-guidelines/tab-bars" },
           { label: "Material 3 — Navigation bar guidelines", url: "https://m3.material.io/components/navigation-bar/guidelines" },
@@ -198,6 +212,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
           "Segmented control for switching views within a screen. iOS has no underline-indicator tab convention.",
         rationale:
           "The Material indicator tab reads as Android. iOS uses segmented controls for in-screen view switching.",
+        fix:
+          "Change the Material underline tab row to an iOS segmented control.",
         sources: [
           { label: "Material 3 — Tabs guidelines", url: "https://m3.material.io/components/tabs/guidelines" },
           { label: "Apple HIG — Segmented controls", url: "https://developer.apple.com/design/human-interface-guidelines/segmented-controls" },
@@ -213,6 +229,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
           "iOS tab bar: translucent, icon above label, selection shown by tint only — no pill, no tonal container.",
         rationale:
           "The active-indicator pill is a Material signal. iOS selection is tint-only on a translucent bar.",
+        fix:
+          "Change the Material navigation bar to the Apple tab bar: translucent, tint-only selection, no pill.",
         sources: [
           { label: "Apple HIG — Tab bars", url: "https://developer.apple.com/design/human-interface-guidelines/tab-bars" },
           { label: "Material 3 — Navigation bar guidelines", url: "https://m3.material.io/components/navigation-bar/guidelines" },
@@ -225,6 +243,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
         sourcePattern: "Material full-screen dialog with an X close icon in the app bar, confirm-by-basic-dialog on unsaved discard",
         targetPattern: "iOS full-screen cover with Cancel (leading) / Done or Save (trailing) in the navigation bar — no X icon; swipe-down disabled for completion-required flows",
         rationale: "Material's full-screen dialog convention (X icon, discard-confirmation dialog) doesn't exist on iOS. HIG sheets use Cancel-leading/confirm-trailing placement and explicit Done/Cancel; importing the X affordance plus a confirmation dialog reads as Android.",
+        fix:
+          "Change the Material full-screen dialog (X close icon) to an iOS full-screen cover with Cancel/Done.",
         sources: [
           { label: "Material 3 — Dialogs guidelines", url: "https://m3.material.io/components/dialogs/guidelines" },
           { label: "Apple HIG — Sheets", url: "https://developer.apple.com/design/human-interface-guidelines/sheets" },
@@ -244,6 +264,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
         targetPattern: "Roboto, or the brand font with a proper Android license.",
         rationale:
           "SF Pro is not licensed for Android. Ship Roboto or re-license the brand font — silent fallback to Roboto looks broken.",
+        fix:
+          "Change SF Pro to Roboto (or your licensed brand font).",
         sources: [
           { label: "Apple Fonts", url: "https://developer.apple.com/fonts/" },
           { label: "Material 3 — Typography overview", url: "https://m3.material.io/styles/typography/overview" },
@@ -258,6 +280,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
           "Material 3 type-scale roles (display, headline, title, body, label — large/medium/small).",
         rationale:
           "Mapping sizes by eye produces inconsistent hierarchy. Re-mapping to Material roles keeps text, spacing, and accessibility scaling coherent.",
+        fix:
+          "Change the iOS text styles to Material 3 type-scale roles.",
         sources: [
           { label: "Apple HIG — Typography", url: "https://developer.apple.com/design/human-interface-guidelines/typography" },
           { label: "Material 3 — Typography overview", url: "https://m3.material.io/styles/typography/overview" },
@@ -271,6 +295,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
         targetPattern:
           "SF Pro for UI text, SF Pro Text at small sizes; adopt HIG text styles throughout.",
         rationale: "Roboto on iOS is an instant port signal. SF (system font) is expected and optically tuned for Apple text rendering — SF Pro Text below 20pt, SF Pro Display at/above 20pt; adopt HIG text styles throughout.",
+        fix:
+          "Change Roboto to SF Pro (SF Pro Text at small sizes).",
         sources: [
           { label: "Apple HIG — Typography", url: "https://developer.apple.com/design/human-interface-guidelines/typography" },
           { label: "Apple Fonts", url: "https://developer.apple.com/fonts/" },
@@ -285,6 +311,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
         targetPattern: "HIG text styles (Large Title, Title 1-3, Headline, Body, Callout, Subheadline, Footnote, Caption 1-2)",
         rationale:
           "Material roles don't map 1:1 to HIG styles. Re-mapping keeps hierarchy, spacing, and Dynamic Type scaling coherent.",
+        fix:
+          "Change the Material 3 type-scale roles to HIG text styles.",
         sources: [
           { label: "Apple HIG — Typography", url: "https://developer.apple.com/design/human-interface-guidelines/typography" },
           { label: "Material 3 — Typography overview", url: "https://m3.material.io/styles/typography/overview" },
@@ -303,6 +331,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
         sourcePattern: "Centered alert with vertically stacked action buttons.",
         targetPattern: "Material dialog: surfaceContainerHigh container, headline and supporting text, actions as right-aligned text buttons",
         rationale: "iOS-style stacked-button alerts are an instant 'ported' signal. Material dialogs use text-button actions aligned to the trailing edge (confirmation closest to the edge); stacked actions are a documented Caution for long button text (confirming above dismissing), not forbidden.",
+        fix:
+          "Change the centered iOS alert to a Material dialog with right-aligned text buttons.",
         sources: [
           { label: "Material 3 — Dialogs", url: "https://m3.material.io/components/dialogs/overview" },
           { label: "Material 3 — Buttons guidelines", url: "https://m3.material.io/components/buttons/guidelines" },
@@ -319,6 +349,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
           "Modal bottom sheet: list of options, drag handle, scrim; no separate cancel row needed.",
         rationale:
           "Action sheets map almost 1:1 to bottom sheets — keep the option list, restyle the container and drop the iOS cancel pattern.",
+        fix:
+          "Change the iOS action sheet to a Material modal bottom sheet.",
         sources: [
           { label: "Apple HIG — Action sheets", url: "https://developer.apple.com/design/human-interface-guidelines/action-sheets" },
           { label: "Material 3 — Bottom sheets", url: "https://m3.material.io/components/bottom-sheets/overview" },
@@ -334,6 +366,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
           "Material FAB: bottom-trailing, 16dp margins, above the navigation bar, carrying the single primary action; correct elevation and size variant.",
         rationale:
           "Adding a FAB is fine, but it must follow Material placement, elevation, and size rules — not float like an iOS overlay.",
+        fix:
+          "Change the floating circular button to a Material FAB: bottom-trailing, 16dp margins.",
         sources: [
           { label: "Material 3 — FAB", url: "https://m3.material.io/components/floating-action-button/overview" },
           { label: "Material Components Android — FloatingActionButton", url: "https://github.com/material-components/material-components-android/blob/master/docs/components/FloatingActionButton.md" },
@@ -347,6 +381,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
         targetPattern: "Material segmented buttons: one outlined container split into segments with shared borders; selection shown with a checkmark (Selected icon); single-select (exactly one) or multi-select (none to all). Note: M3 Expressive no longer recommends segmented buttons — use the connected button group instead.",
         rationale:
           "The iOS pill-in-track segmented control has a distinct look; Material segmented buttons are outlined per-button and behave differently in multi-select.",
+        fix:
+          "Change the iOS segmented control to Material segmented buttons.",
         sources: [
           { label: "Material 3 — Segmented buttons", url: "https://m3.material.io/components/segmented-buttons/overview" },
           { label: "Apple HIG — Segmented controls", url: "https://developer.apple.com/design/human-interface-guidelines/segmented-controls" },
@@ -360,6 +396,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
         targetPattern: "Material date picker: modal calendar dialog for casual selection; modal date input (keyboard entry) when the user knows the exact date; docked picker on medium/expanded screens; full-screen for ranges",
         rationale:
           "Spinner wheels are the strongest 'ported from iOS' signal in forms. Switch to the calendar picker users expect.",
+        fix:
+          "Change the spinner date wheels to the Material calendar date picker.",
         sources: [
           { label: "Material 3 — Date pickers", url: "https://m3.material.io/components/date-pickers/overview" },
           { label: "Apple HIG — Pickers", url: "https://developer.apple.com/design/human-interface-guidelines/pickers" },
@@ -373,6 +411,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
         targetPattern: "Material switch: 52x32dp track, handle (M3's term — 'thumb' is the old name; 16dp unselected / 24dp selected / 28dp pressed), optional state icon (X / checkmark) inside the handle",
         rationale:
           "Close cousins, but the Material switch has distinct track styling and optional state icons — restyle to avoid the iOS look.",
+        fix:
+          "Change the iOS switch to the Material switch (52x32dp, icon in the handle).",
         sources: [
           { label: "Material 3 — Switch", url: "https://m3.material.io/components/switch/overview" },
           { label: "Apple HIG — Toggles", url: "https://developer.apple.com/design/human-interface-guidelines/toggles" },
@@ -388,6 +428,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
           "No FAB convention on iOS — promote the action to a navigation-bar button, toolbar item, or a primary button in content.",
         rationale:
           "A floating circle on iOS looks alien; HIG has no FAB. The action must live in the nav bar, toolbar, or content — not float over it.",
+        fix:
+          "Change the FAB to a navigation-bar button, toolbar item, or primary button in content.",
         sources: [
           { label: "Apple HIG — Toolbars", url: "https://developer.apple.com/design/human-interface-guidelines/toolbars" },
           { label: "Apple HIG — Buttons", url: "https://developer.apple.com/design/human-interface-guidelines/buttons" },
@@ -403,6 +445,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
           "Fixed light/dark palettes with semantic colors resolved at design time. No runtime palette generation on iOS.",
         rationale:
           "Dynamic color doesn't exist on iOS. Designs that depend on it need a resolved static palette or they'll ship unstyled.",
+        fix:
+          "Change the wallpaper-generated dynamic palette to fixed light/dark palettes.",
         sources: [
           { label: "Material 3 — Color system", url: "https://m3.material.io/styles/color/system/overview" },
           { label: "Apple HIG — Color", url: "https://developer.apple.com/design/human-interface-guidelines/color" },
@@ -417,6 +461,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
           "iOS alert: centered, with stacked (or side-by-side for two) action buttons; option lists become action sheets.",
         rationale:
           "Trailing text-button dialogs read as Android. iOS alerts stack their actions; lists of options belong in action sheets.",
+        fix:
+          "Change the Material dialog to a centered iOS alert with stacked action buttons.",
         sources: [
           { label: "Material 3 — Dialogs", url: "https://m3.material.io/components/dialogs/overview" },
           { label: "Apple HIG — Alerts", url: "https://developer.apple.com/design/human-interface-guidelines/alerts" },
@@ -432,6 +478,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
           "Flat grouped backgrounds with hairline separators. iOS uses minimal elevation — hierarchy comes from grouping, not shadow depth.",
         rationale:
           "Material's elevation language doesn't translate. HIG builds hierarchy with grouped backgrounds and separators, not shadows.",
+        fix:
+          "Change the elevated cards to flat grouped backgrounds with hairline separators.",
         sources: [
           { label: "Apple HIG — Lists and tables", url: "https://developer.apple.com/design/human-interface-guidelines/lists-and-tables" },
           { label: "Material 3 — Cards", url: "https://m3.material.io/components/cards/overview" },
@@ -446,6 +494,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
         targetPattern: "iOS switch: pill track, circular thumb, green on-state — and use the switch style ONLY in a list row; iOS selection styling (rounded-square checkbox, blue fill, white checkmark); system press-state highlight instead of ripples",
         rationale:
           "Ripples don't exist on iOS — they're the subtlest port signal. Swap to the iOS switch and replace ripples with highlight/opacity feedback.",
+        fix:
+          "Change the Material switch to the iOS switch — and only use it in a list row.",
         sources: [
           { label: "Apple HIG — Toggles", url: "https://developer.apple.com/design/human-interface-guidelines/toggles" },
           { label: "Apple HIG — Buttons", url: "https://developer.apple.com/design/human-interface-guidelines/buttons" },
@@ -461,6 +511,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
         targetPattern: "No snackbar on iOS — use in-content status indicators (the HIG's Mail-offline pattern), never a bottom bar",
         rationale:
           "The bottom snackbar is a Material idiom. iOS has no equivalent; forcing one in reads as a port.",
+        fix:
+          "Change the snackbar to an in-content status indicator.",
         sources: [
           { label: "Material 3 — Snackbar", url: "https://m3.material.io/components/snackbar/overview" },
           { label: "Apple HIG — Alerts", url: "https://developer.apple.com/design/human-interface-guidelines/alerts" },
@@ -473,6 +525,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
         sourcePattern: "iOS spinner drums (wheels style) for hour/minute/AM-PM",
         targetPattern: "Material dial time picker (clock-face dial selector) or input time picker (keyboard entry); keyboard icon toggles between them",
         rationale: "Same ported-signal class as date pickers: iOS drums have no M3 equivalent. M3 time selection is a dial mimicking a watch face, with keyboard input as the fallback.",
+        fix:
+          "Change the iOS time spinner drums to the Material dial time picker.",
         sources: [
           { label: "Material 3 — Time pickers", url: "https://m3.material.io/components/time-pickers/overview" },
           { label: "Apple HIG — Pickers", url: "https://developer.apple.com/design/human-interface-guidelines/pickers" },
@@ -485,6 +539,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
         sourcePattern: "iOS stepper: two-segment +/- control sitting next to the value field it changes",
         targetPattern: "No M3 stepper exists — rebuild with paired icon buttons, or a slider when the value is a range",
         rationale: "M3's value-selection control is the slider (standard/centered/range); a stepper ports as paired +/- icon buttons.",
+        fix:
+          "Change the iOS stepper to paired Material icon buttons (or a slider for ranges).",
         sources: [
           { label: "Apple HIG — Steppers", url: "https://developer.apple.com/design/human-interface-guidelines/steppers" },
           { label: "Material 3 — Sliders", url: "https://m3.material.io/components/sliders/overview" },
@@ -497,6 +553,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
         sourcePattern: "M3's five emphasis-ordered button styles: elevated, filled, tonal, outlined, text",
         targetPattern: "iOS button styles: one .borderedProminent button per view for the primary action, .bordered for secondary, .borderless/.plain for tertiary; title-style capitalization (M3 uses sentence case)",
         rationale: "M3's filled/tonal/outlined/text ladder has no 1:1 iOS mapping; porting it verbatim yields off-hierarchy buttons. HIG reserves the prominent style for the single most likely action.",
+        fix:
+          "Change the five M3 button styles to iOS button styles (one .borderedProminent primary per view).",
         sources: [
           { label: "Material 3 — Buttons guidelines", url: "https://m3.material.io/components/buttons/guidelines" },
           { label: "Apple HIG — Buttons", url: "https://developer.apple.com/design/human-interface-guidelines/buttons" },
@@ -509,6 +567,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
         sourcePattern: "Material modal calendar date picker and dial time picker",
         targetPattern: "iOS picker styles: compact (button opening a calendar/time modal), inline (calendar view or wheels), or wheels (scrolling drums)",
         rationale: "The reverse of the date/time checks: an M3 calendar dialog or clock dial on iOS reads as Android. iOS offers compact, inline, and wheels styles.",
+        fix:
+          "Change the Material calendar/dial pickers to the iOS picker style (compact, inline, or wheels).",
         sources: [
           { label: "Apple HIG — Pickers", url: "https://developer.apple.com/design/human-interface-guidelines/pickers" },
           { label: "Material 3 — Date pickers", url: "https://m3.material.io/components/date-pickers/overview" },
@@ -527,6 +587,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
         sourcePattern: "44x44pt recommended hit region (HIG Accessibility: iOS default control size 44x44pt; hard minimum 28x28pt)",
         targetPattern: "48×48dp minimum touch targets.",
         rationale: "44pt controls fall below Android's 48dp accessibility floor and get flagged by Google's Accessibility Scanner. (Note: dp and pt are both density-independent, so there is no 'denser display' size difference — 44pt and 44dp are the same physical size.) Bump interactive targets to 48dp.",
+        fix:
+          "Change 44pt touch targets to 48dp minimum touch targets.",
         sources: [
           { label: "Apple HIG — Buttons", url: "https://developer.apple.com/design/human-interface-guidelines/buttons" },
           { label: "Apple HIG — Accessibility", url: "https://developer.apple.com/design/human-interface-guidelines/accessibility" },
@@ -543,6 +605,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
           "Edge-to-edge layout with WindowInsets handling for the status bar, gesture nav bar, and display cutouts.",
         rationale:
           "iOS-style letterboxing wastes screen on Android. Go edge-to-edge and handle insets per-component instead of padding the whole screen.",
+        fix:
+          "Change the letterboxed safe-area layout to edge-to-edge with WindowInsets handling.",
         sources: [
           { label: "Android Developers — Window insets", url: "https://developer.android.com/develop/ui/views/layout/insets" },
           { label: "Android Developers — Edge-to-edge", url: "https://developer.android.com/develop/ui/views/layout/edge-to-edge" },
@@ -557,6 +621,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
           "Transparent status bar over edge-to-edge content with light/dark icon control via WindowInsetsController.",
         rationale:
           "Hardcoded status-bar backgrounds clash with edge-to-edge layouts and gesture navigation.",
+        fix:
+          "Change the opaque status bar to a transparent one over edge-to-edge content.",
         sources: [
           { label: "Android Developers — Edge-to-edge", url: "https://developer.android.com/develop/ui/views/layout/edge-to-edge" },
           { label: "Android Developers — WindowInsetsController", url: "https://developer.android.com/reference/android/view/WindowInsetsController" },
@@ -570,6 +636,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
         targetPattern: "44×44pt minimum touch targets on iOS.",
         rationale:
           "Going down in size is usually safe, but verify nothing lands below 44pt — and don't just scale everything down; re-check spacing and rhythm.",
+        fix:
+          "Change 48dp touch targets to 44pt minimum touch targets.",
         sources: [
           { label: "Apple HIG — Accessibility", url: "https://developer.apple.com/design/human-interface-guidelines/accessibility" },
           { label: "Material 3 — Accessible design", url: "https://m3.material.io/foundations/accessible-design" },
@@ -584,6 +652,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
         targetPattern: "Respect the iOS safe area — keep interactive content below the notch/Dynamic Island and above the home indicator, while letting backgrounds and scrolling content extend edge to edge. Do NOT add black bars/letterbox to hide the notch or home indicator",
         rationale:
           "On Android, letterboxing wastes screen; on iOS the safe area is the convention. Don't bleed content into the notch or the home indicator.",
+        fix:
+          "Change the edge-to-edge layout to respect the iOS safe area (notch, Dynamic Island, home indicator).",
         sources: [
           { label: "Apple HIG — Layout", url: "https://developer.apple.com/design/human-interface-guidelines/layout" },
         ],
@@ -597,6 +667,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
         targetPattern: "iOS status bar style set per screen via preferredStatusBarStyle (.default / .lightContent / .darkContent). No transparency games — the system manages it",
         rationale:
           "Android's programmatic status-bar control has no iOS equivalent. Set the style per screen and let the system handle the rest.",
+        fix:
+          "Change the transparent status bar to per-screen preferredStatusBarStyle.",
         sources: [
           { label: "Apple HIG — Layout", url: "https://developer.apple.com/design/human-interface-guidelines/layout" },
         ],
@@ -608,6 +680,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
         sourcePattern: "Edge-swipe gestures (e.g. swipe-back) freely usable near screen edges",
         targetPattern: "Keep interactive controls, tap targets, and app-owned horizontal swipes clear of system gesture insets — those edge zones take priority for the system back/home gestures",
         rationale: "On Android the system reserves gesture-navigation edge zones; app gestures there are overridden by the OS.",
+        fix:
+          "Change edge-adjacent controls to clear the system gesture insets.",
         sources: [
           { label: "Android Developers — Window insets", url: "https://developer.android.com/develop/ui/views/layout/insets" },
         ],
@@ -625,6 +699,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
         sourcePattern: "Push/pop with spring curves tied to the swipe-back gesture.",
         targetPattern: "Material emphasized easing with the M3 transition pattern matched to the navigation relationship: container transform (card/list to detail), forward and backward (hierarchical push/pop), lateral (peer content like tabs), top level (unrelated destinations, e.g. nav-bar switches)",
         rationale: "iOS springs feel wrong on Android. Pick the Material transition that matches the relationship (container transform for cards, lateral for peer moves, top level for destination switches).",
+        fix:
+          "Change the iOS push/pop spring transitions to the matching Material motion pattern.",
         sources: [
           { label: "Material 3 — Transition patterns", url: "https://m3.material.io/styles/motion/transitions/transition-patterns" },
           { label: "Material 3 — Easing and duration", url: "https://m3.material.io/styles/motion/easing-and-duration" },
@@ -639,6 +715,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
           "Material motion tokens: short/medium/long durations with standard and emphasized easing curves.",
         rationale:
           "A shared motion token system keeps transitions consistent across the app and feeling native to the platform.",
+        fix:
+          "Change feel-tuned iOS durations to Material motion tokens.",
         sources: [
           { label: "Material 3 — Easing and duration", url: "https://m3.material.io/styles/motion/easing-and-duration" },
           { label: "Material Components Android — Motion theming", url: "https://github.com/material-components/material-components-android/blob/master/docs/theming/Motion.md" },
@@ -652,6 +730,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
         targetPattern: "iOS push/pop with the system's parallax transition and the interactive swipe-back gesture; modals present as sheets from the bottom",
         rationale:
           "Material transitions feel technical on iOS. Match the iOS navigation model: horizontal push/pop between peers, sheets from the bottom.",
+        fix:
+          "Change the Material transitions to the iOS parallax push/pop with interactive swipe-back.",
         sources: [
           { label: "Material 3 — Transition patterns", url: "https://m3.material.io/styles/motion/transitions/transition-patterns" },
         ],
@@ -666,6 +746,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
           "UIView animation curves (ease-in-out, spring with damping and velocity). iOS has no shared token system by default — define one.",
         rationale:
           "Port the token discipline, not the token values. iOS springs and easing have a different feel than Material emphasized curves.",
+        fix:
+          "Change the Material motion tokens to UIView animation curves (ease-in-out, spring).",
         sources: [
           { label: "Material 3 — Easing and duration", url: "https://m3.material.io/styles/motion/easing-and-duration" },
         ],
@@ -677,6 +759,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
         sourcePattern: "Swipe-from-left-edge interactive pop tied to the navigation stack",
         targetPattern: "Predictive back gesture: opt in via android:enableOnBackInvokedCallback and the Navigation component's built-in handling — the system drives the back animation and previews the destination; do not re-implement a custom swipe-back",
         rationale: "Android's back model is system-owned and animated by the OS, including cross-activity transitions. A hand-rolled swipe-back fights the platform gesture, duplicates the system animation, and breaks predictive-back previews.",
+        fix:
+          "Change the custom swipe-back handling to opt into the predictive back gesture.",
         sources: [
           { label: "Android Developers — Predictive back gesture", url: "https://developer.android.com/guide/navigation/custom-back/predictive-back-gesture" },
           { label: "Material 3 — Transition patterns", url: "https://m3.material.io/styles/motion/transitions/transition-patterns" },
@@ -695,6 +779,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
         sourcePattern: "SF Symbols with Apple-defined weights and variants.",
         targetPattern: "Material Symbols: outlined, rounded, and sharp styles; fill, weight, grade, and optical-size axes chosen per usage",
         rationale: "SF Symbols are system-provided images licensed solely for apps on Apple platforms (Xcode and Apple SDKs Agreement section 2.10) — not permitted in Android apps. Replace with Material Symbols (Apache 2.0), using filled vs outlined to signal active state",
+        fix:
+          "Change SF Symbols to Material Symbols (outlined, rounded, or sharp).",
         sources: [
           { label: "Apple — SF Symbols", url: "https://developer.apple.com/sf-symbols/" },
           { label: "Apple — Xcode and Apple SDKs Agreement", url: "https://www.apple.com/legal/sla/docs/xcode.pdf" },
@@ -711,6 +797,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
           "Material icons with state layers providing touch feedback and the active-indicator pill for selection.",
         rationale:
           "Selection feedback differs between platforms — add state layers so pressed and selected states read correctly on Android.",
+        fix:
+          "Change tint-only tab icons to Material icons with state layers and the active-indicator pill.",
         sources: [
           { label: "Material 3 — Navigation bar specs", url: "https://m3.material.io/components/navigation-bar/specs" },
         ],
@@ -725,6 +813,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
           "SF Symbols with Apple-defined weights and variants; match the symbol weight to the surrounding text style.",
         rationale:
           "Material Symbols on iOS are an instant port signal. SF Symbols are free and render correctly at every Apple-defined weight.",
+        fix:
+          "Change Material Symbols to SF Symbols, matching weight to the text style.",
         sources: [
           { label: "Apple HIG — SF Symbols", url: "https://developer.apple.com/design/human-interface-guidelines/sf-symbols/overview/" },
           { label: "Google — material-design-icons (Apache 2.0)", url: "https://github.com/google/material-design-icons" },
@@ -738,6 +828,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
         targetPattern: "Single full-bleed square 1024x1024 asset with NO pre-rounded corners. iOS applies its own rounded-rectangle mask (continuous corners); providing pre-masked layers double-applies the mask and degrades specular effects",
         rationale:
           "Android's adaptive-icon system has no iOS equivalent. Ship one proper squircle; don't reuse an asset masked for a Pixel.",
+        fix:
+          "Change the adaptive icon layers to a single full-bleed 1024x1024 square asset.",
         sources: [
           { label: "Android Developers — Adaptive icons", url: "https://developer.android.com/develop/ui/compose/system/icon_design_adaptive" },
           { label: "Apple HIG — App icons", url: "https://developer.apple.com/design/human-interface-guidelines/app-icons" },
@@ -750,6 +842,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
         sourcePattern: "Adaptive icon with a monochrome layer enabling Android 13+ themed icons (Material You tinting)",
         targetPattern: "No themed-icon equivalent on iOS — drop the monochrome layer and ship one full-color square asset; iOS handles light/dark/tinted appearances itself",
         rationale: "The monochrome layer exists only for Android's user-theming pipeline. Porting it (or leaving it as the only asset) produces a wrong-looking iOS icon; iOS applies its own appearance treatments to the single full-bleed asset.",
+        fix:
+          "Change the themed/monochrome icon to a single full-color square asset.",
         sources: [
           { label: "Android Developers — Adaptive icons", url: "https://developer.android.com/develop/ui/compose/system/icon_design_adaptive" },
           { label: "Apple HIG — App icons", url: "https://developer.apple.com/design/human-interface-guidelines/app-icons" },

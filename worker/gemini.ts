@@ -164,6 +164,8 @@ export interface ResolvedFinding {
   sourcePattern: string;
   targetPattern: string;
   rationale: string;
+  /** One-line plain-language fix from the taxonomy library. */
+  fix: string;
   sources: { label: string; url: string }[];
   unverified?: boolean;
   unverifiedNote?: string;
@@ -323,6 +325,7 @@ export async function analyzeWithGemini(
       sourcePattern: check.sourcePattern,
       targetPattern: check.targetPattern,
       rationale: check.rationale,
+      fix: check.fix,
       sources: check.sources,
       ...(check.unverified
         ? { unverified: true, unverifiedNote: check.unverifiedNote }

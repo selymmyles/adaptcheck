@@ -32,6 +32,8 @@ export interface Finding {
   sourcePattern: string;
   targetPattern: string;
   rationale: string;
+  /** One-line plain-language fix from the taxonomy library. */
+  fix: string;
   /** Official-doc citations grounding this finding. */
   sources: FindingSource[];
   /** True when grounded in community convention, not official docs. */
