@@ -33,9 +33,10 @@ export const GEMINI_MODEL = "gemini-3.8-flash";
  * part of the analysis-cache key, so a bump invalidates cached results.
  * 1 = launch, 2 = consensus voting, 3 = tie-breaker judge, 4 = result cache,
  * 5 = multi-region findings + icon deep links,
- * 6 = expanded icon alias map.
+ * 6 = expanded icon alias map,
+ * 7 = direct selected-icon Google Fonts URLs (verified format).
  */
-export const PIPELINE_VERSION = 6;
+export const PIPELINE_VERSION = 7;
 
 export interface ModelRegion {
   x_min: number;
@@ -495,12 +496,16 @@ const MATERIAL_TO_SF_ICONS: Record<string, string> = Object.fromEntries(
 );
 
 /**
- * Google Fonts page for a Material Symbol. Uses the search URL: it lands on
- * the icon when the name is right and on useful results when approximate.
- * (The selected-icon URL format is unstable; search is the robust target.)
+ * Google Fonts page for a Material Symbol, verified 2026-10-11: the
+ * `selected` param opens the icon's detail panel directly (copy-code
+ * buttons), with only the name segment varying per icon.
  */
 function materialIconUrl(materialName: string): string {
-  return `https://fonts.google.com/icons?icon.query=${encodeURIComponent(materialName)}`;
+  return (
+    "https://fonts.google.com/icons?selected=Material+Symbols+Outlined:" +
+    `${encodeURIComponent(materialName)}` +
+    ":FILL@0;wght@400;GRAD@0;opsz@24&icon.size=24&icon.color=%231f1f1f"
+  );
 }
 
 /**
