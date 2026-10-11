@@ -43,7 +43,7 @@ export default function UploadScreen({ onAnalyze }: UploadScreenProps) {
       <div
         role="button"
         tabIndex={0}
-        aria-label="Upload an iOS screenshot"
+        aria-label="Upload an app screenshot"
         onClick={() => inputRef.current?.click()}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") inputRef.current?.click();
@@ -86,7 +86,7 @@ export default function UploadScreen({ onAnalyze }: UploadScreenProps) {
           />
         </svg>
         <p className="text-base font-medium text-stone-900">
-          Drop your iOS screenshot here
+          Drop your screenshot here
         </p>
         <p className="mt-1 text-sm text-stone-500">
           or <span className="font-medium text-teal-700 underline">browse files</span> — PNG or JPG
