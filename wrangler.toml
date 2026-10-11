@@ -1,0 +1,10 @@
+# PROVISIONAL worker name — final product name TBD by the user.
+name = "adaptcheck-api"
+main = "worker/index.ts"
+compatibility_date = "2025-06-01"
+
+# Serve the Vite production build (dist/) as static assets.
+# Requests that don't match a static file (e.g. POST /api/analyze)
+# fall through to the worker above.
+[assets]
+directory = "./dist"
