@@ -212,3 +212,13 @@ a focused tie-breaker pass (single-check yes/no with visual evidence, strict:
 ambiguous = drop). Summary prompt constrained to mention only consensus
 findings. Verified: 5/5 identical finding sets on a screenshot that flipped
 before. ~$0.06/analysis.
+
+## 2026-10-11 — Deterministic result cache
+
+Founder's 5-run test still showed a flip (FAB 3/5): the tie-breaker itself
+can coin-flip a genuinely ambiguous call. New rule: identical image bytes
+always return identical findings, via a SHA-256-keyed KV cache (7-day TTL).
+Cache key includes PIPELINE_VERSION (bumped on any prompt/taxonomy/voting
+change, so fixes are never masked). Vote+judge pipeline still runs for every
+new image. Bonus: repeat analyses are instant and free. Verified: 28s fresh,
+0.7s cached, byte-identical findings.
