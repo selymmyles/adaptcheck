@@ -200,6 +200,8 @@ function validRegion(value: unknown): value is ModelRegion {
 
 export interface BackendAnalysisResult {
   summary: string;
+  /** Token counts for spend monitoring (not sent to the client). */
+  usage: { promptTokens: number; candidateTokens: number };
   findings: ResolvedFinding[];
   /** The direction the findings belong to (== detected for auto). */
   direction: AnalysisDirection;
@@ -270,6 +272,15 @@ export async function analyzeWithGemini(
 
   const data = (await res.json()) as {
     candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+    usageMetadata?: {
+      promptTokenCount?: number;
+      candidatesTokenCount?: number;
+      totalTokenCount?: number;
+    };
+  };
+  const usage = {
+    promptTokens: data.usageMetadata?.promptTokenCount ?? 0,
+    candidateTokens: data.usageMetadata?.candidatesTokenCount ?? 0,
   };
   const text =
     data.candidates?.[0]?.content?.parts
@@ -339,5 +350,5 @@ export async function analyzeWithGemini(
     (a, b) => (CHECK_ORDER[a.id] ?? 0) - (CHECK_ORDER[b.id] ?? 0),
   );
 
-  return { summary: parsed.summary, findings, direction, detectedDirection: detected };
+  return { summary: parsed.summary, findings, direction, detectedDirection: detected, usage };
 }

@@ -7,3 +7,8 @@ compatibility_date = "2025-06-01"
 # fall through to the worker above.
 [assets]
 directory = "./dist"
+
+# Token-usage ledger for spend monitoring (daily keys: usage:YYYY-MM-DD).
+[[kv_namespaces]]
+binding = "janus_usage"
+id = "aa23cdea1ac041a6b86930609ed99a83"

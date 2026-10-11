@@ -28,6 +28,8 @@ interface Env {
    * Never hardcode or commit this value.
    */
   GEMINI_API_KEY: string;
+  /** KV ledger for per-day token usage (spend monitoring). */
+  janus_usage: KVNamespace;
 }
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // ~10MB
@@ -50,7 +52,11 @@ async function fileToBase64(file: File): Promise<string> {
   return btoa(binary);
 }
 
-async function handleAnalyze(request: Request, env: Env): Promise<Response> {
+async function handleAnalyze(
+  request: Request,
+  env: Env,
+  ctx: ExecutionContext,
+): Promise<Response> {
   if (!env.GEMINI_API_KEY) {
     return json(
       { error: "Server misconfigured: GEMINI_API_KEY is not set." },
@@ -92,7 +98,11 @@ async function handleAnalyze(request: Request, env: Env): Promise<Response> {
       base64,
       direction,
     );
-    return json(result);
+    // Spend ledger: accumulate per-day token counts in KV (fire-and-forget).
+    ctx.waitUntil(recordUsage(env.janus_usage, result.usage));
+    // Never leak usage internals to the client.
+    const { usage: _usage, ...clientResult } = result;
+    return json(clientResult);
   } catch (err) {
     const message = err instanceof Error ? err.message : "unknown";
     console.error("analyze failed:", message);
@@ -120,14 +130,45 @@ async function handleAnalyze(request: Request, env: Env): Promise<Response> {
   }
 }
 
+/**
+ * Accumulate one analysis's token counts into today's KV ledger entry.
+ * Key: usage:YYYY-MM-DD -> { promptTokens, candidateTokens, requests }.
+ */
+async function recordUsage(
+  kv: KVNamespace,
+  usage: { promptTokens: number; candidateTokens: number },
+): Promise<void> {
+  try {
+    const key = `usage:${new Date().toISOString().slice(0, 10)}`;
+    const raw = await kv.get(key);
+    const cur = raw
+      ? (JSON.parse(raw) as {
+          promptTokens: number;
+          candidateTokens: number;
+          requests: number;
+        })
+      : { promptTokens: 0, candidateTokens: 0, requests: 0 };
+    cur.promptTokens += usage.promptTokens;
+    cur.candidateTokens += usage.candidateTokens;
+    cur.requests += 1;
+    await kv.put(key, JSON.stringify(cur), { expirationTtl: 90 * 86400 });
+  } catch (e) {
+    console.error("usage ledger failed:", e);
+  }
+}
+
 const handler = {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(
+    request: Request,
+    env: Env,
+    ctx: ExecutionContext,
+  ): Promise<Response> {
     const url = new URL(request.url);
     if (url.pathname === "/api/analyze") {
       if (request.method !== "POST") {
         return json({ error: "Method not allowed." }, 405);
       }
-      return handleAnalyze(request, env);
+      return handleAnalyze(request, env, ctx);
     }
     // Non-API paths are served from Workers Static Assets (dist/).
     return new Response("Not found", { status: 404 });
