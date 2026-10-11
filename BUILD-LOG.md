@@ -142,3 +142,11 @@ model only detects and localizes now. Cheaper, consistent, red-pennable.
 Cards show the FIX line; full card redesign (stacked iOS 26 / Material 3
 boxes, in-box source links, collapsible categories, sticky index) planned
 next.
+
+## 2026-10-11 — Spend guardrail
+
+Founder: "will you monitor to make sure i dont hit 20?" Yes. Worker now
+logs per-analysis token counts to a KV ledger; a daily check estimates
+month-to-date spend and paces it against the $20 cap (warns at $15 MTD,
+on pace-over, or single-day spikes). At ~$0.015/analysis, the cap is
+~1,300 analyses/month — testing will never get close.
