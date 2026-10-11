@@ -271,3 +271,21 @@ rollup showing checks that repeat across screens (fix in theme/design system,
 not per screen). Included in the markdown export. Verified: parallel analyses
 with correct independent direction detection. NOTE: /tmp is ephemeral across
 VM replacements — test screenshots there vanish; use workspace uploads.
+
+## 2026-10-11 — Item-based results (dogfood feedback)
+
+His red-pen via use: findings were grouped by taxonomy category (Nav, Type,
+Components) — he wants them grouped by UI ITEM: the bottom nav bar is item
+one (bar + its icons), the top search bar is item two (bar + its icons +
+text). Implemented as geometry clustering: regions containing each other's
+centers merge (union-find), named after the largest region's finding, ordered
+bottom-of-screen first. Regionless (global) findings go in a leading "Whole
+screen" group. Item sections are collapsible, default open; the annotated
+screenshot is now the only thing collapsed by default. Map badge click now
+jumps to the finding card (was: pointless re-flash on the map); card number
+click opens the collapsed map and highlights. Content index + markdown export
+follow the item grouping. Also: new comp-searchbar / a2i-comp-searchbar checks
+(the model had caught a barcode icon inside a search bar but missed the bar
+itself); prompt nudge to scan nav/tab/toolbar icons individually. Verified:
+fresh analysis fires comp-searchbar; clustering unit-tested on real regions.
+PIPELINE_VERSION 10.
