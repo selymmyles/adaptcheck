@@ -10,7 +10,7 @@
  */
 
 import type { ExportedHandler } from "@cloudflare/workers-types";
-import { analyzeWithGemini } from "./gemini";
+import { analyzeWithGemini, PIPELINE_VERSION } from "./gemini";
 import type { DirectionRequest } from "../src/lib/taxonomy";
 
 function parseDirection(value: unknown): DirectionRequest {
@@ -28,7 +28,10 @@ interface Env {
    * Never hardcode or commit this value.
    */
   GEMINI_API_KEY: string;
-  /** KV ledger for per-day token usage (spend monitoring). */
+  /**
+   * KV: per-day token usage ledger (spend monitoring) + versioned
+   * analysis-result cache (analysis:<pipelineVersion>:<sha256>).
+   */
   janus_usage: KVNamespace;
 }
 
@@ -42,14 +45,21 @@ function json(data: unknown, status = 200): Response {
   });
 }
 
-async function fileToBase64(file: File): Promise<string> {
-  const bytes = new Uint8Array(await file.arrayBuffer());
+function bytesToBase64(bytes: Uint8Array): string {
   let binary = "";
   const CHUNK = 0x8000;
   for (let i = 0; i < bytes.length; i += CHUNK) {
     binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
   }
   return btoa(binary);
+}
+
+function sha256Hex(bytes: Uint8Array): Promise<string> {
+  return crypto.subtle.digest("SHA-256", bytes as BufferSource).then((digest) =>
+    [...new Uint8Array(digest)]
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join(""),
+  );
 }
 
 async function handleAnalyze(
@@ -91,17 +101,31 @@ async function handleAnalyze(
   const direction = parseDirection(form.get("direction"));
 
   try {
-    const base64 = await fileToBase64(screenshot);
+    const bytes = new Uint8Array(await screenshot.arrayBuffer());
+    // Identical image bytes -> identical findings, always. A tool must be
+    // deterministic for the same input; the vote+judge pipeline below still
+    // produces the best judgment for every NEW image. The pipeline version
+    // in the key means prompt/taxonomy fixes are never masked by stale cache.
+    const cacheKey = `analysis:${PIPELINE_VERSION}:${await sha256Hex(bytes)}`;
+    const cached = await env.janus_usage.get(cacheKey, "json");
+    if (cached) return json(cached);
+
     const result = await analyzeWithGemini(
       env.GEMINI_API_KEY,
       screenshot.type,
-      base64,
+      bytesToBase64(bytes),
       direction,
     );
     // Spend ledger: accumulate per-day token counts in KV (fire-and-forget).
     ctx.waitUntil(recordUsage(env.janus_usage, result.usage));
     // Never leak usage internals to the client.
     const { usage: _usage, ...clientResult } = result;
+    // Cache the client-safe result for 7 days (fire-and-forget).
+    ctx.waitUntil(
+      env.janus_usage.put(cacheKey, JSON.stringify(clientResult), {
+        expirationTtl: 7 * 86400,
+      }),
+    );
     return json(clientResult);
   } catch (err) {
     const message = err instanceof Error ? err.message : "unknown";

@@ -28,6 +28,13 @@ import {
 // vision on the free tier the same day. DO NOT revert to 2.5-flash.
 export const GEMINI_MODEL = "gemini-3.8-flash";
 
+/**
+ * Bump this whenever the prompt, taxonomy, or voting logic changes — it is
+ * part of the analysis-cache key, so a bump invalidates cached results.
+ * 1 = launch, 2 = consensus voting, 3 = tie-breaker judge, 4 = result cache.
+ */
+export const PIPELINE_VERSION = 4;
+
 export interface ModelRegion {
   x_min: number;
   y_min: number;
