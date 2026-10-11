@@ -68,7 +68,7 @@ Format per check: **Title** — source pattern → target pattern. **Fix:** the 
   - *Why: Material roles don't map 1:1 to HIG styles. Re-mapping keeps hierarchy, spacing, and Dynamic Type scaling coherent.*
   - Sources: [Apple HIG — Typography](https://developer.apple.com/design/human-interface-guidelines/typography); [Material 3 — Typography overview](https://m3.material.io/styles/typography/overview)
 
-## Components — iOS → Android (8 checks)
+## Components — iOS → Android (9 checks)
 
 - **Alerts** `[comp-alert]` — Centered alert with vertically stacked action buttons. → Material dialog: surfaceContainerHigh container, headline and supporting text, actions as right-aligned text buttons
   - **Fix:** Change the centered iOS alert to a Material dialog with right-aligned text buttons.
@@ -82,6 +82,10 @@ Format per check: **Title** — source pattern → target pattern. **Fix:** the 
   - **Fix:** Change the floating circular button to a Material FAB: bottom-trailing, 16dp margins. If it sits beside a bottom bar that opens an input modal, convert the cluster into a Material 3 Search Bar instead (56dp fully-rounded container; actions become the bar's leading/trailing icon buttons; tapping it opens the full input surface, the SearchView pattern).
   - *Why: Adding a FAB is fine, but it must follow Material placement, elevation, and size rules — not float like an iOS overlay.*
   - Sources: [Material 3 — FAB](https://m3.material.io/components/floating-action-button/overview); [Material Components Android — FloatingActionButton](https://github.com/material-components/material-components-android/blob/master/docs/components/FloatingActionButton.md)
+- **Search bar / prompt bar** `[comp-searchbar]` — iOS search field (rounded, magnifier + placeholder) or a floating bottom prompt bar (e.g. AI chat trigger) with detached circular action buttons beside it. → Material 3 Search Bar: 56dp fully-rounded container, leading icon button, supporting text, up to two trailing icons; detached buttons fold into the bar's leading/trailing slots, and tapping the bar opens the full input surface (SearchView pattern).
+  - **Fix:** Change the search field / prompt bar cluster to a Material 3 Search Bar: 56dp fully-rounded container; move adjacent buttons into the leading/trailing icon slots.
+  - *Why: An iOS search field or floating prompt cluster has no direct transplant equivalent; Material's Search Bar is the native container, and its leading/trailing slots absorb the adjacent action buttons instead of floating separate FABs.*
+  - Sources: [Material 3 — Search](https://m3.material.io/components/search/overview); [Apple HIG — Search fields](https://developer.apple.com/design/human-interface-guidelines/search-fields)
 - **Segmented controls** `[comp-segmented]` — iOS stepper and segmented control (pill-in-track look). → Material segmented buttons: one outlined container split into segments with shared borders; selection shown with a checkmark (Selected icon); single-select (exactly one) or multi-select (none to all). Note: M3 Expressive no longer recommends segmented buttons — use the connected button group instead.
   - **Fix:** Change the iOS segmented control to Material segmented buttons.
   - *Why: The iOS pill-in-track segmented control has a distinct look; Material segmented buttons are outlined per-button and behave differently in multi-select.*
@@ -103,7 +107,7 @@ Format per check: **Title** — source pattern → target pattern. **Fix:** the 
   - *Why: M3's value-selection control is the slider (standard/centered/range); a stepper ports as paired +/- icon buttons.*
   - Sources: [Apple HIG — Steppers](https://developer.apple.com/design/human-interface-guidelines/steppers); [Material 3 — Sliders](https://m3.material.io/components/sliders/overview)
 
-## Components — Android → iOS (8 checks)
+## Components — Android → iOS (9 checks)
 
 - **Floating action button → promoted action** `[a2i-comp-fab]` — FAB: bottom-trailing circular button carrying the screen's primary action, with Material elevation. → No FAB convention on iOS — promote the action to a navigation-bar button, toolbar item, or a primary button in content.
   - **Fix:** Change the FAB to a navigation-bar button, toolbar item, or primary button in content.
@@ -113,6 +117,10 @@ Format per check: **Title** — source pattern → target pattern. **Fix:** the 
   - **Fix:** Change the wallpaper-generated dynamic palette to fixed light/dark palettes.
   - *Why: Dynamic color doesn't exist on iOS. Designs that depend on it need a resolved static palette or they'll ship unstyled.*
   - Sources: [Material 3 — Color system](https://m3.material.io/styles/color/system/overview); [Apple HIG — Color](https://developer.apple.com/design/human-interface-guidelines/color)
+- **Search bar → iOS search field** `[a2i-comp-searchbar]` — Material 3 Search Bar: 56dp fully-rounded container with leading/trailing icon slots, opening a full-screen search view. → Native iOS search field: rounded editable field with magnifier icon, clear button, and placeholder text; scope bars/tokens where applicable.
+  - **Fix:** Change the Material Search Bar to a native iOS search field (magnifier, clear button, placeholder).
+  - *Why: The Material Search Bar's slots, container treatment, and search-view pattern don't exist on iOS; iOS uses its own search field idiom.*
+  - Sources: [Apple HIG — Search fields](https://developer.apple.com/design/human-interface-guidelines/search-fields); [Material 3 — Search](https://m3.material.io/components/search/overview)
 - **Material dialogs → alerts and action sheets** `[a2i-comp-dialog]` — Material dialog: surfaceContainerHigh container, headline and supporting text, actions as trailing text buttons → iOS alert: centered, with stacked (or side-by-side for two) action buttons; option lists become action sheets.
   - **Fix:** Change the Material dialog to a centered iOS alert with stacked action buttons.
   - *Why: Trailing text-button dialogs read as Android. iOS alerts stack their actions; lists of options belong in action sheets.*

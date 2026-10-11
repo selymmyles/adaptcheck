@@ -383,6 +383,22 @@ export const TAXONOMY: TaxonomyCategory[] = [
         ],
       },
       {
+        id: "comp-searchbar",
+        check: "Search bar / prompt bar",
+        direction: "ios-to-android",
+        sourcePattern:
+          "iOS search field (rounded, magnifier + placeholder) or a floating bottom prompt bar (e.g. AI chat trigger) with detached circular action buttons beside it.",
+        targetPattern:
+          "Material 3 Search Bar: 56dp fully-rounded container, surfaceContainerHigh, leading icon button, supporting text, up to two trailing icons. Detached buttons fold into the bar's leading/trailing slots; tapping the bar opens the full input surface (SearchView pattern).",
+        rationale:
+          "An iOS search field or floating prompt cluster has no direct iOS-transplant equivalent; Material's Search Bar is the native container, and its leading/trailing slots absorb the adjacent action buttons instead of floating separate FABs.",
+        fix: "Change the search field / prompt bar cluster to a Material 3 Search Bar: 56dp fully-rounded container; move adjacent buttons into the leading/trailing icon slots.",
+        sources: [
+          { label: "Material 3 — Search", url: "https://m3.material.io/components/search/overview" },
+          { label: "Apple HIG — Search fields", url: "https://developer.apple.com/design/human-interface-guidelines/search-fields" },
+        ],
+      },
+      {
         id: "comp-segmented",
         check: "Segmented controls",
         direction: "ios-to-android",
@@ -442,6 +458,22 @@ export const TAXONOMY: TaxonomyCategory[] = [
         sources: [
           { label: "Apple HIG — Toolbars", url: "https://developer.apple.com/design/human-interface-guidelines/toolbars" },
           { label: "Apple HIG — Buttons", url: "https://developer.apple.com/design/human-interface-guidelines/buttons" },
+        ],
+      },
+      {
+        id: "a2i-comp-searchbar",
+        check: "Search bar → iOS search field",
+        direction: "android-to-ios",
+        sourcePattern:
+          "Material 3 Search Bar: 56dp fully-rounded container with leading/trailing icon slots, opening a full-screen search view.",
+        targetPattern:
+          "Native iOS search field: rounded editable field with magnifier icon, clear button, and placeholder text; scope bars/tokens where applicable. A bottom prompt cluster is rebuilt in native iOS style, not as a Material bar.",
+        rationale:
+          "The Material Search Bar's slots, container treatment, and search-view pattern don't exist on iOS; iOS uses its own search field idiom.",
+        fix: "Change the Material Search Bar to a native iOS search field (magnifier, clear button, placeholder).",
+        sources: [
+          { label: "Apple HIG — Search fields", url: "https://developer.apple.com/design/human-interface-guidelines/search-fields" },
+          { label: "Material 3 — Search", url: "https://m3.material.io/components/search/overview" },
         ],
       },
       {

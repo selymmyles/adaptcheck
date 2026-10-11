@@ -38,7 +38,7 @@ export const GEMINI_MODEL = "gemini-3.8-flash";
  * 8 = FAB input-cluster -> Search Bar guidance; back-gesture + icon source order fixes,
  * 9 = Search Bar fix names the SearchView modal pattern.
  */
-export const PIPELINE_VERSION = 9;
+export const PIPELINE_VERSION = 10;
 
 export interface ModelRegion {
   x_min: number;
@@ -112,6 +112,7 @@ export function buildSystemPrompt(request: DirectionRequest): string {
     "- Include ONLY checks you can see evidence for in the screenshot. Do not guess.",
     "- Use only the check ids listed below, copied verbatim. Never invent ids.",
     "- If the same check applies to multiple DISTINCT elements (e.g. two separate floating buttons), return one finding per element with the same check_id and a different region. Never return the same element twice.",
+    "- Scan navigation bars, tab bars, and toolbars icon by icon: each icon that doesn't match the target platform's iconography gets its own finding, even when the icons are small.",
     "- When a finding concerns a group of related elements (e.g. an input bar plus its adjacent action buttons), draw the region around the WHOLE group, not one button.",
     '- If a finding is about a specific icon, put the icon\'s common name in "detail" (e.g. "home", "search", "settings").',
     "- The phone's own OS chrome is never a finding: the system status bar (time, battery, signal/wifi icons), the home indicator, and the system navigation bar/gestures belong to the device, not the app. Ignore them completely.",

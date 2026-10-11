@@ -4,7 +4,7 @@ import type {
   Finding,
   AnalysisDirection,
 } from "../lib/mockAnalysis";
-import { DIRECTION_META, TAXONOMY, CHECK_ORDER } from "../lib/taxonomy";
+import { DIRECTION_META, CHECK_ORDER } from "../lib/taxonomy";
 import FindingCard from "./FindingCard";
 import ScreenshotMap, { type MapMarker } from "./ScreenshotMap";
 import ContentIndex, { type IndexShot } from "./ContentIndex";
@@ -28,17 +28,99 @@ interface Highlight {
   id: string;
 }
 
-/** Findings grouped by taxonomy category, in taxonomy order. */
-function groupByCategory(
+type Region = NonNullable<Finding["region"]>;
+
+const regionArea = (r: Region) =>
+  Math.max(0, r.x_max - r.x_min) * Math.max(0, r.y_max - r.y_min);
+
+const regionCenterY = (r: Region) => (r.y_min + r.y_max) / 2;
+
+const iou = (a: Region, b: Region) => {
+  const ix = Math.max(0, Math.min(a.x_max, b.x_max) - Math.max(a.x_min, b.x_min));
+  const iy = Math.max(0, Math.min(a.y_max, b.y_max) - Math.max(a.y_min, b.y_min));
+  const inter = ix * iy;
+  const union = regionArea(a) + regionArea(b) - inter;
+  return union > 0 ? inter / union : 0;
+};
+
+/** Findings grouped by UI item: regions that contain each other merge into one
+ *  item (the nav bar plus its icons, the search bar plus its icons), so each
+ *  section reads as one thing on screen rather than one taxonomy bucket.
+ *  Ordered bottom of screen first (the nav bar is item one); findings without
+ *  a region go in a leading "Whole screen" group. */
+function groupByItem(
   findings: Finding[],
 ): { name: string; findings: Finding[] }[] {
-  const sorted = [...findings].sort(
-    (a, b) => (CHECK_ORDER[a.id] ?? 0) - (CHECK_ORDER[b.id] ?? 0),
-  );
-  return TAXONOMY.map((cat) => ({
-    name: cat.name,
-    findings: sorted.filter((f) => f.category === cat.name),
-  })).filter((g) => g.findings.length > 0);
+  const withRegion = findings.filter((f) => f.region);
+  const withoutRegion = findings.filter((f) => !f.region);
+  const byCheckOrder = (a: Finding, b: Finding) =>
+    (CHECK_ORDER[a.id] ?? 0) - (CHECK_ORDER[b.id] ?? 0);
+
+  // Union-find: merge when one region contains the other's center, or they
+  // overlap substantially.
+  const parent = withRegion.map((_, i) => i);
+  const find = (i: number): number =>
+    parent[i] === i ? i : (parent[i] = find(parent[i]));
+  const centerInside = (outer: Region, inner: Region) => {
+    const cx = (inner.x_min + inner.x_max) / 2;
+    const cy = (inner.y_min + inner.y_max) / 2;
+    const t = 15;
+    return (
+      cx >= outer.x_min - t &&
+      cx <= outer.x_max + t &&
+      cy >= outer.y_min - t &&
+      cy <= outer.y_max + t
+    );
+  };
+  for (let i = 0; i < withRegion.length; i++) {
+    for (let j = i + 1; j < withRegion.length; j++) {
+      const ri = withRegion[i].region!;
+      const rj = withRegion[j].region!;
+      if (
+        centerInside(ri, rj) ||
+        centerInside(rj, ri) ||
+        iou(ri, rj) > 0.2
+      ) {
+        const pi = find(i);
+        const pj = find(j);
+        if (pi !== pj) parent[pi] = pj;
+      }
+    }
+  }
+
+  const clusters = new Map<number, Finding[]>();
+  withRegion.forEach((f, i) => {
+    const r = find(i);
+    if (!clusters.has(r)) clusters.set(r, []);
+    clusters.get(r)!.push(f);
+  });
+
+  const itemGroups = [...clusters.values()]
+    .map((fs) => {
+      // The item is named after its largest region's finding.
+      const primary = fs.reduce((a, b) =>
+        regionArea(a.region!) >= regionArea(b.region!) ? a : b,
+      );
+      return { primary, findings: [...fs].sort(byCheckOrder) };
+    })
+    .sort(
+      (a, b) =>
+        regionCenterY(b.primary.region!) - regionCenterY(a.primary.region!),
+    )
+    .map((g, i) => ({
+      name: `Item ${i + 1} — ${g.primary.title}`,
+      findings: g.findings,
+    }));
+
+  const groups: { name: string; findings: Finding[] }[] = [];
+  if (withoutRegion.length > 0) {
+    groups.push({
+      name: "Whole screen",
+      findings: [...withoutRegion].sort(byCheckOrder),
+    });
+  }
+  groups.push(...itemGroups);
+  return groups;
 }
 
 function toMarkdown(items: ResultItem[]): string {
@@ -82,7 +164,7 @@ function toMarkdown(items: ResultItem[]): string {
     const { result } = item;
     const meta = DIRECTION_META[result.direction];
     lines.push("", `_${meta.arrow}_`, "", result.summary, "");
-    for (const group of groupByCategory(result.findings)) {
+    for (const group of groupByItem(result.findings)) {
       lines.push(`### ${group.name}`, "");
       for (const f of group.findings) {
         lines.push(`- [ ] **${f.title}**`);
@@ -124,9 +206,10 @@ export default function ResultsScreen({
 
   const locateOnMap = (shot: number, id: string) => {
     flashHighlight(shot, id);
-    document
-      .getElementById(`map-${shot}`)
-      ?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    // The annotated screenshot is collapsed by default — open it first.
+    const map = document.getElementById(`map-${shot}`) as HTMLDetailsElement | null;
+    if (map && !map.open) map.open = true;
+    map?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   };
 
   const jumpToFinding = (shot: number, id: string) => {
@@ -186,9 +269,9 @@ export default function ResultsScreen({
     label: `Screenshot ${i + 1}`,
     fileName: item.fileName,
     ready: item.status === "done" && !!item.result,
-    categories:
+    items:
       item.status === "done" && item.result
-        ? groupByCategory(item.result.findings).map((g) => ({
+        ? groupByItem(item.result.findings).map((g) => ({
             name: g.name,
             findings: g.findings.map((f) => ({ id: f.key, title: f.title })),
           }))
@@ -301,9 +384,9 @@ export default function ResultsScreen({
           const { result } = item;
           const direction: AnalysisDirection = result.direction;
           const meta = DIRECTION_META[direction];
-          const groups = groupByCategory(result.findings);
+          const groups = groupByItem(result.findings);
 
-          // Stable 1..N numbering per screenshot, in category order.
+          // Stable 1..N numbering per screenshot: whole-screen first, then items bottom-up.
           const numberByKey = new Map<string, number>();
           {
             let n = 0;
@@ -342,13 +425,35 @@ export default function ResultsScreen({
               </p>
 
               {markers.length > 0 && (
-                <div id={`map-${si}`} className="mb-8 scroll-mt-6">
+                <details id={`map-${si}`} className="mb-8 scroll-mt-6 group/map">
+                  <summary className="mb-3 cursor-pointer list-none">
+                    <span className="inline-flex items-center gap-2 text-sm font-semibold text-stone-700">
+                      <svg
+                        className="h-4 w-4 text-stone-400 transition-transform group-open/map:rotate-180"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth={2.5}
+                        stroke="currentColor"
+                        aria-hidden="true"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M19.5 8.25l-7.5 7.5-7.5-7.5"
+                        />
+                      </svg>
+                      Annotated screenshot
+                      <span className="font-normal text-stone-400">
+                        {markers.length} {markers.length === 1 ? "pin" : "pins"}
+                      </span>
+                    </span>
+                  </summary>
                   <ScreenshotMap
                     imageUrl={item.imageUrl}
                     markers={markers}
-                    onSelectMarker={(id) => locateOnMap(si, id)}
+                    onSelectMarker={(id) => jumpToFinding(si, id)}
                   />
-                </div>
+                </details>
               )}
 
               {groups.length === 0 && (

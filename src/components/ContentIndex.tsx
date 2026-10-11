@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export interface IndexCategory {
+export interface IndexItem {
   name: string;
   findings: { id: string; title: string }[];
 }
@@ -10,7 +10,7 @@ export interface IndexShot {
   label: string;
   fileName: string;
   ready: boolean;
-  categories: IndexCategory[];
+  items: IndexItem[];
 }
 
 interface ContentIndexProps {
@@ -18,15 +18,15 @@ interface ContentIndexProps {
   onJump: (shotIndex: number, findingId: string) => void;
 }
 
-/** One collapsible category: header with count, expands to finding titles. */
-function IndexCategoryItem({
+/** One collapsible item: header with count, expands to finding titles. */
+function IndexItemGroup({
   shotIndex,
-  category,
+  item,
   defaultOpen,
   onJump,
 }: {
   shotIndex: number;
-  category: IndexCategory;
+  item: IndexItem;
   defaultOpen: boolean;
   onJump: (shotIndex: number, findingId: string) => void;
 }) {
@@ -40,9 +40,9 @@ function IndexCategoryItem({
         className="flex w-full items-center justify-between gap-2 py-0.5 text-left"
       >
         <span className="text-xs font-semibold uppercase tracking-wide text-stone-500">
-          {category.name}
+          {item.name}
           <span className="ml-1 font-normal text-stone-400">
-            {category.findings.length}
+            {item.findings.length}
           </span>
         </span>
         <svg
@@ -62,7 +62,7 @@ function IndexCategoryItem({
       </button>
       {open && (
         <ol className="mt-1 space-y-1">
-          {category.findings.map((f) => (
+          {item.findings.map((f) => (
             <li key={f.id}>
               <button
                 type="button"
@@ -88,7 +88,7 @@ function IndexBody({
     <nav aria-label="Findings index" className="text-sm">
       <ol className="space-y-4">
         {shots.map((shot, si) => {
-          const total = shot.categories.reduce(
+          const total = shot.items.reduce(
             (n, c) => n + c.findings.length,
             0,
           );
@@ -109,12 +109,12 @@ function IndexBody({
                 </p>
               ) : (
                 <ol className="mt-1.5 space-y-2 border-l border-stone-200 pl-3">
-                  {shot.categories.map((cat, ci) => (
-                    <IndexCategoryItem
-                      key={cat.name}
+                  {shot.items.map((it, ii) => (
+                    <IndexItemGroup
+                      key={it.name}
                       shotIndex={si}
-                      category={cat}
-                      defaultOpen={si === 0 && ci === 0}
+                      item={it}
+                      defaultOpen={si === 0 && ii === 0}
                       onJump={onJump}
                     />
                   ))}
@@ -129,7 +129,7 @@ function IndexBody({
 }
 
 /**
- * Jump index: Screenshot → collapsible category → finding. Sidebar on
+ * Jump index: Screenshot → collapsible item → finding. Sidebar on
  * desktop, collapsible drawer on mobile. Clicking a finding scrolls to its
  * card and briefly highlights it.
  *
