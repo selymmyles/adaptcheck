@@ -261,3 +261,13 @@ modal — with a Figma M3 search-bar example for reference. He's right about the
 trigger, but that IS the Search Bar pattern: M3 defines it as a persistent bar
 whose tap opens a full-screen input modal (SearchView). Fix text now names the
 modal mapping explicitly. PIPELINE_VERSION 9.
+
+## 2026-10-11 — Batch upload (founder-approved scope)
+
+Problem statement says "translate every screen twice" — single-upload was a
+demo constraint. Now: up to 10 screenshots per batch, 4 concurrent analyses
+(paid Tier 1 quotas), per-file progress, and a "Fix once, apply everywhere"
+rollup showing checks that repeat across screens (fix in theme/design system,
+not per screen). Included in the markdown export. Verified: parallel analyses
+with correct independent direction detection. NOTE: /tmp is ephemeral across
+VM replacements — test screenshots there vanish; use workspace uploads.
