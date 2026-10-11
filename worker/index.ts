@@ -11,6 +11,15 @@
 
 import type { ExportedHandler } from "@cloudflare/workers-types";
 import { analyzeWithGemini } from "./gemini";
+import type { DirectionRequest } from "../src/lib/taxonomy";
+
+function parseDirection(value: unknown): DirectionRequest {
+  return value === "ios-to-android" ||
+    value === "android-to-ios" ||
+    value === "auto"
+    ? value
+    : "auto";
+}
 
 interface Env {
   /**
@@ -73,12 +82,15 @@ async function handleAnalyze(request: Request, env: Env): Promise<Response> {
     return json({ error: "Image too large (10MB limit)." }, 413);
   }
 
+  const direction = parseDirection(form.get("direction"));
+
   try {
     const base64 = await fileToBase64(screenshot);
     const result = await analyzeWithGemini(
       env.GEMINI_API_KEY,
       screenshot.type,
       base64,
+      direction,
     );
     return json(result);
   } catch (err) {
