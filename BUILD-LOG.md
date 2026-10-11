@@ -222,3 +222,20 @@ Cache key includes PIPELINE_VERSION (bumped on any prompt/taxonomy/voting
 change, so fixes are never masked). Vote+judge pipeline still runs for every
 new image. Bonus: repeat analyses are instant and free. Verified: 28s fresh,
 0.7s cached, byte-identical findings.
+
+## 2026-10-11 — Multi-region findings + icon deep links
+
+Founder: bottom bar has 3 elements (left FAB, Ask AI box, half-visible right
+FAB) but the pipeline deduped to one finding per check, so repeats were
+silently dropped. New: the model may return the same check for multiple
+distinct elements (overlap-IoU dedup kills true duplicates); votes cluster by
+(check_id, region); UI keys are unique (check_id#2…); numbering/map/jump all
+use the unique key. Verified: one icon check returned 6 distinct icon
+findings, keys unique.
+
+Also his ask: icon findings now link the EXACT counterpart instead of the
+Material git repo. Model names each icon; worker maps SF<->Material names
+(~50 common aliases) and deep-links the Material icon's Google Fonts page
+(search URL = robust target) in the Material box. Apple has no per-symbol web
+pages, so the iOS box shows the exact SF Symbol name as copyable text.
+PIPELINE_VERSION 6 (cache invalidated).
