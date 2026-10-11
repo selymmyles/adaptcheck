@@ -1,5 +1,4 @@
-# PROVISIONAL worker name — final product name TBD by the user.
-name = "adaptcheck-api"
+name = "janus"
 main = "worker/index.ts"
 compatibility_date = "2025-06-01"
 
