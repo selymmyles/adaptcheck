@@ -121,3 +121,9 @@ Founder product thesis, implemented as one coherent redesign:
 
 *Story beat: the founder looked at severity tiers and said "all of it needs
 to be fixed or it still looks like a port" — and he was right.*
+
+## 2026-10-11 — "Still working" state
+
+Follow-up to the slow-model wart: after 15s of analysis the UI now says
+"Still working — the AI service is slow right now. This can take up to a
+minute; your screenshots are safe." instead of a dead-feeling spinner.
