@@ -1,5 +1,11 @@
 import { useState } from "react";
-import type { AnalysisResult, Finding, Severity } from "../lib/mockAnalysis";
+import type {
+  AnalysisResult,
+  Finding,
+  Severity,
+  AnalysisDirection,
+} from "../lib/mockAnalysis";
+import { DIRECTION_META } from "../lib/taxonomy";
 import FindingCard, { SeverityBadge } from "./FindingCard";
 
 interface ResultsScreenProps {
@@ -8,32 +14,46 @@ interface ResultsScreenProps {
   onReset: () => void;
 }
 
-const GROUPS: Array<{ severity: Severity; heading: string; blurb: string }> = [
-  {
-    severity: "must",
-    heading: "Must fix",
-    blurb: "Reads as broken on Android — address before shipping.",
-  },
-  {
-    severity: "should",
-    heading: "Should fix",
-    blurb: "Clearly ported from iOS — worth addressing for a native feel.",
-  },
-  {
-    severity: "nice",
-    heading: "Consider polishing",
-    blurb: "Nice-to-haves that sell the platform fit.",
-  },
-];
+interface Group {
+  severity: Severity;
+  heading: string;
+  blurb: string;
+}
 
-function toMarkdown(result: AnalysisResult, fileName: string): string {
+function groupsFor(direction: AnalysisDirection): Group[] {
+  const meta = DIRECTION_META[direction];
+  return [
+    {
+      severity: "must",
+      heading: "Must fix",
+      blurb: meta.brokenBlurb,
+    },
+    {
+      severity: "should",
+      heading: "Should fix",
+      blurb: meta.portedBlurb,
+    },
+    {
+      severity: "nice",
+      heading: "Consider polishing",
+      blurb: "Nice-to-haves that sell the platform fit.",
+    },
+  ];
+}
+
+function toMarkdown(
+  result: AnalysisResult,
+  fileName: string,
+  direction: AnalysisDirection,
+): string {
+  const meta = DIRECTION_META[direction];
   const lines: string[] = [
-    `# iOS → Android adaptation checklist — ${fileName}`,
+    `# ${meta.arrow} adaptation checklist — ${fileName}`,
     "",
     result.summary,
     "",
   ];
-  for (const group of GROUPS) {
+  for (const group of groupsFor(direction)) {
     const findings = result.findings.filter(
       (f) => f.severity === group.severity,
     );
@@ -41,8 +61,8 @@ function toMarkdown(result: AnalysisResult, fileName: string): string {
     lines.push(`## ${group.heading}`, "");
     for (const f of findings) {
       lines.push(`- [ ] **${f.title}** (${f.category})`);
-      lines.push(`  - iOS: ${f.iosPattern}`);
-      lines.push(`  - Android: ${f.androidPattern}`);
+      lines.push(`  - ${meta.sourcePatternLabel}: ${f.sourcePattern}`);
+      lines.push(`  - ${meta.targetPatternLabel}: ${f.targetPattern}`);
       lines.push(`  - Why: ${f.rationale}`);
     }
     lines.push("");
@@ -56,13 +76,16 @@ export default function ResultsScreen({
   onReset,
 }: ResultsScreenProps) {
   const [copied, setCopied] = useState(false);
+  const direction = result.direction;
+  const meta = DIRECTION_META[direction];
+  const groups = groupsFor(direction);
 
   const counts = (severity: Severity) =>
     result.findings.filter((f) => f.severity === severity).length;
 
   const copyChecklist = async () => {
     try {
-      await navigator.clipboard.writeText(toMarkdown(result, fileName));
+      await navigator.clipboard.writeText(toMarkdown(result, fileName, direction));
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -72,6 +95,13 @@ export default function ResultsScreen({
 
   return (
     <div className="mx-auto w-full max-w-3xl">
+      {/* Direction header */}
+      <div className="mb-5">
+        <span className="inline-flex items-center rounded-full bg-teal-700 px-3.5 py-1.5 text-sm font-semibold text-white">
+          {meta.arrow} checklist
+        </span>
+      </div>
+
       {/* Summary */}
       <section className="rounded-2xl border border-stone-200 bg-white p-6">
         <div className="flex flex-wrap items-center gap-2">
@@ -120,7 +150,7 @@ export default function ResultsScreen({
       </section>
 
       {/* Grouped findings */}
-      {GROUPS.map((group) => {
+      {groups.map((group) => {
         const findings: Finding[] = result.findings.filter(
           (f) => f.severity === group.severity,
         );
@@ -138,7 +168,7 @@ export default function ResultsScreen({
             <p className="mb-4 text-sm text-stone-500">{group.blurb}</p>
             <div className="space-y-3">
               {findings.map((f) => (
-                <FindingCard key={f.id} finding={f} />
+                <FindingCard key={f.id} finding={f} direction={direction} />
               ))}
             </div>
           </section>
