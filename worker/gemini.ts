@@ -24,7 +24,10 @@ import {
  * input and JSON response-schema mode. Alternatives if limits ever bite:
  * gemini-2.5-flash-lite (most generous free quota).
  */
-export const GEMINI_MODEL = "gemini-2.5-flash";
+// NOTE (2026-10-10): gemini-2.5-flash returns 404 for new API users ("no longer
+// available to new users" per Google); gemini-3.8-flash verified working with
+// vision on the free tier the same day.
+export const GEMINI_MODEL = "gemini-3.8-flash";
 
 export interface ModelFinding {
   check_id: string;
