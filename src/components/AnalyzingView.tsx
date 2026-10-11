@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import type { DirectionRequest } from "../lib/mockAnalysis";
 
 export type ItemStatus = "queued" | "analyzing" | "done" | "error";
@@ -58,6 +59,14 @@ export default function AnalyzingView({
 }: AnalyzingViewProps) {
   const done = items.filter((i) => i.status === "done").length;
   const progress = items.length > 0 ? (done / items.length) * 100 : 0;
+  // After ~15s the AI can still be working (slow model, retries) — say so
+  // instead of leaving the user staring at a spinner wondering if it died.
+  const [slow, setSlow] = useState(false);
+  useEffect(() => {
+    setSlow(false);
+    const t = setTimeout(() => setSlow(true), 15000);
+    return () => clearTimeout(t);
+  }, [items.length]);
 
   return (
     <div className="mx-auto w-full max-w-xl" aria-live="polite">
@@ -80,6 +89,12 @@ export default function AnalyzingView({
             style={{ width: `${progress}%` }}
           />
         </div>
+        {slow && done < items.length && (
+          <p className="mt-4 text-center text-sm text-stone-500">
+            Still working — the AI service is slow right now. This can take up
+            to a minute; your screenshots are safe.
+          </p>
+        )}
         <ol className="mt-6 space-y-3">
           {items.map((item) => (
             <li key={item.fileName} className="flex items-center gap-3">
