@@ -3,17 +3,18 @@
  *
  * The system prompt is constructed programmatically from src/lib/taxonomy.ts,
  * which is the single source of truth for both directions' checks (stable ids).
- * The model returns ONLY { detected_direction, check_id, severity } plus a
+ * The model returns ONLY { detected_direction, check_id, region } plus a
  * summary; all display content (title, patterns, rationale) is resolved from
- * the taxonomy by the worker — never trusted from model output.
+ * the taxonomy by the worker — never trusted from model output. There are no
+ * severity tiers: every finding is required for a native look.
  */
 
 import {
   TAXONOMY,
   CHECKS_BY_DIRECTION,
   CATEGORY_BY_CHECK_ID,
+  CHECK_ORDER,
   DIRECTION_META,
-  type Severity,
   type AnalysisDirection,
   type DirectionRequest,
 } from "../src/lib/taxonomy";
@@ -36,8 +37,7 @@ export interface ModelRegion {
 
 export interface ModelFinding {
   check_id: string;
-  severity: Severity;
-  /** Optional bounding box (0–1000 normalized) around the flagged element. */
+  /** Bounding box (0–1000 normalized) around the flagged element. */
   region?: ModelRegion;
 }
 
@@ -62,9 +62,7 @@ function checksSection(direction: AnalysisDirection): string[] {
     if (checks.length === 0) continue;
     lines.push("", `## ${category.name}`);
     for (const check of checks) {
-      lines.push(
-        `- ${check.id} — "${check.check}" (default: ${check.defaultSeverity})`,
-      );
+      lines.push(`- ${check.id} — "${check.check}"`);
       lines.push(`  ${meta.sourceShort}: ${check.sourcePattern}`);
       lines.push(`  ${meta.targetShort} (${meta.targetSystem}): ${check.targetPattern}`);
       lines.push(`  Why it matters: ${check.rationale}`);
@@ -85,8 +83,7 @@ export function buildSystemPrompt(request: DirectionRequest): string {
     'Return a JSON object with exactly three keys: "detected_direction", "summary", and "findings".',
     '"detected_direction" is "ios-to-android" when the screenshot shows an iOS design to adapt for Android, or "android-to-ios" when it shows an Android design to adapt for iOS.',
     '"summary" is one sentence describing the overall adaptation state of the screen for the detected direction.',
-    '"findings" is an array of objects, each with "check_id", "severity", and a "region" bounding box (see REGION).',
-    'Severity meanings: "must" = the issue would read as broken or wrong on the target platform; "should" = the issue would read as an obvious port and is worth fixing; "nice" = polish that would make it feel native.',
+    '"findings" is an array of objects, each with "check_id" and a "region" bounding box (see REGION). Every finding matters — the goal is for the design to look fully native on the target platform, so include every check you can see evidence for.',
     "",
     "REGION",
     'Every finding MUST include a "region" object — e.g. {"x_min": 120, "y_min": 800, "x_max": 400, "y_max": 880}. Coordinates are integers in a 0–1000 normalized space where (0,0) is the screenshot\'s top-left corner. Draw the box TIGHTLY around the specific UI element the finding refers to (the tab bar, the back chevron, the FAB, the switch).',
@@ -97,9 +94,8 @@ export function buildSystemPrompt(request: DirectionRequest): string {
     "- FIRST identify the screenshot's platform, then evaluate ONLY that direction's checks.",
     "- Include ONLY checks you can see evidence for in the screenshot. Do not guess.",
     "- Use only the check ids listed below, copied verbatim. Never invent ids.",
-    "- A check's severity may differ from its default when the specific instance warrants it.",
     "- If the image is not an app UI screenshot, or no checks apply, return an empty findings array and say so in the summary.",
-    "- Order findings by severity: must first, then should, then nice.",
+    "- Order findings in the same order the checks appear below (they are grouped by category).",
     "",
   ];
 
@@ -143,7 +139,6 @@ const RESPONSE_SCHEMA = {
         type: "object",
         properties: {
           check_id: { type: "string" },
-          severity: { type: "string", enum: ["must", "should", "nice"] },
           region: {
             type: "object",
             properties: {
@@ -155,22 +150,15 @@ const RESPONSE_SCHEMA = {
             required: ["x_min", "y_min", "x_max", "y_max"],
           },
         },
-        required: ["check_id", "severity", "region"],
+        required: ["check_id", "region"],
       },
     },
   },
   required: ["detected_direction", "summary", "findings"],
 } as const;
 
-const VALID_SEVERITIES: ReadonlySet<string> = new Set([
-  "must",
-  "should",
-  "nice",
-]);
-
 export interface ResolvedFinding {
   id: string;
-  severity: Severity;
   category: string;
   title: string;
   sourcePattern: string;
@@ -318,7 +306,7 @@ export async function analyzeWithGemini(
   for (const f of parsed.findings) {
     if (seen.has(f.check_id)) continue;
     const check = checkMap[f.check_id];
-    if (!check || !VALID_SEVERITIES.has(f.severity)) continue;
+    if (!check) continue;
     seen.add(f.check_id);
     const region = validRegion(f.region)
       ? {
@@ -330,7 +318,6 @@ export async function analyzeWithGemini(
       : undefined;
     findings.push({
       id: check.id,
-      severity: f.severity,
       category: CATEGORY_BY_CHECK_ID[f.check_id] ?? "General",
       title: check.check,
       sourcePattern: check.sourcePattern,
@@ -343,6 +330,11 @@ export async function analyzeWithGemini(
       ...(region ? { region } : {}),
     });
   }
+
+  // Deterministic order: category order, then check order within category.
+  findings.sort(
+    (a, b) => (CHECK_ORDER[a.id] ?? 0) - (CHECK_ORDER[b.id] ?? 0),
+  );
 
   return { summary: parsed.summary, findings, direction, detectedDirection: detected };
 }

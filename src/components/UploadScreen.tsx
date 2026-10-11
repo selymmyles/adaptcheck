@@ -1,9 +1,15 @@
 import { useRef, useState } from "react";
 
 const ACCEPTED_TYPES = ["image/png", "image/jpeg", "image/webp"];
+const MAX_FILES = 4;
 
 interface UploadScreenProps {
-  onAnalyze: (file: File) => void;
+  onAnalyze: (files: File[]) => void;
+}
+
+interface PickedFile {
+  file: File;
+  preview: string;
 }
 
 function formatSize(bytes: number): string {
@@ -12,30 +18,47 @@ function formatSize(bytes: number): string {
 }
 
 export default function UploadScreen({ onAnalyze }: UploadScreenProps) {
-  const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
+  const [picked, setPicked] = useState<PickedFile[]>([]);
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const pickFile = (candidate: File | null | undefined) => {
-    if (!candidate) return;
-    if (!ACCEPTED_TYPES.includes(candidate.type)) {
-      setError("Please upload a PNG or JPG screenshot.");
-      return;
+  const addFiles = (candidates: FileList | File[] | null | undefined) => {
+    if (!candidates) return;
+    const list = Array.from(candidates);
+    const valid = list.filter((f) => ACCEPTED_TYPES.includes(f.type));
+    if (valid.length < list.length) {
+      setError("Only PNG or JPG screenshots — the rest were skipped.");
+    } else {
+      setError(null);
     }
-    setError(null);
-    if (preview) URL.revokeObjectURL(preview);
-    setFile(candidate);
-    setPreview(URL.createObjectURL(candidate));
+    setPicked((prev) => {
+      const room = MAX_FILES - prev.length;
+      if (room <= 0) {
+        setError(`Up to ${MAX_FILES} screenshots per batch.`);
+        return prev;
+      }
+      const accepted = valid.slice(0, room);
+      if (valid.length > accepted.length) {
+        setError(`Up to ${MAX_FILES} screenshots per batch.`);
+      }
+      return [
+        ...prev,
+        ...accepted.map((file) => ({
+          file,
+          preview: URL.createObjectURL(file),
+        })),
+      ];
+    });
   };
 
-  const clearFile = () => {
-    if (preview) URL.revokeObjectURL(preview);
-    setFile(null);
-    setPreview(null);
+  const removeFile = (index: number) => {
+    setPicked((prev) => {
+      const target = prev[index];
+      if (target) URL.revokeObjectURL(target.preview);
+      return prev.filter((_, i) => i !== index);
+    });
     setError(null);
-    if (inputRef.current) inputRef.current.value = "";
   };
 
   return (
@@ -43,7 +66,7 @@ export default function UploadScreen({ onAnalyze }: UploadScreenProps) {
       <div
         role="button"
         tabIndex={0}
-        aria-label="Upload an app screenshot"
+        aria-label="Upload app screenshots"
         onClick={() => inputRef.current?.click()}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") inputRef.current?.click();
@@ -56,7 +79,7 @@ export default function UploadScreen({ onAnalyze }: UploadScreenProps) {
         onDrop={(e) => {
           e.preventDefault();
           setDragging(false);
-          pickFile(e.dataTransfer.files[0]);
+          addFiles(e.dataTransfer.files);
         }}
         className={`flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-12 text-center transition-colors ${
           dragging
@@ -67,9 +90,13 @@ export default function UploadScreen({ onAnalyze }: UploadScreenProps) {
         <input
           ref={inputRef}
           type="file"
+          multiple
           accept="image/png,image/jpeg,image/webp"
           className="hidden"
-          onChange={(e) => pickFile(e.target.files?.[0])}
+          onChange={(e) => {
+            addFiles(e.target.files);
+            e.target.value = "";
+          }}
         />
         <svg
           className="mb-4 h-10 w-10 text-stone-400"
@@ -86,10 +113,10 @@ export default function UploadScreen({ onAnalyze }: UploadScreenProps) {
           />
         </svg>
         <p className="text-base font-medium text-stone-900">
-          Drop your screenshot here
+          Drop your screenshots here
         </p>
         <p className="mt-1 text-sm text-stone-500">
-          or <span className="font-medium text-teal-700 underline">browse files</span> — PNG or JPG
+          or <span className="font-medium text-teal-700 underline">browse files</span> — PNG or JPG, up to {MAX_FILES}
         </p>
       </div>
 
@@ -99,36 +126,47 @@ export default function UploadScreen({ onAnalyze }: UploadScreenProps) {
         </p>
       )}
 
-      {file && preview && (
-        <div className="mt-4 flex items-center gap-4 rounded-2xl border border-stone-200 bg-white p-4">
-          <img
-            src={preview}
-            alt="Screenshot preview"
-            className="h-24 w-auto rounded-lg border border-stone-200 object-cover"
-          />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-stone-900">
-              {file.name}
-            </p>
-            <p className="text-sm text-stone-500">{formatSize(file.size)}</p>
-          </div>
-          <button
-            type="button"
-            onClick={clearFile}
-            className="rounded-lg px-3 py-1.5 text-sm font-medium text-stone-500 hover:bg-stone-100 hover:text-stone-800"
-          >
-            Remove
-          </button>
-        </div>
+      {picked.length > 0 && (
+        <ul className="mt-4 space-y-2">
+          {picked.map((p, i) => (
+            <li
+              key={`${p.file.name}-${i}`}
+              className="flex items-center gap-4 rounded-2xl border border-stone-200 bg-white p-4"
+            >
+              <img
+                src={p.preview}
+                alt={`Screenshot ${i + 1} preview`}
+                className="h-24 w-auto rounded-lg border border-stone-200 object-cover"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-stone-900">
+                  {p.file.name}
+                </p>
+                <p className="text-sm text-stone-500">
+                  {formatSize(p.file.size)}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => removeFile(i)}
+                className="rounded-lg px-3 py-1.5 text-sm font-medium text-stone-500 hover:bg-stone-100 hover:text-stone-800"
+              >
+                Remove
+              </button>
+            </li>
+          ))}
+        </ul>
       )}
 
       <button
         type="button"
-        disabled={!file}
-        onClick={() => file && onAnalyze(file)}
+        disabled={picked.length === 0}
+        onClick={() => onAnalyze(picked.map((p) => p.file))}
         className="mt-6 w-full rounded-xl bg-teal-700 px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-teal-800 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:text-stone-500"
       >
-        Analyze design
+        {picked.length <= 1
+          ? "Analyze design"
+          : `Analyze ${picked.length} designs`}
       </button>
       <p className="mt-3 text-center text-xs text-stone-400">
         Screenshots are sent securely for AI analysis and are never stored.

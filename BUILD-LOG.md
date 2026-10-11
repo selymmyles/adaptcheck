@@ -98,3 +98,26 @@ generic 502. Fix: retry transient 503/500s twice with backoff, and surface
 a distinct "AI service is busy — try again in a minute" message.
 
 *Story beat: the first bug report came from the founder dogfooding it.*
+
+## 2026-10-11 — Findings UX overhaul: "look native" means no tiers
+
+Founder product thesis, implemented as one coherent redesign:
+
+- **Severity tiers killed.** must/should/nice are gone from the taxonomy, the
+  AI prompt, the API schema, and the UI. The reasoning: Janus promises "look
+  native" — a "nice to fix" left unfixed still reads as a port, so every
+  finding is required. Findings group by category (Navigation, Typography,
+  Components, Touch & Layout, Motion, Iconography) in taxonomy order instead.
+- **Multi-screenshot upload (up to 4).** Each screenshot gets its own analysis
+  call, run max 2-at-a-time against the free-tier limit, with per-screenshot
+  progress and per-screenshot retry on failure.
+- **Inline crops per finding.** Every finding card now shows a zoomed crop of
+  its flagged region (CSS cut from the uploaded screenshot) next to the fix —
+  problem and solution in the same place. The numbered screenshot map stays
+  as the per-screenshot overview.
+- **Content index.** Sticky sidebar (desktop) / collapsible drawer (mobile):
+  Screenshot → category → finding, click to jump and highlight.
+- Checklist regenerated in the new format (categories, no severities).
+
+*Story beat: the founder looked at severity tiers and said "all of it needs
+to be fixed or it still looks like a port" — and he was right.*

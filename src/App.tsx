@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import UploadScreen from "./components/UploadScreen";
 import AnalyzingView from "./components/AnalyzingView";
-import ResultsScreen from "./components/ResultsScreen";
+import ResultsScreen, { type ResultItem } from "./components/ResultsScreen";
 import DirectionSelector from "./components/DirectionSelector";
 import {
   analyzeDesign,
@@ -11,48 +11,85 @@ import {
 
 type Phase = "upload" | "analyzing" | "results";
 
+/** Max concurrent /api/analyze calls — respects the Gemini free-tier limit. */
+const MAX_CONCURRENT = 2;
+
 const delay = (ms: number) =>
   new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 export default function App() {
   const [phase, setPhase] = useState<Phase>("upload");
-  const [fileName, setFileName] = useState("");
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [result, setResult] = useState<AnalysisResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [items, setItems] = useState<ResultItem[]>([]);
   const [directionRequest, setDirectionRequest] =
     useState<DirectionRequest>("auto");
+  const filesRef = useRef<File[]>([]);
 
-  const handleAnalyze = async (file: File) => {
-    setFileName(file.name);
-    setImageUrl(URL.createObjectURL(file));
-    setError(null);
-    setPhase("analyzing");
+  const markItem = (
+    index: number,
+    patch: Partial<ResultItem>,
+  ) =>
+    setItems((prev) =>
+      prev.map((it, idx) => (idx === index ? { ...it, ...patch } : it)),
+    );
+
+  const analyzeOne = async (index: number, file: File) => {
+    markItem(index, { status: "analyzing", error: undefined });
     try {
-      // BACKEND: POSTs the screenshot + direction to the worker (/api/analyze).
-      // The staged UI needs a beat to read well even on fast networks.
-      const [res] = await Promise.all([
-        analyzeDesign(file, directionRequest),
-        delay(1500),
-      ]);
-      setResult(res);
-      setPhase("results");
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Analysis failed. Please try again.",
+      const result: AnalysisResult = await analyzeDesign(
+        file,
+        directionRequest,
       );
-      setPhase("upload");
+      markItem(index, { status: "done", result, error: undefined });
+    } catch (err) {
+      markItem(index, {
+        status: "error",
+        error:
+          err instanceof Error ? err.message : "Analysis failed. Please try again.",
+      });
     }
+  };
+
+  const handleAnalyze = async (files: File[]) => {
+    filesRef.current = files;
+    setItems(
+      files.map((file) => ({
+        fileName: file.name,
+        imageUrl: URL.createObjectURL(file),
+        status: "queued" as const,
+      })),
+    );
+    setPhase("analyzing");
+    // The staged UI needs a beat to read well even on fast networks.
+    await delay(800);
+
+    let next = 0;
+    const workers = Array.from(
+      { length: Math.min(MAX_CONCURRENT, files.length) },
+      async () => {
+        while (true) {
+          const i = next;
+          next += 1;
+          if (i >= files.length) return;
+          await analyzeOne(i, files[i]);
+        }
+      },
+    );
+    await Promise.all(workers);
+    setPhase("results");
+  };
+
+  const handleRetry = (index: number) => {
+    const file = filesRef.current[index];
+    if (file) void analyzeOne(index, file);
   };
 
   const handleReset = () => {
     setPhase("upload");
-    setResult(null);
-    setFileName("");
-    setImageUrl((url) => {
-      if (url) URL.revokeObjectURL(url);
-      return null;
+    setItems((prev) => {
+      for (const it of prev) URL.revokeObjectURL(it.imageUrl);
+      return [];
     });
+    filesRef.current = [];
   };
 
   return (
@@ -84,28 +121,11 @@ export default function App() {
                 Will your design survive the other platform?
               </h1>
               <p className="mt-3 text-[15px] leading-relaxed text-stone-600">
-                Upload an app screenshot and get a prioritized checklist of
+                Upload up to 4 app screenshots and get a checklist of
                 everything to change when porting between iOS and Android —
                 navigation, components, typography, motion, and more.
               </p>
             </div>
-            {error && (
-              <div
-                className="mx-auto mb-6 w-full max-w-xl rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800"
-                role="alert"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <p>{error}</p>
-                  <button
-                    type="button"
-                    onClick={() => setError(null)}
-                    className="shrink-0 font-medium underline"
-                  >
-                    Dismiss
-                  </button>
-                </div>
-              </div>
-            )}
             <DirectionSelector
               value={directionRequest}
               onChange={setDirectionRequest}
@@ -115,15 +135,14 @@ export default function App() {
         )}
 
         {phase === "analyzing" && (
-          <AnalyzingView fileName={fileName} directionRequest={directionRequest} />
+          <AnalyzingView items={items} directionRequest={directionRequest} />
         )}
 
-        {phase === "results" && result && (
+        {phase === "results" && (
           <ResultsScreen
-            result={result}
-            fileName={fileName}
-            imageUrl={imageUrl}
+            items={items}
             onReset={handleReset}
+            onRetry={handleRetry}
           />
         )}
       </main>

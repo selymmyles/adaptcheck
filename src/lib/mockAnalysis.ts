@@ -7,14 +7,10 @@
  * taxonomy.
  */
 
-import type {
-  Severity,
-  AnalysisDirection,
-  DirectionRequest,
-} from "./taxonomy";
+import type { AnalysisDirection, DirectionRequest } from "./taxonomy";
 
 // Re-exported so UI components import all analysis types from one place.
-export type { Severity, AnalysisDirection, DirectionRequest };
+export type { AnalysisDirection, DirectionRequest };
 
 export interface FindingSource {
   label: string;
@@ -31,7 +27,6 @@ export interface FindingRegion {
 
 export interface Finding {
   id: string;
-  severity: Severity;
   category: string;
   title: string;
   sourcePattern: string;
