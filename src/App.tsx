@@ -2,7 +2,12 @@ import { useState } from "react";
 import UploadScreen from "./components/UploadScreen";
 import AnalyzingView from "./components/AnalyzingView";
 import ResultsScreen from "./components/ResultsScreen";
-import { analyzeDesign, type AnalysisResult } from "./lib/mockAnalysis";
+import DirectionSelector from "./components/DirectionSelector";
+import {
+  analyzeDesign,
+  type AnalysisResult,
+  type DirectionRequest,
+} from "./lib/mockAnalysis";
 
 type Phase = "upload" | "analyzing" | "results";
 
@@ -14,15 +19,20 @@ export default function App() {
   const [fileName, setFileName] = useState("");
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [directionRequest, setDirectionRequest] =
+    useState<DirectionRequest>("auto");
 
   const handleAnalyze = async (file: File) => {
     setFileName(file.name);
     setError(null);
     setPhase("analyzing");
     try {
-      // BACKEND: POSTs the screenshot to the worker (/api/analyze).
+      // BACKEND: POSTs the screenshot + direction to the worker (/api/analyze).
       // The staged UI needs a beat to read well even on fast networks.
-      const [res] = await Promise.all([analyzeDesign(file), delay(1500)]);
+      const [res] = await Promise.all([
+        analyzeDesign(file, directionRequest),
+        delay(1500),
+      ]);
       setResult(res);
       setPhase("results");
     } catch (err) {
@@ -54,7 +64,7 @@ export default function App() {
               AdaptCheck
             </p>
             <p className="text-xs text-stone-500">
-              iOS → Android design adaptation checker
+              iOS ⇄ Android design adaptation checker
             </p>
           </div>
         </div>
@@ -65,12 +75,12 @@ export default function App() {
           <>
             <div className="mx-auto mb-8 max-w-xl text-center">
               <h1 className="text-3xl font-semibold tracking-tight text-stone-900 sm:text-4xl">
-                Will your iOS design survive Android?
+                Will your design survive the other platform?
               </h1>
               <p className="mt-3 text-[15px] leading-relaxed text-stone-600">
-                Upload an iOS app screenshot and get a prioritized checklist of
-                everything to change for Material 3 — navigation, components,
-                typography, motion, and more.
+                Upload an app screenshot and get a prioritized checklist of
+                everything to change when porting between iOS and Android —
+                navigation, components, typography, motion, and more.
               </p>
             </div>
             {error && (
@@ -90,11 +100,17 @@ export default function App() {
                 </div>
               </div>
             )}
+            <DirectionSelector
+              value={directionRequest}
+              onChange={setDirectionRequest}
+            />
             <UploadScreen onAnalyze={handleAnalyze} />
           </>
         )}
 
-        {phase === "analyzing" && <AnalyzingView fileName={fileName} />}
+        {phase === "analyzing" && (
+          <AnalyzingView fileName={fileName} directionRequest={directionRequest} />
+        )}
 
         {phase === "results" && result && (
           <ResultsScreen
