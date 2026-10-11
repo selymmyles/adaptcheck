@@ -143,12 +143,12 @@ Format per check: **Title** — source pattern → target pattern. **Fix:** the 
 - **Minimum touch target size** `[touch-targets]` — 44x44pt recommended hit region (HIG Accessibility: iOS default control size 44x44pt; hard minimum 28x28pt) → 48×48dp minimum touch targets.
   - **Fix:** Change 44pt touch targets to 48dp minimum touch targets.
   - *Why: 44pt controls fall below Android's 48dp accessibility floor and get flagged by Google's Accessibility Scanner. (Note: dp and pt are both density-independent, so there is no 'denser display' size difference — 44pt and 44dp are the same physical size.) Bump interactive targets to 48dp.*
-  - Sources: [Apple HIG — Buttons](https://developer.apple.com/design/human-interface-guidelines/buttons); [Apple HIG — Accessibility](https://developer.apple.com/design/human-interface-guidelines/accessibility); [Material 3 — Accessible design](https://m3.material.io/foundations/accessible-design)
+  - Sources: [Apple HIG — Buttons](https://developer.apple.com/design/human-interface-guidelines/buttons); [Apple HIG — Accessibility](https://developer.apple.com/design/human-interface-guidelines/accessibility); [Material 3 — Accessible design](https://m3.material.io/foundations/designing/structure)
 - **Safe area vs edge-to-edge** `[layout-safe-area]` — Content inset to the iOS safe area, letterboxed below the home indicator. → Edge-to-edge layout with WindowInsets handling for the status bar, gesture nav bar, and display cutouts.
   - **Fix:** Change the letterboxed safe-area layout to edge-to-edge with WindowInsets handling.
   - *Why: iOS-style letterboxing wastes screen on Android. Go edge-to-edge and handle insets per-component instead of padding the whole screen.*
   - Sources: [Android Developers — Window insets](https://developer.android.com/develop/ui/views/layout/insets); [Android Developers — Edge-to-edge](https://developer.android.com/develop/ui/views/layout/edge-to-edge)
-- **Status and navigation bar treatment** `[layout-status-bar]` — Opaque status bar background matched to the nav bar. → Transparent status bar over edge-to-edge content with light/dark icon control via WindowInsetsController.
+- **Status and navigation bar treatment** `[layout-status-bar]` — only when the app itself paints an opaque background behind the status bar (e.g. nav-bar color extending under the time). Never flag the phone's own system status bar (time, wifi, battery icons); that is device chrome, not the app. Opaque status bar background matched to the nav bar. → Transparent status bar over edge-to-edge content with light/dark icon control via WindowInsetsController.
   - **Fix:** Change the opaque status bar to a transparent one over edge-to-edge content.
   - *Why: Hardcoded status-bar backgrounds clash with edge-to-edge layouts and gesture navigation.*
   - Sources: [Android Developers — Edge-to-edge](https://developer.android.com/develop/ui/views/layout/edge-to-edge); [Android Developers — WindowInsetsController](https://developer.android.com/reference/android/view/WindowInsetsController)
@@ -162,12 +162,12 @@ Format per check: **Title** — source pattern → target pattern. **Fix:** the 
 - **Touch target size (48dp → 44pt)** `[a2i-touch-targets]` — 48×48dp minimum touch targets. → 44×44pt minimum touch targets on iOS.
   - **Fix:** Change 48dp touch targets to 44pt minimum touch targets.
   - *Why: Going down in size is usually safe, but verify nothing lands below 44pt — and don't just scale everything down; re-check spacing and rhythm.*
-  - Sources: [Apple HIG — Accessibility](https://developer.apple.com/design/human-interface-guidelines/accessibility); [Material 3 — Accessible design](https://m3.material.io/foundations/accessible-design)
+  - Sources: [Apple HIG — Accessibility](https://developer.apple.com/design/human-interface-guidelines/accessibility); [Material 3 — Accessible design](https://m3.material.io/foundations/designing/structure)
 - **Edge-to-edge → safe area** `[a2i-layout-edge]` — Edge-to-edge layout with WindowInsets handling for the status bar, gesture nav bar, and display cutouts. → Respect the iOS safe area — keep interactive content below the notch/Dynamic Island and above the home indicator, while letting backgrounds and scrolling content extend edge to edge. Do NOT add black bars/letterbox to hide the notch or home indicator
   - **Fix:** Change the edge-to-edge layout to respect the iOS safe area (notch, Dynamic Island, home indicator).
   - *Why: On Android, letterboxing wastes screen; on iOS the safe area is the convention. Don't bleed content into the notch or the home indicator.*
   - Sources: [Apple HIG — Layout](https://developer.apple.com/design/human-interface-guidelines/layout)
-- **Status bar treatment** `[a2i-layout-statusbar]` — Transparent status bar over edge-to-edge content, icon colors controlled via WindowInsetsController. → iOS status bar style set per screen via preferredStatusBarStyle (.default / .lightContent / .darkContent). No transparency games — the system manages it
+- **Status bar treatment** `[a2i-layout-statusbar]` — only when the app itself manages the status bar area programmatically. Never flag the phone's own system status bar (time, wifi, battery icons); that is device chrome, not the app. Transparent status bar over edge-to-edge content, icon colors controlled via WindowInsetsController. → iOS status bar style set per screen via preferredStatusBarStyle (.default / .lightContent / .darkContent). No transparency games — the system manages it
   - **Fix:** Change the transparent status bar to per-screen preferredStatusBarStyle.
   - *Why: Android's programmatic status-bar control has no iOS equivalent. Set the style per screen and let the system handle the rest.*
   - Sources: [Apple HIG — Layout](https://developer.apple.com/design/human-interface-guidelines/layout)
@@ -177,11 +177,11 @@ Format per check: **Title** — source pattern → target pattern. **Fix:** the 
 - **Screen transition patterns** `[motion-transitions]` — Push/pop with spring curves tied to the swipe-back gesture. → Material emphasized easing with the M3 transition pattern matched to the navigation relationship: container transform (card/list to detail), forward and backward (hierarchical push/pop), lateral (peer content like tabs), top level (unrelated destinations, e.g. nav-bar switches)
   - **Fix:** Change the iOS push/pop spring transitions to the matching Material motion pattern.
   - *Why: iOS springs feel wrong on Android. Pick the Material transition that matches the relationship (container transform for cards, lateral for peer moves, top level for destination switches).*
-  - Sources: [Material 3 — Transition patterns](https://m3.material.io/styles/motion/transitions/transition-patterns); [Material 3 — Easing and duration](https://m3.material.io/styles/motion/easing-and-duration)
+  - Sources: [Material 3 — Transition patterns](https://m3.material.io/styles/motion/transitions/transition-patterns); [Material 3 — Easing and duration](https://m3.material.io/styles/motion/easing-and-duration/tokens-specs)
 - **Duration and easing tokens** `[motion-duration]` — iOS default durations and spring damping tuned by feel. → Material motion tokens: short/medium/long durations with standard and emphasized easing curves.
   - **Fix:** Change feel-tuned iOS durations to Material motion tokens.
   - *Why: A shared motion token system keeps transitions consistent across the app and feeling native to the platform.*
-  - Sources: [Material 3 — Easing and duration](https://m3.material.io/styles/motion/easing-and-duration); [Material Components Android — Motion theming](https://github.com/material-components/material-components-android/blob/master/docs/theming/Motion.md)
+  - Sources: [Material 3 — Easing and duration](https://m3.material.io/styles/motion/easing-and-duration/tokens-specs); [Material Components Android — Motion theming](https://github.com/material-components/material-components-android/blob/master/docs/theming/Motion.md)
 - **Back-gesture animation (custom swipe-back)** `[motion-predictive-back]` — Swipe-from-left-edge interactive pop tied to the navigation stack → Predictive back gesture: opt in via android:enableOnBackInvokedCallback and the Navigation component's built-in handling — the system drives the back animation and previews the destination; do not re-implement a custom swipe-back
   - **Fix:** Change the custom swipe-back handling to opt into the predictive back gesture.
   - *Why: Android's back model is system-owned and animated by the OS, including cross-activity transitions. A hand-rolled swipe-back fights the platform gesture, duplicates the system animation, and breaks predictive-back previews.*
@@ -196,7 +196,7 @@ Format per check: **Title** — source pattern → target pattern. **Fix:** the 
 - **Motion tokens → iOS animation curves** `[a2i-motion-tokens]` — Material motion tokens: short/medium/long durations with standard and emphasized easing. → UIView animation curves (ease-in-out, spring with damping and velocity). iOS has no shared token system by default — define one.
   - **Fix:** Change the Material motion tokens to UIView animation curves (ease-in-out, spring).
   - *Why: Port the token discipline, not the token values. iOS springs and easing have a different feel than Material emphasized curves.*
-  - Sources: [Material 3 — Easing and duration](https://m3.material.io/styles/motion/easing-and-duration)
+  - Sources: [Material 3 — Easing and duration](https://m3.material.io/styles/motion/easing-and-duration/tokens-specs)
 
 ## Iconography — iOS → Android (2 checks)
 

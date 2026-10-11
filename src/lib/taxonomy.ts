@@ -600,7 +600,7 @@ export const TAXONOMY: TaxonomyCategory[] = [
         sources: [
           { label: "Apple HIG — Buttons", url: "https://developer.apple.com/design/human-interface-guidelines/buttons" },
           { label: "Apple HIG — Accessibility", url: "https://developer.apple.com/design/human-interface-guidelines/accessibility" },
-          { label: "Material 3 — Accessible design", url: "https://m3.material.io/foundations/accessible-design" },
+          { label: "Material 3 — Touch target sizes", url: "https://m3.material.io/foundations/designing/structure" },
         ],
       },
       {
@@ -622,7 +622,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
       },
       {
         id: "layout-status-bar",
-        check: "Status and navigation bar treatment",
+        check:
+          "Status and navigation bar treatment — only when the app itself paints an opaque background behind the status bar (e.g. nav-bar color extending under the time). Never flag the phone's own system status bar (time, wifi, battery icons); that is device chrome, not the app.",
         direction: "ios-to-android",
         sourcePattern: "Opaque status bar background matched to the nav bar.",
         targetPattern:
@@ -648,7 +649,7 @@ export const TAXONOMY: TaxonomyCategory[] = [
           "Change 48dp touch targets to 44pt minimum touch targets.",
         sources: [
           { label: "Apple HIG — Accessibility", url: "https://developer.apple.com/design/human-interface-guidelines/accessibility" },
-          { label: "Material 3 — Accessible design", url: "https://m3.material.io/foundations/accessible-design" },
+          { label: "Material 3 — Touch target sizes", url: "https://m3.material.io/foundations/designing/structure" },
         ],
       },
       {
@@ -668,7 +669,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
       },
       {
         id: "a2i-layout-statusbar",
-        check: "Status bar treatment",
+        check:
+          "Status bar treatment — only when the app itself manages the status bar area programmatically. Never flag the phone's own system status bar (time, wifi, battery icons); that is device chrome, not the app.",
         direction: "android-to-ios",
         sourcePattern:
           "Transparent status bar over edge-to-edge content, icon colors controlled via WindowInsetsController.",
@@ -711,7 +713,7 @@ export const TAXONOMY: TaxonomyCategory[] = [
           "Change the iOS push/pop spring transitions to the matching Material motion pattern.",
         sources: [
           { label: "Material 3 — Transition patterns", url: "https://m3.material.io/styles/motion/transitions/transition-patterns" },
-          { label: "Material 3 — Easing and duration", url: "https://m3.material.io/styles/motion/easing-and-duration" },
+          { label: "Material 3 — Easing and duration", url: "https://m3.material.io/styles/motion/easing-and-duration/tokens-specs" },
         ],
       },
       {
@@ -726,7 +728,7 @@ export const TAXONOMY: TaxonomyCategory[] = [
         fix:
           "Change feel-tuned iOS durations to Material motion tokens.",
         sources: [
-          { label: "Material 3 — Easing and duration", url: "https://m3.material.io/styles/motion/easing-and-duration" },
+          { label: "Material 3 — Easing and duration", url: "https://m3.material.io/styles/motion/easing-and-duration/tokens-specs" },
           { label: "Material Components Android — Motion theming", url: "https://github.com/material-components/material-components-android/blob/master/docs/theming/Motion.md" },
         ],
       },
@@ -757,7 +759,7 @@ export const TAXONOMY: TaxonomyCategory[] = [
         fix:
           "Change the Material motion tokens to UIView animation curves (ease-in-out, spring).",
         sources: [
-          { label: "Material 3 — Easing and duration", url: "https://m3.material.io/styles/motion/easing-and-duration" },
+          { label: "Material 3 — Easing and duration", url: "https://m3.material.io/styles/motion/easing-and-duration/tokens-specs" },
         ],
       },
       {
@@ -793,6 +795,7 @@ export const TAXONOMY: TaxonomyCategory[] = [
           { label: "Apple — SF Symbols", url: "https://developer.apple.com/sf-symbols/" },
           { label: "Apple — Xcode and Apple SDKs Agreement", url: "https://www.apple.com/legal/sla/docs/xcode.pdf" },
           { label: "Google — material-design-icons (Apache 2.0)", url: "https://github.com/google/material-design-icons" },
+          { label: "Material 3 — Icons overview", url: "https://m3.material.io/styles/icons/overview" },
         ],
       },
       {
@@ -826,6 +829,7 @@ export const TAXONOMY: TaxonomyCategory[] = [
         sources: [
           { label: "Apple HIG — SF Symbols", url: "https://developer.apple.com/design/human-interface-guidelines/sf-symbols/overview/" },
           { label: "Google — material-design-icons (Apache 2.0)", url: "https://github.com/google/material-design-icons" },
+          { label: "Material 3 — Icons overview", url: "https://m3.material.io/styles/icons/overview" },
         ],
       },
       {

@@ -7,20 +7,34 @@ import type {
 import { DIRECTION_META } from "../lib/taxonomy";
 
 /**
- * Pick the citation most relevant to a platform: the source whose label
- * starts with "Apple" for iOS, "Material"/"Android" for Material.
- * Falls back to the first source.
+ * Pick the citation most relevant to a platform, matched on URL host first
+ * (apple.com → iOS; material.io / android.com / fonts.google.com → Material),
+ * then on label prefix. Falls back to the first source from the same
+ * platform family — never a source from the other platform's docs.
  */
 function platformSource(
   sources: { label: string; url: string }[],
   platform: "ios" | "material",
 ): { label: string; url: string } | null {
   if (sources.length === 0) return null;
-  const matches = (label: string) =>
-    platform === "ios"
-      ? label.startsWith("Apple")
-      : label.startsWith("Material") || label.startsWith("Android");
-  return sources.find((s) => matches(s.label)) ?? sources[0];
+  const host = (url: string) => {
+    try {
+      return new URL(url).hostname;
+    } catch {
+      return "";
+    }
+  };
+  const isIos = (s: { label: string; url: string }) =>
+    host(s.url).endsWith("apple.com") || s.label.startsWith("Apple");
+  const isMaterial = (s: { label: string; url: string }) =>
+    host(s.url).includes("material.io") ||
+    host(s.url).includes("android.com") ||
+    host(s.url).includes("fonts.google.com") ||
+    s.label.startsWith("Material") ||
+    s.label.startsWith("Android") ||
+    s.label.startsWith("Google");
+  const matches = platform === "ios" ? isIos : isMaterial;
+  return sources.find(matches) ?? null;
 }
 
 /**
