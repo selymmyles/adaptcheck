@@ -152,6 +152,7 @@ const RESPONSE_SCHEMA = {
               x_max: { type: "integer", minimum: 0, maximum: 1000 },
               y_max: { type: "integer", minimum: 0, maximum: 1000 },
             },
+            required: ["x_min", "y_min", "x_max", "y_max"],
           },
         },
         required: ["check_id", "severity", "region"],
