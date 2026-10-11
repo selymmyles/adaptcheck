@@ -210,11 +210,10 @@ export interface BackendAnalysisResult {
 }
 
 /**
- * Send the screenshot to Gemini and resolve the model's check picks against
- * the matching direction's taxonomy. Unknown check ids, wrong-direction ids,
- * and invalid severities are dropped.
+ * One model pass: fetch, parse, and resolve against the taxonomy.
+ * Unknown check ids, wrong-direction ids, and invalid regions are dropped.
  */
-export async function analyzeWithGemini(
+async function analyzeOnce(
   apiKey: string,
   mimeType: string,
   imageBase64: string,
@@ -238,7 +237,10 @@ export async function analyzeWithGemini(
           },
         ],
         generationConfig: {
-          temperature: 0.2,
+          // 0 = deterministic: the same screenshot must return the same
+          // findings every run. (0.2 let borderline checks flip in and out
+          // between runs — founder caught 5→4 on the same screenshot.)
+          temperature: 0,
           responseMimeType: "application/json",
           responseSchema: RESPONSE_SCHEMA,
         },
@@ -260,7 +262,7 @@ export async function analyzeWithGemini(
     // generic failure.
     if ((res.status === 503 || res.status === 500) && attempt < 3) {
       await new Promise((r) => setTimeout(r, 2500 * attempt));
-      return analyzeWithGemini(apiKey, mimeType, imageBase64, request, attempt + 1);
+      return analyzeOnce(apiKey, mimeType, imageBase64, request, attempt + 1);
     }
     if (res.status === 503 || res.status === 500) {
       const err = new Error("Gemini is busy right now. Try again in a minute.");
@@ -351,4 +353,107 @@ export async function analyzeWithGemini(
   );
 
   return { summary: parsed.summary, findings, direction, detectedDirection: detected, usage };
+}
+
+/**
+ * Consensus runs per analysis. 3 is the minimum for a majority vote.
+ * ~$0.045/analysis at current pricing — still trivial against the $20 cap.
+ */
+const CONSENSUS_RUNS = 3;
+
+/** Average bounding boxes across runs into one stable region. */
+function averageRegion(regions: ModelRegion[]): ModelRegion {
+  const n = regions.length;
+  const avg = (f: (r: ModelRegion) => number) =>
+    Math.round(regions.reduce((s, r) => s + f(r), 0) / n);
+  return {
+    x_min: avg((r) => r.x_min),
+    y_min: avg((r) => r.y_min),
+    x_max: avg((r) => r.x_max),
+    y_max: avg((r) => r.y_max),
+  };
+}
+
+/**
+ * Run the analysis several times in parallel and keep only findings a
+ * majority of runs agree on (2 of 3). Temperature 0 alone does NOT make
+ * Gemini deterministic — borderline checks still flip between identical
+ * requests — so consensus is what actually stabilizes the output.
+ */
+export async function analyzeWithGemini(
+  apiKey: string,
+  mimeType: string,
+  imageBase64: string,
+  request: DirectionRequest,
+): Promise<BackendAnalysisResult> {
+  const settled = await Promise.allSettled(
+    Array.from({ length: CONSENSUS_RUNS }, () =>
+      analyzeOnce(apiKey, mimeType, imageBase64, request),
+    ),
+  );
+  const ok = settled
+    .filter(
+      (s): s is PromiseFulfilledResult<BackendAnalysisResult> =>
+        s.status === "fulfilled",
+    )
+    .map((s) => s.value);
+  // Need a majority of runs to succeed; otherwise surface the first failure
+  // (preserves the distinct 429 / busy / 402 messaging from analyzeOnce).
+  if (ok.length < Math.ceil(CONSENSUS_RUNS / 2)) {
+    const first = settled.find(
+      (s): s is PromiseRejectedResult => s.status === "rejected",
+    );
+    throw first ? first.reason : new Error("Analysis failed. Please try again.");
+  }
+
+  const threshold = Math.ceil(ok.length / 2);
+  const votes = new Map<
+    string,
+    { count: number; regions: ModelRegion[]; finding: ResolvedFinding }
+  >();
+  for (const run of ok) {
+    for (const f of run.findings) {
+      const v = votes.get(f.id) ?? { count: 0, regions: [], finding: f };
+      v.count++;
+      if (f.region) v.regions.push(f.region);
+      votes.set(f.id, v);
+    }
+  }
+  const findings = [...votes.values()]
+    .filter((v) => v.count >= threshold)
+    .map((v) => ({
+      ...v.finding,
+      region: v.regions.length ? averageRegion(v.regions) : undefined,
+    }));
+  findings.sort((a, b) => (CHECK_ORDER[a.id] ?? 0) - (CHECK_ORDER[b.id] ?? 0));
+
+  // Summary from the run whose finding set best matches the consensus.
+  const consensusIds = new Set(findings.map((f) => f.id));
+  let summary = ok[0].summary;
+  let best = -1;
+  for (const run of ok) {
+    const overlap = run.findings.filter((f) => consensusIds.has(f.id)).length;
+    if (overlap > best) {
+      best = overlap;
+      summary = run.summary;
+    }
+  }
+
+  const usage = {
+    promptTokens: ok.reduce((s, r) => s + r.usage.promptTokens, 0),
+    candidateTokens: ok.reduce((s, r) => s + r.usage.candidateTokens, 0),
+  };
+  // Direction should agree across runs; majority wins, first run breaks ties.
+  const dirVotes = new Map<AnalysisDirection, number>();
+  for (const run of ok)
+    dirVotes.set(run.direction, (dirVotes.get(run.direction) ?? 0) + 1);
+  const direction = [...dirVotes.entries()].sort((a, b) => b[1] - a[1])[0][0];
+
+  return {
+    summary,
+    findings,
+    direction,
+    detectedDirection: direction,
+    usage,
+  };
 }
