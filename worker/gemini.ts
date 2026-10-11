@@ -227,6 +227,7 @@ export async function analyzeWithGemini(
   mimeType: string,
   imageBase64: string,
   request: DirectionRequest,
+  attempt = 1,
 ): Promise<BackendAnalysisResult> {
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`,
@@ -260,6 +261,18 @@ export async function analyzeWithGemini(
     if (res.status === 429) {
       const err = new Error("Gemini free-tier rate limit hit. Try again in a minute.");
       (err as { statusHint?: number }).statusHint = 429;
+      throw err;
+    }
+    // 503/500 from Gemini is transient capacity pressure — retry up to twice
+    // with backoff, then surface a "busy, try again" message instead of a
+    // generic failure.
+    if ((res.status === 503 || res.status === 500) && attempt < 3) {
+      await new Promise((r) => setTimeout(r, 2500 * attempt));
+      return analyzeWithGemini(apiKey, mimeType, imageBase64, request, attempt + 1);
+    }
+    if (res.status === 503 || res.status === 500) {
+      const err = new Error("Gemini is busy right now. Try again in a minute.");
+      (err as { statusHint?: number }).statusHint = 503;
       throw err;
     }
     throw new Error(`Gemini API error ${res.status}: ${detail}`);

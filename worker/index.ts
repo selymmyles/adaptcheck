@@ -106,6 +106,16 @@ async function handleAnalyze(request: Request, env: Env): Promise<Response> {
         429,
       );
     }
+    // Transient Gemini capacity pressure (after retries): same treatment.
+    if (
+      err instanceof Error &&
+      (err as { statusHint?: number }).statusHint === 503
+    ) {
+      return json(
+        { error: "The AI service is busy right now — try again in a minute." },
+        503,
+      );
+    }
     return json({ error: "Analysis failed. Please try again." }, 502);
   }
 }
