@@ -183,3 +183,11 @@ Every item from the founder's review, built in one pass:
 Founder feedback: the full-width crop stretched and looked ugly. Crop now
 renders at natural size; clicking it opens a lightbox (dimmed page, closer
 look, Escape/backdrop/X to close).
+
+## 2026-10-11 — Consistency via consensus voting
+
+Founder caught run-to-run variance (5→4 findings, same screenshot).
+Temperature 0 didn't fix it — Gemini's serving stack isn't deterministic
+even at temp 0. Fix: 3 parallel model passes per analysis, keep findings a
+majority (2/3) agree on, average their regions. Verified: 3 analyses of the
+same screenshot now return identical finding sets. ~$0.045/analysis.
