@@ -289,3 +289,15 @@ follow the item grouping. Also: new comp-searchbar / a2i-comp-searchbar checks
 itself); prompt nudge to scan nav/tab/toolbar icons individually. Verified:
 fresh analysis fires comp-searchbar; clustering unit-tested on real regions.
 PIPELINE_VERSION 10.
+
+## 2026-10-11 — Icon findings v2 (dogfood feedback)
+
+His red-pen: icon cards read as prose ("a sentence explaining what it is")
+instead of naming the swap. Now: each icon finding leads with the glyph
+itself (self-hosted: 53 Material SVGs + 57 SF PNGs under public/icons/),
+the exact symbol names ("house" → "home"), and a copy button (SwiftUI
+`Image(systemName:)` / Material name). Fix line is dynamic: "Change the iOS
+pin icon to the Material push_pin icon." When no exact counterpart exists,
+the card shows the model's closest-equivalent recommendation with a "Closest
+match" badge. Model must now name the icon (detail) and its counterpart on
+every icon finding — never empty. External deep links kept. PIPELINE_VERSION 11.
