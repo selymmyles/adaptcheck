@@ -121,8 +121,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
         fix:
           "Change the in-app back chevron and edge-swipe pop to the system predictive back gesture.",
         sources: [
-          { label: "Material 3 — Top app bar guidelines", url: "https://m3.material.io/components/app-bars/guidelines" },
           { label: "Android Developers — Predictive back gesture", url: "https://developer.android.com/guide/navigation/custom-back/predictive-back-gesture" },
+          { label: "Material 3 — Top app bar guidelines", url: "https://m3.material.io/components/app-bars/guidelines" },
           { label: "Apple HIG — Toolbars", url: "https://developer.apple.com/design/human-interface-guidelines/toolbars" },
         ],
       },
@@ -371,13 +371,14 @@ export const TAXONOMY: TaxonomyCategory[] = [
         sourcePattern:
           "No iOS equivalent — commonly added as a floating circular button.",
         targetPattern:
-          "Material FAB: bottom-trailing, 16dp margins, above the navigation bar, carrying the single primary action; correct elevation and size variant.",
+          "Material FAB: bottom-trailing, 16dp margins, above the navigation bar, carrying the single primary action; correct elevation and size variant. EXCEPTION: when the floating button sits beside a bottom text-input bar (AI prompt bar pattern), do not float separate FABs — convert the whole cluster into a Material 3 Search Bar instead.",
         rationale:
-          "Adding a FAB is fine, but it must follow Material placement, elevation, and size rules — not float like an iOS overlay.",
+          "Adding a FAB is fine, but it must follow Material placement, elevation, and size rules — not float like an iOS overlay. A bottom input cluster (prompt bar with adjacent circular buttons) is not a FAB case at all: Material's Search Bar already provides leading/trailing icon slots for those actions.",
         fix:
-          "Change the floating circular button to a Material FAB: bottom-trailing, 16dp margins.",
+          "Change the floating circular button to a Material FAB: bottom-trailing, 16dp margins. If it sits beside a bottom text-input bar, convert the cluster into a Material 3 Search Bar instead (56dp fully-rounded container; actions become the bar's leading/trailing icon buttons).",
         sources: [
           { label: "Material 3 — FAB", url: "https://m3.material.io/components/floating-action-button/overview" },
+          { label: "Material 3 — Search bar", url: "https://m3.material.io/components/search/overview" },
           { label: "Material Components Android — FloatingActionButton", url: "https://github.com/material-components/material-components-android/blob/master/docs/components/FloatingActionButton.md" },
         ],
       },
@@ -794,8 +795,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
         sources: [
           { label: "Apple — SF Symbols", url: "https://developer.apple.com/sf-symbols/" },
           { label: "Apple — Xcode and Apple SDKs Agreement", url: "https://www.apple.com/legal/sla/docs/xcode.pdf" },
-          { label: "Google — material-design-icons (Apache 2.0)", url: "https://github.com/google/material-design-icons" },
           { label: "Material 3 — Icons overview", url: "https://m3.material.io/styles/icons/overview" },
+          { label: "Google — material-design-icons (Apache 2.0)", url: "https://github.com/google/material-design-icons" },
         ],
       },
       {

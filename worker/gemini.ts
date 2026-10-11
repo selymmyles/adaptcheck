@@ -34,9 +34,10 @@ export const GEMINI_MODEL = "gemini-3.8-flash";
  * 1 = launch, 2 = consensus voting, 3 = tie-breaker judge, 4 = result cache,
  * 5 = multi-region findings + icon deep links,
  * 6 = expanded icon alias map,
- * 7 = direct selected-icon Google Fonts URLs (verified format).
+ * 7 = direct selected-icon Google Fonts URLs (verified format),
+ * 8 = FAB input-cluster -> Search Bar guidance; back-gesture + icon source order fixes.
  */
-export const PIPELINE_VERSION = 7;
+export const PIPELINE_VERSION = 8;
 
 export interface ModelRegion {
   x_min: number;
@@ -110,6 +111,7 @@ export function buildSystemPrompt(request: DirectionRequest): string {
     "- Include ONLY checks you can see evidence for in the screenshot. Do not guess.",
     "- Use only the check ids listed below, copied verbatim. Never invent ids.",
     "- If the same check applies to multiple DISTINCT elements (e.g. two separate floating buttons), return one finding per element with the same check_id and a different region. Never return the same element twice.",
+    "- When a finding concerns a group of related elements (e.g. an input bar plus its adjacent action buttons), draw the region around the WHOLE group, not one button.",
     '- If a finding is about a specific icon, put the icon\'s common name in "detail" (e.g. "home", "search", "settings").',
     "- The phone's own OS chrome is never a finding: the system status bar (time, battery, signal/wifi icons), the home indicator, and the system navigation bar/gestures belong to the device, not the app. Ignore them completely.",
     "- If the image is not an app UI screenshot, or no checks apply, return an empty findings array and say so in the summary.",
