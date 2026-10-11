@@ -88,3 +88,13 @@ distance between intent and production output:
    the native app is the portfolio piece.
 3. Post the design → build it → post the build → case study, all from this log.
 4. Long arc: Janus grows toward codebase-in / Kotlin-out.
+
+## 2026-10-11 — First real-world failure (and fix)
+
+Myles uploaded a real screenshot Sunday morning and got "Analysis failed."
+Diagnosis: not his image, not our code — Gemini itself returned 503
+(model overloaded). The worker was masking all non-rate-limit errors as a
+generic 502. Fix: retry transient 503/500s twice with backoff, and surface
+a distinct "AI service is busy — try again in a minute" message.
+
+*Story beat: the first bug report came from the founder dogfooding it.*
