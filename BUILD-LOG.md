@@ -132,3 +132,13 @@ minute; your screenshots are safe." instead of a dead-feeling spinner.
 
 Founder call: the "What are you uploading?" toggle is gone — the platform
 is always auto-detected per screenshot. One less decision before the value.
+
+## 2026-10-11 — Fix library (46 one-liners)
+
+Founder call: pre-write every fix instead of letting the model improvise.
+All 46 checks now carry a one-line FIX ("Change the Material navigation
+bar to the Apple tab bar") in the taxonomy, resolved server-side — the
+model only detects and localizes now. Cheaper, consistent, red-pennable.
+Cards show the FIX line; full card redesign (stacked iOS 26 / Material 3
+boxes, in-box source links, collapsible categories, sticky index) planned
+next.
