@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import type { DirectionRequest } from "../lib/mockAnalysis";
 
 export type ItemStatus = "queued" | "analyzing" | "done" | "error";
 
@@ -11,14 +10,7 @@ export interface ProgressItem {
 
 interface AnalyzingViewProps {
   items: ProgressItem[];
-  directionRequest: DirectionRequest;
 }
-
-const COMPARE_LABEL: Record<DirectionRequest, string> = {
-  "ios-to-android": "Comparing against Material 3…",
-  "android-to-ios": "Comparing against iOS HIG…",
-  auto: "Detecting platform…",
-};
 
 function StatusIcon({ status }: { status: ItemStatus }) {
   if (status === "done") {
@@ -53,10 +45,7 @@ function StatusIcon({ status }: { status: ItemStatus }) {
  * Per-screenshot progress for a batch analysis. The parent (App) runs up to
  * two /api/analyze calls concurrently; this view reflects each item's status.
  */
-export default function AnalyzingView({
-  items,
-  directionRequest,
-}: AnalyzingViewProps) {
+export default function AnalyzingView({ items }: AnalyzingViewProps) {
   const done = items.filter((i) => i.status === "done").length;
   const progress = items.length > 0 ? (done / items.length) * 100 : 0;
   // After ~15s the AI can still be working (slow model, retries) — say so
@@ -75,7 +64,7 @@ export default function AnalyzingView({
           Analyzing {items.length === 1 ? "your screenshot" : `${items.length} screenshots`}
         </p>
         <p className="mt-1 text-center text-sm text-stone-500">
-          {COMPARE_LABEL[directionRequest]}
+          Detecting platform and comparing…
         </p>
         <div
           className="mt-6 h-1.5 overflow-hidden rounded-full bg-stone-100"

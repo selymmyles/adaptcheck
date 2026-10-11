@@ -2,12 +2,7 @@ import { useRef, useState } from "react";
 import UploadScreen from "./components/UploadScreen";
 import AnalyzingView from "./components/AnalyzingView";
 import ResultsScreen, { type ResultItem } from "./components/ResultsScreen";
-import DirectionSelector from "./components/DirectionSelector";
-import {
-  analyzeDesign,
-  type AnalysisResult,
-  type DirectionRequest,
-} from "./lib/mockAnalysis";
+import { analyzeDesign, type AnalysisResult } from "./lib/mockAnalysis";
 
 type Phase = "upload" | "analyzing" | "results";
 
@@ -20,8 +15,8 @@ const delay = (ms: number) =>
 export default function App() {
   const [phase, setPhase] = useState<Phase>("upload");
   const [items, setItems] = useState<ResultItem[]>([]);
-  const [directionRequest, setDirectionRequest] =
-    useState<DirectionRequest>("auto");
+  // Platform is always auto-detected per screenshot — no toggle.
+  const directionRequest = "auto" as const;
   const filesRef = useRef<File[]>([]);
 
   const markItem = (
@@ -126,16 +121,12 @@ export default function App() {
                 navigation, components, typography, motion, and more.
               </p>
             </div>
-            <DirectionSelector
-              value={directionRequest}
-              onChange={setDirectionRequest}
-            />
             <UploadScreen onAnalyze={handleAnalyze} />
           </>
         )}
 
         {phase === "analyzing" && (
-          <AnalyzingView items={items} directionRequest={directionRequest} />
+          <AnalyzingView items={items} />
         )}
 
         {phase === "results" && (
