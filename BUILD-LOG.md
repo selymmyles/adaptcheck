@@ -253,3 +253,11 @@ trailing example). comp-fab now carries the exception: input-adjacent
 floating buttons -> convert the cluster to a Search Bar, region around the
 whole group. Source orders fixed (predictive-back first; m3 icons overview
 before the github repo). PIPELINE_VERSION 8.
+
+## 2026-10-11 — Search Bar IS the trigger pattern (founder pushback)
+
+Founder: the middle element isn't a search field, it's a button opening an AI
+modal — with a Figma M3 search-bar example for reference. He's right about the
+trigger, but that IS the Search Bar pattern: M3 defines it as a persistent bar
+whose tap opens a full-screen input modal (SearchView). Fix text now names the
+modal mapping explicitly. PIPELINE_VERSION 9.
