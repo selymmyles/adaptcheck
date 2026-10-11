@@ -6,8 +6,8 @@ import { analyzeDesign, type AnalysisResult } from "./lib/mockAnalysis";
 
 type Phase = "upload" | "analyzing" | "results";
 
-/** Max concurrent /api/analyze calls — respects the Gemini free-tier limit. */
-const MAX_CONCURRENT = 2;
+/** Max concurrent /api/analyze calls — paid Tier 1 quotas are generous. */
+const MAX_CONCURRENT = 4;
 
 const delay = (ms: number) =>
   new Promise<void>((resolve) => setTimeout(resolve, ms));
@@ -116,7 +116,7 @@ export default function App() {
                 Will your design survive the other platform?
               </h1>
               <p className="mt-3 text-[15px] leading-relaxed text-stone-600">
-                Upload up to 4 app screenshots and get a checklist of
+                Upload up to 10 app screenshots and get a checklist of
                 everything to change when porting between iOS and Android —
                 navigation, components, typography, motion, and more.
               </p>

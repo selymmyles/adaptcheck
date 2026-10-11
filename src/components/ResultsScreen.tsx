@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type {
   AnalysisResult,
   Finding,
@@ -43,6 +43,35 @@ function groupByCategory(
 
 function toMarkdown(items: ResultItem[]): string {
   const lines: string[] = ["# Janus adaptation checklist", ""];
+  // Cross-screen patterns first: fix once, apply everywhere.
+  if (items.length > 1) {
+    const byCheck = new Map<
+      string,
+      { title: string; fix: string; screens: number }
+    >();
+    items.forEach((item) => {
+      const seen = new Set<string>();
+      for (const f of item.result?.findings ?? []) {
+        if (seen.has(f.id)) continue;
+        seen.add(f.id);
+        const e = byCheck.get(f.id) ?? { title: f.title, fix: f.fix, screens: 0 };
+        e.screens += 1;
+        byCheck.set(f.id, e);
+      }
+    });
+    const patterns = [...byCheck.values()]
+      .filter((p) => p.screens >= 2)
+      .sort((a, b) => b.screens - a.screens);
+    if (patterns.length > 0) {
+      lines.push("## Fix once, apply everywhere", "");
+      for (const p of patterns) {
+        lines.push(
+          `- [ ] **${p.title}** — on ${p.screens} of ${items.length} screens: ${p.fix}`,
+        );
+      }
+      lines.push("");
+    }
+  }
   items.forEach((item, i) => {
     const label = `Screenshot ${i + 1}`;
     lines.push(`## ${label} — ${item.fileName}`);
@@ -127,6 +156,32 @@ export default function ResultsScreen({
     0,
   );
 
+  // Cross-screen patterns: checks appearing on 2+ screenshots. Fixing these
+  // once (theme, design system) clears them everywhere — the real value of a
+  // batch over N separate single-screen reports.
+  const patterns = useMemo(() => {
+    if (items.length < 2) return [];
+    const byCheck = new Map<
+      string,
+      { id: string; title: string; fix: string; screens: Set<number> }
+    >();
+    items.forEach((item, si) => {
+      for (const f of item.result?.findings ?? []) {
+        const e = byCheck.get(f.id) ?? {
+          id: f.id,
+          title: f.title,
+          fix: f.fix,
+          screens: new Set<number>(),
+        };
+        e.screens.add(si);
+        byCheck.set(f.id, e);
+      }
+    });
+    return [...byCheck.values()]
+      .filter((p) => p.screens.size >= 2)
+      .sort((a, b) => b.screens.size - a.screens.size);
+  }, [items]);
+
   const indexShots: IndexShot[] = items.map((item, i) => ({
     label: `Screenshot ${i + 1}`,
     fileName: item.fileName,
@@ -184,6 +239,36 @@ export default function ResultsScreen({
             </button>
           </div>
         </section>
+
+        {/* Cross-screen patterns: fix once, apply everywhere */}
+        {patterns.length > 0 && (
+          <section className="mt-6 rounded-2xl border border-stone-200 bg-white p-6">
+            <h2 className="text-base font-semibold tracking-tight text-stone-900">
+              Fix once, apply everywhere
+            </h2>
+            <p className="mt-1 text-sm leading-relaxed text-stone-500">
+              These patterns repeat across your screens — handle them globally
+              (theme, design system) instead of screen by screen.
+            </p>
+            <ul className="mt-4 space-y-3">
+              {patterns.map((p) => (
+                <li key={p.id} className="rounded-xl bg-stone-50 p-4">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <p className="text-sm font-semibold text-stone-900">
+                      {p.title}
+                    </p>
+                    <p className="shrink-0 text-xs font-medium text-teal-700">
+                      {p.screens.size} of {items.length} screens
+                    </p>
+                  </div>
+                  <p className="mt-1 text-[13px] leading-relaxed text-stone-600">
+                    {p.fix}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {/* Per-screenshot sections */}
         {items.map((item, si) => {

@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 
 const ACCEPTED_TYPES = ["image/png", "image/jpeg", "image/webp"];
-const MAX_FILES = 4;
+const MAX_FILES = 10;
 
 interface UploadScreenProps {
   onAnalyze: (files: File[]) => void;
