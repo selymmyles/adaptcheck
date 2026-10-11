@@ -1,5 +1,5 @@
 /**
- * Gemini analysis layer for AdaptCheck (bidirectional).
+ * Gemini analysis layer for Janus (bidirectional).
  *
  * The system prompt is constructed programmatically from src/lib/taxonomy.ts,
  * which is the single source of truth for both directions' checks (stable ids).

@@ -61,10 +61,10 @@ export default function App() {
           </div>
           <div>
             <p className="text-base font-semibold tracking-tight text-stone-900">
-              AdaptCheck
+              Janus
             </p>
             <p className="text-xs text-stone-500">
-              iOS ⇄ Android design adaptation checker
+              See your design through the other platform's eyes.
             </p>
           </div>
         </div>
@@ -124,7 +124,7 @@ export default function App() {
       <footer className="border-t border-stone-200">
         <p className="mx-auto max-w-5xl px-4 py-5 text-xs text-stone-400 sm:px-6">
           Screenshots are sent securely to our AI analysis service and are
-          never stored. AdaptCheck prototype.
+          never stored. Janus prototype.
         </p>
       </footer>
     </div>

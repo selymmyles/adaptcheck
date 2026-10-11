@@ -1,6 +1,6 @@
-# AdaptCheck (working title) — iOS → Android design adaptation checker
+# Janus — See your design through the other platform's eyes.
 
-Upload an iOS app screenshot, get a prioritized Material 3 adaptation checklist.
+Upload an app screenshot, get a prioritized iOS ⇄ Android adaptation checklist.
 
 ## Frontend
 
@@ -21,10 +21,11 @@ static assets and implements the analysis API:
   (PNG/JPG/WebP, 10MB limit). Forwards the image to the Google Gemini API
   (multimodal), which picks applicable checks from the taxonomy; the worker
   resolves display content from `src/lib/taxonomy.ts` (the single source of
-  truth — 19 checks, stable ids) and returns the `AnalysisResult` shape.
+  truth — 38 checks across both directions, stable ids) and returns the
+  `AnalysisResult` shape.
 
 `wrangler.toml` configures Workers Static Assets from `dist/`; the worker
-name (`adaptcheck-api`) is provisional — final product name TBD.
+name (`adaptcheck-api`) is unchanged for now.
 
 ## API key
 

@@ -1,4 +1,4 @@
-# AdaptCheck — Bidirectional Checklist (red-pen draft)
+# Janus — Bidirectional Checklist (red-pen draft)
 
 Myles — this is the knowledge base the AI checks screenshots against, now in **both directions**. Your UX eye is the product here: mark anything that's wrong, missing, mis-severitized, or phrased like an engineer instead of a designer.
 Severity key: 🔴 must fix · 🟡 should fix · ⚪ consider polishing.

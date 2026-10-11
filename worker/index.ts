@@ -1,5 +1,5 @@
 /**
- * AdaptCheck Cloudflare Worker.
+ * Janus Cloudflare Worker.
  *
  * Serves two roles:
  *  1. API: POST /api/analyze — accepts a screenshot, runs it through Gemini
