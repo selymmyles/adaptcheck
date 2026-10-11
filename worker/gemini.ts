@@ -35,9 +35,10 @@ export const GEMINI_MODEL = "gemini-3.8-flash";
  * 5 = multi-region findings + icon deep links,
  * 6 = expanded icon alias map,
  * 7 = direct selected-icon Google Fonts URLs (verified format),
- * 8 = FAB input-cluster -> Search Bar guidance; back-gesture + icon source order fixes.
+ * 8 = FAB input-cluster -> Search Bar guidance; back-gesture + icon source order fixes,
+ * 9 = Search Bar fix names the SearchView modal pattern.
  */
-export const PIPELINE_VERSION = 8;
+export const PIPELINE_VERSION = 9;
 
 export interface ModelRegion {
   x_min: number;
