@@ -34,10 +34,12 @@ function RegionCrop({
   imageUrl,
   region,
   alt,
+  className,
 }: {
   imageUrl: string;
   region: FindingRegion;
   alt: string;
+  className?: string;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const w = region.x_max - region.x_min;
@@ -72,9 +74,80 @@ function RegionCrop({
       ref={canvasRef}
       role="img"
       aria-label={alt}
-      className="w-full rounded-xl border border-stone-200 bg-stone-100"
-      style={{ aspectRatio: `${w} / ${h}` }}
+      className={
+        className ??
+        "h-auto max-w-full rounded-xl border border-stone-200 bg-stone-100"
+      }
     />
+  );
+}
+
+/**
+ * Lightbox: the region crop at a closer look, over a dimmed page.
+ * Closes on backdrop click, the close button, or Escape.
+ */
+function CropLightbox({
+  imageUrl,
+  region,
+  alt,
+  onClose,
+}: {
+  imageUrl: string;
+  region: FindingRegion;
+  alt: string;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/70 p-4"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label={alt}
+    >
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="Close"
+        className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+      >
+        <svg
+          className="h-5 w-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth={2}
+          stroke="currentColor"
+          aria-hidden="true"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </button>
+      <div onClick={(e) => e.stopPropagation()}>
+        <RegionCrop
+          imageUrl={imageUrl}
+          region={region}
+          alt={alt}
+          className="h-auto max-h-[85vh] w-auto max-w-[92vw] rounded-xl border border-white/20 shadow-2xl"
+        />
+      </div>
+    </div>
   );
 }
 
@@ -147,6 +220,7 @@ export default function FindingCard({
   const targetKey: "ios" | "material" =
     sourceKey === "ios" ? "material" : "ios";
   const [showShot, setShowShot] = useState(false);
+  const [lightbox, setLightbox] = useState(false);
 
   return (
     <article
@@ -246,14 +320,30 @@ export default function FindingCard({
           </button>
           {showShot && (
             <div className="mt-2">
-              <RegionCrop
-                imageUrl={imageUrl}
-                region={finding.region}
-                alt={`Close-up of ${finding.title}`}
-              />
+              <button
+                type="button"
+                onClick={() => setLightbox(true)}
+                title="Enlarge"
+                aria-label={`Enlarge screenshot for ${finding.title}`}
+                className="block cursor-zoom-in transition-transform hover:scale-[1.01]"
+              >
+                <RegionCrop
+                  imageUrl={imageUrl}
+                  region={finding.region}
+                  alt={`Close-up of ${finding.title}`}
+                />
+              </button>
             </div>
           )}
         </div>
+      )}
+      {lightbox && finding.region && (
+        <CropLightbox
+          imageUrl={imageUrl}
+          region={finding.region}
+          alt={`Close-up of ${finding.title}`}
+          onClose={() => setLightbox(false)}
+        />
       )}
     </article>
   );
