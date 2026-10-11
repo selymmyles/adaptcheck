@@ -191,3 +191,14 @@ Temperature 0 didn't fix it — Gemini's serving stack isn't deterministic
 even at temp 0. Fix: 3 parallel model passes per analysis, keep findings a
 majority (2/3) agree on, average their regions. Verified: 3 analyses of the
 same screenshot now return identical finding sets. ~$0.045/analysis.
+
+## 2026-10-11 — Source link audit + fixes
+
+Founder clicked through and found dead/mismatched source links. Audit of all
+23 m3.material.io URLs against their sitemap: 2 dead (foundations restructure
+killed /foundations/accessible-design -> now /foundations/designing/structure;
+motion easing page moved to /easing-and-duration/tokens-specs). Also fixed the
+source picker: it matched on label prefixes and fell back to the first source,
+so the Material box on the icon check linked Apple's SF Symbols page. Now
+matches on URL host first and never falls back across platforms (no link beats
+a wrong-platform link).
