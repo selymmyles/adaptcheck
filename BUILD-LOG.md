@@ -158,3 +158,22 @@ Diagnosis: the model was right (correct bbox); our CSS crop math assumed
 a square image, so vertical offsets were wrong on tall phone screenshots.
 Replaced with a canvas crop (pixel-exact, padded 8%). Map pins were
 unaffected — only the thumbnail zoom was wrong.
+
+## 2026-10-11 — Finding card + menu redesign (founder-specified)
+
+Every item from the founder's review, built in one pass:
+- Pattern boxes stack vertically, labeled "iOS 26" / "Material 3" from the
+  taxonomy (never hardcoded) — the old "ANDROID PATTERN"/"iOS · HIG" labels
+  are gone.
+- Each pattern box carries its own "source" hyperlink (Apple doc in the iOS
+  box, Material/Android doc in the Material box); the bottom source row and
+  the rationale quote are removed from the card.
+- Screenshot thumbnail removed from the card's left edge; a collapsed
+  "Show screenshot" toggle reveals the canvas region crop at full card
+  width.
+- Findings index: categories are collapsible accordions; the sidebar is
+  now TRULY sticky (the old code put `sticky` on an inner div whose parent
+  was exactly its own height — nothing to stick within — so it never moved;
+  sticky now sits on the <aside> flex item itself with self-start).
+- Category groups in the main content are collapsible accordions too;
+  jumping from the index auto-opens a collapsed group first.

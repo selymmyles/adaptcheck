@@ -104,9 +104,11 @@ export default function ResultsScreen({
     flashHighlight(shot, id);
     // Let the highlight apply before scrolling into view.
     window.setTimeout(() => {
-      document
-        .getElementById(`finding-${shot}-${id}`)
-        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      const el = document.getElementById(`finding-${shot}-${id}`);
+      // Open the category accordion first if the user collapsed it.
+      const details = el?.closest("details");
+      if (details && !details.open) details.open = true;
+      el?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 30);
   };
 
@@ -272,13 +274,29 @@ export default function ResultsScreen({
               )}
 
               {groups.map((group) => (
-                <section key={group.name} className="mb-8">
-                  <h3 className="mb-3 text-lg font-semibold tracking-tight text-stone-900">
-                    {group.name}
-                    <span className="ml-2 text-sm font-medium text-stone-400">
-                      {group.findings.length}
+                <details key={group.name} open className="mb-8 group/acc">
+                  <summary className="mb-3 cursor-pointer list-none">
+                    <span className="inline-flex items-center gap-2 text-lg font-semibold tracking-tight text-stone-900">
+                      <svg
+                        className="h-4 w-4 text-stone-400 transition-transform group-open/acc:rotate-180"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth={2.5}
+                        stroke="currentColor"
+                        aria-hidden="true"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M19.5 8.25l-7.5 7.5-7.5-7.5"
+                        />
+                      </svg>
+                      {group.name}
+                      <span className="text-sm font-medium text-stone-400">
+                        {group.findings.length}
+                      </span>
                     </span>
-                  </h3>
+                  </summary>
                   <div className="space-y-3">
                     {group.findings.map((f) => (
                       <div
@@ -301,7 +319,7 @@ export default function ResultsScreen({
                       </div>
                     ))}
                   </div>
-                </section>
+                </details>
               ))}
             </section>
           );

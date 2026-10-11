@@ -73,6 +73,10 @@ export interface DirectionMeta {
   sourceSystem: string;
   /** Full target design system name, for prompts. */
   targetSystem: string;
+  /** Display label for the source platform box: "iOS 26" / "Material 3". */
+  sourcePlatform: string;
+  /** Display label for the target platform box: "Material 3" / "iOS 26". */
+  targetPlatform: string;
 }
 
 export const DIRECTION_META: Record<AnalysisDirection, DirectionMeta> = {
@@ -84,6 +88,8 @@ export const DIRECTION_META: Record<AnalysisDirection, DirectionMeta> = {
     targetPatternLabel: "Android · Material 3",
     sourceSystem: "Apple's Human Interface Guidelines (HIG)",
     targetSystem: "Material Design 3",
+    sourcePlatform: "iOS 26",
+    targetPlatform: "Material 3",
   },
   "android-to-ios": {
     arrow: "Android → iOS",
@@ -93,6 +99,8 @@ export const DIRECTION_META: Record<AnalysisDirection, DirectionMeta> = {
     targetPatternLabel: "iOS · HIG",
     sourceSystem: "Material Design 3",
     targetSystem: "Apple's Human Interface Guidelines (HIG)",
+    sourcePlatform: "Material 3",
+    targetPlatform: "iOS 26",
   },
 };
 
