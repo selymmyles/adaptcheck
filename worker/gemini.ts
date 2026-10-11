@@ -31,9 +31,11 @@ export const GEMINI_MODEL = "gemini-3.8-flash";
 /**
  * Bump this whenever the prompt, taxonomy, or voting logic changes — it is
  * part of the analysis-cache key, so a bump invalidates cached results.
- * 1 = launch, 2 = consensus voting, 3 = tie-breaker judge, 4 = result cache.
+ * 1 = launch, 2 = consensus voting, 3 = tie-breaker judge, 4 = result cache,
+ * 5 = multi-region findings + icon deep links,
+ * 6 = expanded icon alias map.
  */
-export const PIPELINE_VERSION = 4;
+export const PIPELINE_VERSION = 6;
 
 export interface ModelRegion {
   x_min: number;
@@ -46,6 +48,11 @@ export interface ModelFinding {
   check_id: string;
   /** Bounding box (0–1000 normalized) around the flagged element. */
   region?: ModelRegion;
+  /**
+   * Optional element detail the model noticed — e.g. the icon's name
+   * ("home") for icon checks. Used for deep links; never trusted blindly.
+   */
+  detail?: string;
 }
 
 interface ModelResult {
@@ -101,6 +108,8 @@ export function buildSystemPrompt(request: DirectionRequest): string {
     "- FIRST identify the screenshot's platform, then evaluate ONLY that direction's checks.",
     "- Include ONLY checks you can see evidence for in the screenshot. Do not guess.",
     "- Use only the check ids listed below, copied verbatim. Never invent ids.",
+    "- If the same check applies to multiple DISTINCT elements (e.g. two separate floating buttons), return one finding per element with the same check_id and a different region. Never return the same element twice.",
+    '- If a finding is about a specific icon, put the icon\'s common name in "detail" (e.g. "home", "search", "settings").',
     "- The phone's own OS chrome is never a finding: the system status bar (time, battery, signal/wifi icons), the home indicator, and the system navigation bar/gestures belong to the device, not the app. Ignore them completely.",
     "- If the image is not an app UI screenshot, or no checks apply, return an empty findings array and say so in the summary.",
     "- Order findings in the same order the checks appear below (they are grouped by category).",
@@ -157,6 +166,7 @@ const RESPONSE_SCHEMA = {
             },
             required: ["x_min", "y_min", "x_max", "y_max"],
           },
+          detail: { type: "string" },
         },
         required: ["check_id", "region"],
       },
@@ -165,8 +175,29 @@ const RESPONSE_SCHEMA = {
   required: ["detected_direction", "summary", "findings"],
 } as const;
 
+/** Intersection-over-union for two normalized boxes; used to spot duplicate regions. */
+function iou(a: ModelRegion, b: ModelRegion): number {
+  const x1 = Math.max(a.x_min, b.x_min);
+  const y1 = Math.max(a.y_min, b.y_min);
+  const x2 = Math.min(a.x_max, b.x_max);
+  const y2 = Math.min(a.y_max, b.y_max);
+  const inter = Math.max(0, x2 - x1) * Math.max(0, y2 - y1);
+  if (inter === 0) return 0;
+  const union =
+    (a.x_max - a.x_min) * (a.y_max - a.y_min) +
+    (b.x_max - b.x_min) * (b.y_max - b.y_min) -
+    inter;
+  return union === 0 ? 0 : inter / union;
+}
+
 export interface ResolvedFinding {
+  /** Taxonomy check id (stable). Repeat findings share it; see `key`. */
   id: string;
+  /**
+   * Unique per-analysis key: the check id, or check_id#2, #3… when the same
+   * check flagged multiple distinct elements. Used for UI identity.
+   */
+  key: string;
   category: string;
   title: string;
   sourcePattern: string;
@@ -179,6 +210,12 @@ export interface ResolvedFinding {
   unverifiedNote?: string;
   /** Validated bounding box (0–1000 normalized) around the flagged element. */
   region?: ModelRegion;
+  /** Model-supplied element detail (e.g. icon name); sanitized before use. */
+  detail?: string;
+  /** Deep link to the exact counterpart resource (e.g. the icon's page). */
+  deepLink?: string;
+  /** Counterpart name where no web page exists (e.g. the SF Symbol name). */
+  counterpartName?: string;
 }
 
 /**
@@ -322,15 +359,14 @@ async function analyzeOnce(
     request === "auto" ? detected : request;
 
   // Resolve against the matching direction's taxonomy — never trust the model
-  // to reproduce content, and drop ids from the wrong direction.
+  // to reproduce content, and drop ids from the wrong direction. The same
+  // check may flag multiple DISTINCT elements (one finding each); true
+  // duplicates (same check, heavily overlapping region) are dropped.
   const checkMap = CHECKS_BY_DIRECTION[direction];
-  const seen = new Set<string>();
   const findings: ResolvedFinding[] = [];
   for (const f of parsed.findings) {
-    if (seen.has(f.check_id)) continue;
     const check = checkMap[f.check_id];
     if (!check) continue;
-    seen.add(f.check_id);
     const region = validRegion(f.region)
       ? {
           x_min: Math.round(f.region.x_min),
@@ -339,8 +375,16 @@ async function analyzeOnce(
           y_max: Math.round(f.region.y_max),
         }
       : undefined;
+    if (
+      region &&
+      findings.some(
+        (g) => g.id === check.id && g.region && iou(g.region, region) > 0.3,
+      )
+    )
+      continue; // same element reported twice
     findings.push({
       id: check.id,
+      key: check.id, // finalized after consensus (adds #2, #3… for repeats)
       category: CATEGORY_BY_CHECK_ID[f.check_id] ?? "General",
       title: check.check,
       sourcePattern: check.sourcePattern,
@@ -352,6 +396,7 @@ async function analyzeOnce(
         ? { unverified: true, unverifiedNote: check.unverifiedNote }
         : {}),
       ...(region ? { region } : {}),
+      ...(f.detail ? { detail: sanitizeDetail(f.detail) } : {}),
     });
   }
 
@@ -368,6 +413,136 @@ async function analyzeOnce(
  * ~$0.045/analysis at current pricing — still trivial against the $20 cap.
  */
 const CONSENSUS_RUNS = 3;
+
+/** Keep model-supplied detail short and safe (icon names like "home"). */
+function sanitizeDetail(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const clean = value.trim().toLowerCase().slice(0, 40);
+  return /^[a-z0-9._-]+$/.test(clean) ? clean : undefined;
+}
+
+/**
+ * Common SF Symbol → Material Symbol name mappings, so an icon finding can
+ * link straight to its counterpart. Inverted programmatically for the
+ * reverse direction. Names outside this map fall back to a Google Fonts
+ * search for the model's best-effort name.
+ */
+const SF_TO_MATERIAL_ICONS: Record<string, string> = {
+  house: "home",
+  magnifyingglass: "search",
+  gearshape: "settings",
+  gear: "settings",
+  "chevron.left": "chevron_left",
+  "chevron.right": "chevron_right",
+  plus: "add",
+  xmark: "close",
+  checkmark: "check",
+  "square.and.pencil": "edit",
+  trash: "delete",
+  heart: "favorite",
+  star: "star",
+  bell: "notifications",
+  person: "person",
+  envelope: "mail",
+  camera: "photo_camera",
+  photo: "image",
+  mic: "mic",
+  phone: "call",
+  message: "chat",
+  ellipsis: "more_vert",
+  "line.3.horizontal": "menu",
+  "arrow.left": "arrow_back",
+  "arrow.right": "arrow_forward",
+  "square.and.arrow.up": "share",
+  bookmark: "bookmark",
+  clock: "schedule",
+  calendar: "calendar_month",
+  map: "map",
+  paperplane: "send",
+  "info.circle": "info",
+  globe: "language",
+  "clock.arrow.circlepath": "history",
+  wifi: "wifi",
+  "chevron.up": "expand_less",
+  "chevron.down": "expand_more",
+  "ellipsis.circle": "more_horiz",
+  "square.and.arrow.down": "download",
+  "doc.text": "description",
+  folder: "folder",
+  pencil: "edit",
+  "plus.circle": "add_circle",
+  "xmark.circle": "cancel",
+  "checkmark.circle": "check_circle",
+  "exclamationmark.triangle": "warning",
+  "questionmark.circle": "help",
+  thumbsup: "thumb_up",
+  "hand.thumbsdown": "thumb_down",
+  "arrow.clockwise": "refresh",
+  "arrow.counterclockwise": "refresh",
+  "slider.horizontal.3": "tune",
+  "bell.badge": "notifications_active",
+  "person.2": "group",
+  "star.fill": "star",
+  "heart.fill": "favorite",
+  "bookmark.fill": "bookmark",
+  "mappin": "location_on",
+  "video": "videocam",
+  "phone.fill": "call",
+  "envelope.fill": "mail",
+};
+const MATERIAL_TO_SF_ICONS: Record<string, string> = Object.fromEntries(
+  Object.entries(SF_TO_MATERIAL_ICONS).map(([sf, m]) => [m, sf]),
+);
+
+/**
+ * Google Fonts page for a Material Symbol. Uses the search URL: it lands on
+ * the icon when the name is right and on useful results when approximate.
+ * (The selected-icon URL format is unstable; search is the robust target.)
+ */
+function materialIconUrl(materialName: string): string {
+  return `https://fonts.google.com/icons?icon.query=${encodeURIComponent(materialName)}`;
+}
+
+/**
+ * For icon findings, resolve the counterpart: a Google Fonts deep link for
+ * the Material icon, and the SF Symbol name for the iOS side (Apple has no
+ * per-symbol web pages, so the name is the deliverable there).
+ */
+function iconCounterparts(
+  direction: AnalysisDirection,
+  detail: string | undefined,
+): { deepLink?: string; counterpartName?: string } {
+  if (!detail) return {};
+  if (direction === "ios-to-android") {
+    // Screenshot shows an SF Symbol; dev needs the Material equivalent.
+    const material = SF_TO_MATERIAL_ICONS[detail] ?? detail.replace(/\./g, "_");
+    return {
+      deepLink: materialIconUrl(material),
+      counterpartName: material,
+    };
+  }
+  // Screenshot shows a Material Symbol; dev needs the SF Symbol name.
+  const sf = MATERIAL_TO_SF_ICONS[detail] ?? detail;
+  return { counterpartName: sf };
+}
+
+/** Most frequent value; ties go to the first seen. */
+function mostCommon(values: string[]): string | undefined {
+  const counts = new Map<string, number>();
+  for (const v of values) counts.set(v, (counts.get(v) ?? 0) + 1);
+  let best: string | undefined;
+  let bestN = 0;
+  for (const [v, n] of counts) {
+    if (n > bestN) {
+      best = v;
+      bestN = n;
+    }
+  }
+  return best;
+}
+
+/** Checks whose findings can carry an icon deep link. */
+const ICON_CHECK_IDS = new Set(["icon-symbols", "a2i-icon-symbols"]);
 
 /** Average bounding boxes across runs into one stable region. */
 function averageRegion(regions: ModelRegion[]): ModelRegion {
@@ -413,15 +588,26 @@ async function judgeContested(
   mimeType: string,
   imageBase64: string,
   direction: AnalysisDirection,
-  contested: { id: string; votesFor: number; votesTotal: number }[],
+  contested: {
+    key: string;
+    id: string;
+    votesFor: number;
+    votesTotal: number;
+    regionHint?: ModelRegion;
+    detail?: string;
+  }[],
 ): Promise<Map<string, boolean> | null> {
   const checkMap = CHECKS_BY_DIRECTION[direction];
   const lines = contested.map((c) => {
     const check = checkMap[c.id];
     return [
-      `- ${c.id} (flagged by ${c.votesFor}/${c.votesTotal} passes): ${check?.check ?? c.id}`,
+      `- ${c.key} — ${c.id} (flagged by ${c.votesFor}/${c.votesTotal} passes): ${check?.check ?? c.id}`,
       `  Current: ${check?.sourcePattern ?? ""}`,
       `  Expected: ${check?.targetPattern ?? ""}`,
+      ...(c.regionHint
+        ? [`  Location in screenshot (0-1000): ${JSON.stringify(c.regionHint)}`]
+        : []),
+      ...(c.detail ? [`  Element detail: ${c.detail}`] : []),
     ].join("\n");
   });
   try {
@@ -441,7 +627,7 @@ async function judgeContested(
                   "You are a decisive UI review judge. Other analysts disagreed on whether the checks below apply to the attached app screenshot.",
                   "For EACH check, examine the screenshot and give a final YES (keep) or NO (drop) with one sentence of visual evidence.",
                   "Be strict: a finding must earn its place with clearly visible evidence. If it is genuinely ambiguous, say NO.",
-                  'Return JSON: {"decisions": [{"check_id": "...", "keep": true, "why": "..."}]}.',
+                  'Return JSON: {"decisions": [{"check_id": "<the key shown, e.g. c0>", "keep": true, "why": "..."}]} — one decision per contested item, using its key.',
                   "",
                   "CONTESTED CHECKS:",
                   ...lines,
@@ -475,10 +661,17 @@ async function judgeContested(
     const parsed = JSON.parse(text) as {
       decisions?: Array<{ check_id: string; keep: boolean }>;
     };
+    // Verdicts are keyed by the contested key handed to the judge (c0, c1…),
+    // matched back to clusters by that key.
     const out = new Map<string, boolean>();
+    const keys = contested.map((c) => c.key);
     for (const d of parsed.decisions ?? []) {
-      if (typeof d.check_id === "string" && typeof d.keep === "boolean")
-        out.set(d.check_id, d.keep);
+      if (typeof d.check_id === "string" && typeof d.keep === "boolean") {
+        const match =
+          keys.find((k) => d.check_id === k) ??
+          keys.find((k) => d.check_id.includes(k) || k.includes(d.check_id));
+        if (match) out.set(match, d.keep);
+      }
     }
     (judgeContested as { lastUsage?: { promptTokens: number; candidateTokens: number } }).lastUsage = {
       promptTokens: data.usageMetadata?.promptTokenCount ?? 0,
@@ -529,24 +722,50 @@ export async function analyzeWithGemini(
     dirVotes.set(run.direction, (dirVotes.get(run.direction) ?? 0) + 1);
   const direction = [...dirVotes.entries()].sort((a, b) => b[1] - a[1])[0][0];
 
-  const votes = new Map<
-    string,
-    { count: number; regions: ModelRegion[]; finding: ResolvedFinding }
-  >();
+  // Cluster votes by (check_id, region): the same check flagging two
+  // distinct elements forms two clusters that live or die independently.
+  const clusters: {
+    id: string;
+    count: number;
+    regions: ModelRegion[];
+    finding: ResolvedFinding;
+    details: string[];
+  }[] = [];
   for (const run of ok) {
     for (const f of run.findings) {
-      const v = votes.get(f.id) ?? { count: 0, regions: [], finding: f };
-      v.count++;
-      if (f.region) v.regions.push(f.region);
-      votes.set(f.id, v);
+      const cluster = clusters.find((c) => {
+        if (c.id !== f.id) return false;
+        if (!f.region) return c.regions.length === 0;
+        return c.regions.some((r) => iou(r, f.region as ModelRegion) > 0.3);
+      });
+      if (cluster) {
+        cluster.count++;
+        if (f.region) cluster.regions.push(f.region);
+        if (f.detail) cluster.details.push(f.detail);
+      } else {
+        clusters.push({
+          id: f.id,
+          count: 1,
+          regions: f.region ? [f.region] : [],
+          finding: f,
+          details: f.detail ? [f.detail] : [],
+        });
+      }
     }
   }
 
   // Split votes go to the judge; unanimous verdicts stand as-is.
   const total = ok.length;
-  const contested = [...votes.entries()]
-    .filter(([, v]) => v.count > 0 && v.count < total)
-    .map(([id, v]) => ({ id, votesFor: v.count, votesTotal: total }));
+  const contested = clusters
+    .filter((c) => c.count > 0 && c.count < total)
+    .map((c, i) => ({
+      key: `c${i}`,
+      id: c.id,
+      votesFor: c.count,
+      votesTotal: total,
+      regionHint: c.regions.length ? averageRegion(c.regions) : undefined,
+      detail: mostCommon(c.details),
+    }));
   let verdicts: Map<string, boolean> | null = null;
   if (contested.length > 0) {
     verdicts = await judgeContested(apiKey, mimeType, imageBase64, direction, contested);
@@ -556,17 +775,36 @@ export async function analyzeWithGemini(
   ).lastUsage ?? { promptTokens: 0, candidateTokens: 0 };
 
   const threshold = Math.ceil(total / 2);
-  const findings = [...votes.values()]
-    .filter((v) => {
-      if (v.count === total) return true; // unanimous keep
-      if (verdicts?.has(v.finding.id)) return verdicts.get(v.finding.id)!;
-      return v.count >= threshold; // judge unavailable: majority fallback
-    })
-    .map((v) => ({
-      ...v.finding,
-      region: v.regions.length ? averageRegion(v.regions) : undefined,
-    }));
+  const kept = clusters.filter((c) => {
+    if (c.count === total) return true; // unanimous keep
+    const key = contested.find((k) => k.id === c.id && k.votesFor === c.count)?.key;
+    if (key && verdicts?.has(key)) return verdicts.get(key)!;
+    return c.count >= threshold; // judge unavailable: majority fallback
+  });
+
+  const findings: ResolvedFinding[] = kept.map((c) => {
+    const detail = mostCommon(c.details);
+    const links =
+      ICON_CHECK_IDS.has(c.id) && detail
+        ? iconCounterparts(direction, detail)
+        : {};
+    return {
+      ...c.finding,
+      region: c.regions.length ? averageRegion(c.regions) : undefined,
+      ...(detail ? { detail } : {}),
+      ...(links.deepLink ? { deepLink: links.deepLink } : {}),
+      ...(links.counterpartName ? { counterpartName: links.counterpartName } : {}),
+    };
+  });
   findings.sort((a, b) => (CHECK_ORDER[a.id] ?? 0) - (CHECK_ORDER[b.id] ?? 0));
+
+  // Unique UI keys: first occurrence keeps the bare check id, repeats get #2…
+  const occurrences = new Map<string, number>();
+  for (const f of findings) {
+    const n = (occurrences.get(f.id) ?? 0) + 1;
+    occurrences.set(f.id, n);
+    f.key = n === 1 ? f.id : `${f.id}#${n}`;
+  }
 
   // Summary from the run whose finding set best matches the consensus.
   const consensusIds = new Set(findings.map((f) => f.id));

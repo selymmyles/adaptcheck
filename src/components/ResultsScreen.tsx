@@ -135,7 +135,7 @@ export default function ResultsScreen({
       item.status === "done" && item.result
         ? groupByCategory(item.result.findings).map((g) => ({
             name: g.name,
-            findings: g.findings.map((f) => ({ id: f.id, title: f.title })),
+            findings: g.findings.map((f) => ({ id: f.key, title: f.title })),
           }))
         : [],
   }));
@@ -219,21 +219,21 @@ export default function ResultsScreen({
           const groups = groupByCategory(result.findings);
 
           // Stable 1..N numbering per screenshot, in category order.
-          const numberById = new Map<string, number>();
+          const numberByKey = new Map<string, number>();
           {
             let n = 0;
             for (const g of groups)
-              for (const f of g.findings) numberById.set(f.id, ++n);
+              for (const f of g.findings) numberByKey.set(f.key, ++n);
           }
           const markers: MapMarker[] = result.findings.flatMap((f) =>
             f.region
               ? [
                   {
-                    key: f.id,
-                    number: numberById.get(f.id) ?? 0,
+                    key: f.key,
+                    number: numberByKey.get(f.key) ?? 0,
                     region: f.region,
                     highlighted:
-                      highlight?.shot === si && highlight.id === f.id,
+                      highlight?.shot === si && highlight.id === f.key,
                   },
                 ]
               : [],
@@ -300,20 +300,20 @@ export default function ResultsScreen({
                   <div className="space-y-3">
                     {group.findings.map((f) => (
                       <div
-                        key={f.id}
-                        id={`finding-${si}-${f.id}`}
+                        key={f.key}
+                        id={`finding-${si}-${f.key}`}
                         className="scroll-mt-6"
                       >
                         <FindingCard
                           finding={f}
                           direction={direction}
-                          number={numberById.get(f.id) ?? 0}
+                          number={numberByKey.get(f.key) ?? 0}
                           imageUrl={item.imageUrl}
                           active={
-                            highlight?.shot === si && highlight.id === f.id
+                            highlight?.shot === si && highlight.id === f.key
                           }
                           onLocate={
-                            f.region ? () => locateOnMap(si, f.id) : null
+                            f.region ? () => locateOnMap(si, f.key) : null
                           }
                         />
                       </div>

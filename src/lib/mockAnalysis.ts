@@ -26,7 +26,10 @@ export interface FindingRegion {
 }
 
 export interface Finding {
+  /** Taxonomy check id (stable). */
   id: string;
+  /** Unique per-analysis key: the check id, or check_id#2, #3… for repeats. */
+  key: string;
   category: string;
   title: string;
   sourcePattern: string;
@@ -42,6 +45,10 @@ export interface Finding {
   unverifiedNote?: string;
   /** Optional bounding box around the flagged UI element. */
   region?: FindingRegion;
+  /** Deep link to the exact counterpart resource (e.g. the icon's page). */
+  deepLink?: string;
+  /** Counterpart name where no web page exists (e.g. the SF Symbol name). */
+  counterpartName?: string;
 }
 
 export interface AnalysisResult {

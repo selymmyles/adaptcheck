@@ -170,11 +170,14 @@ function PatternBox({
   pattern,
   cite,
   tone,
+  note,
 }: {
   platformLabel: string;
   pattern: string;
   cite: { label: string; url: string } | null;
   tone: "source" | "target";
+  /** Small extra line, e.g. the exact counterpart symbol name. */
+  note?: string;
 }) {
   return (
     <div
@@ -194,6 +197,14 @@ function PatternBox({
         {platformLabel}
       </p>
       <p className="mt-1 text-sm leading-relaxed text-stone-700">{pattern}</p>
+      {note && (
+        <p className="mt-1.5 text-xs text-stone-500">
+          Counterpart:{" "}
+          <code className="rounded bg-stone-100 px-1 py-0.5 font-mono text-[11px] text-stone-700">
+            {note}
+          </code>
+        </p>
+      )}
       {cite && (
         <a
           href={cite.url}
@@ -233,6 +244,19 @@ export default function FindingCard({
     direction === "ios-to-android" ? "ios" : "material";
   const targetKey: "ios" | "material" =
     sourceKey === "ios" ? "material" : "ios";
+  // Icon findings can deep-link straight to the counterpart icon's page so
+  // devs copy code instead of hunting. Apple has no per-symbol web pages, so
+  // the iOS side gets the exact SF Symbol name as text instead.
+  const materialCite = finding.deepLink
+    ? {
+        label: `Google Fonts — ${finding.counterpartName ?? "icon"}`,
+        url: finding.deepLink,
+      }
+    : platformSource(finding.sources, "material");
+  const iosBoxNote =
+    !finding.deepLink && finding.counterpartName && targetKey === "ios"
+      ? finding.counterpartName
+      : undefined;
   const [showShot, setShowShot] = useState(false);
   const [lightbox, setLightbox] = useState(false);
 
@@ -296,14 +320,15 @@ export default function FindingCard({
         <PatternBox
           platformLabel={meta.sourcePlatform}
           pattern={finding.sourcePattern}
-          cite={platformSource(finding.sources, sourceKey)}
+          cite={sourceKey === "material" ? materialCite : platformSource(finding.sources, "ios")}
           tone="source"
         />
         <PatternBox
           platformLabel={meta.targetPlatform}
           pattern={finding.targetPattern}
-          cite={platformSource(finding.sources, targetKey)}
+          cite={targetKey === "material" ? materialCite : platformSource(finding.sources, "ios")}
           tone="target"
+          note={iosBoxNote}
         />
       </div>
 
