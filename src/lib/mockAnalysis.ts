@@ -1,41 +1,55 @@
 /**
  * Analysis client — talks to the Cloudflare Worker backend.
  *
- * POSTs the screenshot as multipart/form-data to /api/analyze and returns
- * the AnalysisResult. The worker resolves findings against
- * src/lib/taxonomy.ts, so check ids here always match the taxonomy.
+ * POSTs the screenshot as multipart/form-data to /api/analyze (with the
+ * requested direction) and returns the AnalysisResult. The worker resolves
+ * findings against src/lib/taxonomy.ts, so check ids here always match the
+ * taxonomy.
  */
 
-import type { Severity } from "./taxonomy";
+import type {
+  Severity,
+  AnalysisDirection,
+  DirectionRequest,
+} from "./taxonomy";
 
 // Re-exported so UI components import all analysis types from one place.
-export type { Severity };
+export type { Severity, AnalysisDirection, DirectionRequest };
 
 export interface Finding {
   id: string;
   severity: Severity;
   category: string;
   title: string;
-  iosPattern: string;
-  androidPattern: string;
+  sourcePattern: string;
+  targetPattern: string;
   rationale: string;
 }
 
 export interface AnalysisResult {
   summary: string;
   findings: Finding[];
+  /** The direction the findings belong to (resolved server-side). */
+  direction: AnalysisDirection;
+  /** What the model identified (== direction for explicit requests). */
+  detectedDirection: AnalysisDirection;
 }
 
 export class AnalysisError extends Error {}
 
 /**
- * Analyze an uploaded iOS screenshot via the backend.
+ * Analyze an uploaded screenshot via the backend.
  *
- * Throws AnalysisError with a human-readable message on failure.
+ * `direction` is "ios-to-android" | "android-to-ios" | "auto" (default in the
+ * UI). Throws AnalysisError with a human-readable message on failure.
  */
-export async function analyzeDesign(file: File): Promise<AnalysisResult> {
+export async function analyzeDesign(
+  file: File,
+  direction: DirectionRequest,
+): Promise<AnalysisResult> {
   const form = new FormData();
   form.append("screenshot", file, file.name);
+  form.append("direction", direction);
 
   let res: Response;
   try {
