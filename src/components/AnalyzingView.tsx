@@ -1,23 +1,38 @@
 import { useEffect, useState } from "react";
+import type { DirectionRequest } from "../lib/mockAnalysis";
 
-const STEPS = [
+const BASE_STEPS = [
   "Reading layout…",
   "Detecting components…",
   "Checking navigation patterns…",
-  "Comparing against Material 3…",
-  "Prioritizing findings…",
 ];
+
+const COMPARE_STEPS: Record<DirectionRequest, string> = {
+  "ios-to-android": "Comparing against Material 3…",
+  "android-to-ios": "Comparing against iOS HIG…",
+  auto: "Detecting platform…",
+};
 
 interface AnalyzingViewProps {
   fileName: string;
+  directionRequest: DirectionRequest;
 }
 
 /**
  * Purely presentational staged progress. The parent (App) holds the analyzing
- * phase for ~5s while this cycles through the steps; the mock analysis
- * resolves in parallel.
+ * phase while this cycles through the steps; the backend analysis resolves
+ * in parallel.
  */
-export default function AnalyzingView({ fileName }: AnalyzingViewProps) {
+export default function AnalyzingView({
+  fileName,
+  directionRequest,
+}: AnalyzingViewProps) {
+  const STEPS = [
+    ...BASE_STEPS,
+    COMPARE_STEPS[directionRequest],
+    "Prioritizing findings…",
+  ];
+
   const [step, setStep] = useState(0);
 
   useEffect(() => {
