@@ -1,32 +1,30 @@
 /**
- * Gemini analysis layer for AdaptCheck.
+ * Gemini analysis layer for AdaptCheck (bidirectional).
  *
  * The system prompt is constructed programmatically from src/lib/taxonomy.ts,
- * which is the single source of truth for the 19 checks (stable ids across
- * 6 categories). The model returns ONLY { check_id, severity } pairs plus a
+ * which is the single source of truth for both directions' checks (stable ids).
+ * The model returns ONLY { detected_direction, check_id, severity } plus a
  * summary; all display content (title, patterns, rationale) is resolved from
  * the taxonomy by the worker — never trusted from model output.
  */
 
 import {
   TAXONOMY,
-  CHECKS_BY_ID,
+  CHECKS_BY_DIRECTION,
   CATEGORY_BY_CHECK_ID,
+  DIRECTION_META,
   type Severity,
+  type AnalysisDirection,
+  type DirectionRequest,
 } from "../src/lib/taxonomy";
 
 /**
  * Multimodal model used for screenshot analysis. SINGLE CONFIG POINT — swap
  * this constant to change models later.
- *
- * Verified free-tier (Oct 2026, official Gemini API pricing page):
- * gemini-2.5-flash input/output is "Free of charge". It supports vision
- * input and JSON response-schema mode. Alternatives if limits ever bite:
- * gemini-2.5-flash-lite (most generous free quota).
  */
 // NOTE (2026-10-10): gemini-2.5-flash returns 404 for new API users ("no longer
 // available to new users" per Google); gemini-3.8-flash verified working with
-// vision on the free tier the same day.
+// vision on the free tier the same day. DO NOT revert to 2.5-flash.
 export const GEMINI_MODEL = "gemini-3.8-flash";
 
 export interface ModelFinding {
@@ -35,48 +33,95 @@ export interface ModelFinding {
 }
 
 interface ModelResult {
+  detected_direction: AnalysisDirection;
   summary: string;
   findings: ModelFinding[];
 }
 
-/** Build the system prompt from the taxonomy — stays in sync automatically. */
-export function buildSystemPrompt(): string {
+function isDirection(value: unknown): value is AnalysisDirection {
+  return value === "ios-to-android" || value === "android-to-ios";
+}
+
+/** Enumerate one direction's checks for the prompt. */
+function checksSection(direction: AnalysisDirection): string[] {
+  const meta = DIRECTION_META[direction];
   const lines: string[] = [
+    `CHECKS FOR ${meta.arrow.toUpperCase()} (use ONLY when detected_direction is "${direction}")`,
+  ];
+  for (const category of TAXONOMY) {
+    const checks = category.checks.filter((c) => c.direction === direction);
+    if (checks.length === 0) continue;
+    lines.push("", `## ${category.name}`);
+    for (const check of checks) {
+      lines.push(
+        `- ${check.id} — "${check.check}" (default: ${check.defaultSeverity})`,
+      );
+      lines.push(`  ${meta.sourceShort}: ${check.sourcePattern}`);
+      lines.push(`  ${meta.targetShort} (${meta.targetSystem}): ${check.targetPattern}`);
+      lines.push(`  Why it matters: ${check.rationale}`);
+    }
+  }
+  return lines;
+}
+
+/** Build the system prompt from the taxonomy — stays in sync automatically. */
+export function buildSystemPrompt(request: DirectionRequest): string {
+  const intro = [
     "You are an expert mobile UI/UX analyst specializing in Apple's Human Interface Guidelines and Material Design 3.",
     "",
-    "TASK",
-    "Examine the attached iOS app screenshot. Identify which of the adaptation checks listed below visibly apply — i.e. the screenshot shows an iOS design pattern that would need to change for a correct Android (Material 3) implementation.",
-    "",
+  ];
+
+  const output = [
     "OUTPUT",
-    'Return a JSON object with exactly two keys: "summary" (one sentence describing the overall iOS-to-Android adaptation state of this screen) and "findings" (an array of objects, each with "check_id" and "severity").',
-    'Severity meanings: "must" = the issue would read as broken or wrong on Android; "should" = the issue would read as an obvious iOS port and is worth fixing; "nice" = polish that would make it feel native.',
+    'Return a JSON object with exactly three keys: "detected_direction", "summary", and "findings".',
+    '"detected_direction" is "ios-to-android" when the screenshot shows an iOS design to adapt for Android, or "android-to-ios" when it shows an Android design to adapt for iOS.',
+    '"summary" is one sentence describing the overall adaptation state of the screen for the detected direction.',
+    '"findings" is an array of objects, each with "check_id" and "severity".',
+    'Severity meanings: "must" = the issue would read as broken or wrong on the target platform; "should" = the issue would read as an obvious port and is worth fixing; "nice" = polish that would make it feel native.',
     "",
     "RULES",
+    "- FIRST identify the screenshot's platform, then evaluate ONLY that direction's checks.",
     "- Include ONLY checks you can see evidence for in the screenshot. Do not guess.",
     "- Use only the check ids listed below, copied verbatim. Never invent ids.",
     "- A check's severity may differ from its default when the specific instance warrants it.",
     "- If the image is not an app UI screenshot, or no checks apply, return an empty findings array and say so in the summary.",
     "- Order findings by severity: must first, then should, then nice.",
     "",
-    "ADAPTATION CHECKS",
   ];
-  for (const category of TAXONOMY) {
-    lines.push("", `## ${category.name}`);
-    for (const check of category.checks) {
-      lines.push(
-        `- ${check.id} — "${check.check}" (default: ${check.defaultSeverity})`,
-      );
-      lines.push(`  iOS: ${check.iosPattern}`);
-      lines.push(`  Android (Material 3): ${check.androidPattern}`);
-      lines.push(`  Why it matters: ${check.rationale}`);
-    }
+
+  if (request === "auto") {
+    return [
+      ...intro,
+      "TASK",
+      "First, determine the platform of the attached app screenshot: is it an iOS app (Apple HIG conventions — SF typography, tab bar, back chevron, grouped lists) or an Android app (Material Design 3 conventions — Roboto, navigation bar with active-indicator pill, FAB, tonal surfaces)?",
+      'Set "detected_direction" accordingly, then identify which of THAT direction\'s adaptation checks visibly apply.',
+      "",
+      ...output,
+      ...checksSection("ios-to-android"),
+      "",
+      ...checksSection("android-to-ios"),
+    ].join("\n");
   }
-  return lines.join("\n");
+
+  const meta = DIRECTION_META[request];
+  return [
+    ...intro,
+    "TASK",
+    `Examine the attached ${meta.sourceShort} app screenshot. Identify which of the adaptation checks listed below visibly apply — i.e. the screenshot shows a ${meta.sourceShort} design pattern that would need to change for a correct ${meta.targetShort} (${meta.targetSystem}) implementation.`,
+    `Set "detected_direction" to "${request}".`,
+    "",
+    ...output,
+    ...checksSection(request),
+  ].join("\n");
 }
 
 const RESPONSE_SCHEMA = {
   type: "object",
   properties: {
+    detected_direction: {
+      type: "string",
+      enum: ["ios-to-android", "android-to-ios"],
+    },
     summary: { type: "string" },
     findings: {
       type: "array",
@@ -90,7 +135,7 @@ const RESPONSE_SCHEMA = {
       },
     },
   },
-  required: ["summary", "findings"],
+  required: ["detected_direction", "summary", "findings"],
 } as const;
 
 const VALID_SEVERITIES: ReadonlySet<string> = new Set([
@@ -104,24 +149,30 @@ export interface ResolvedFinding {
   severity: Severity;
   category: string;
   title: string;
-  iosPattern: string;
-  androidPattern: string;
+  sourcePattern: string;
+  targetPattern: string;
   rationale: string;
 }
 
 export interface BackendAnalysisResult {
   summary: string;
   findings: ResolvedFinding[];
+  /** The direction the findings belong to (== detected for auto). */
+  direction: AnalysisDirection;
+  /** What the model identified (== requested direction for explicit calls). */
+  detectedDirection: AnalysisDirection;
 }
 
 /**
  * Send the screenshot to Gemini and resolve the model's check picks against
- * the taxonomy. Unknown check ids and invalid severities are dropped.
+ * the matching direction's taxonomy. Unknown check ids, wrong-direction ids,
+ * and invalid severities are dropped.
  */
 export async function analyzeWithGemini(
   apiKey: string,
   mimeType: string,
   imageBase64: string,
+  request: DirectionRequest,
 ): Promise<BackendAnalysisResult> {
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`,
@@ -132,7 +183,7 @@ export async function analyzeWithGemini(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        systemInstruction: { parts: [{ text: buildSystemPrompt() }] },
+        systemInstruction: { parts: [{ text: buildSystemPrompt(request) }] },
         contents: [
           {
             role: "user",
@@ -182,12 +233,24 @@ export async function analyzeWithGemini(
     throw new Error("Gemini returned an unexpected shape.");
   }
 
-  // Resolve against the taxonomy — never trust the model to reproduce content.
+  // Effective direction: explicit requests win; auto follows the model, with
+  // a safe fallback if it returns something unexpected.
+  const detected: AnalysisDirection = isDirection(parsed.detected_direction)
+    ? parsed.detected_direction
+    : request === "auto"
+      ? "ios-to-android"
+      : request;
+  const direction: AnalysisDirection =
+    request === "auto" ? detected : request;
+
+  // Resolve against the matching direction's taxonomy — never trust the model
+  // to reproduce content, and drop ids from the wrong direction.
+  const checkMap = CHECKS_BY_DIRECTION[direction];
   const seen = new Set<string>();
   const findings: ResolvedFinding[] = [];
   for (const f of parsed.findings) {
     if (seen.has(f.check_id)) continue;
-    const check = CHECKS_BY_ID[f.check_id];
+    const check = checkMap[f.check_id];
     if (!check || !VALID_SEVERITIES.has(f.severity)) continue;
     seen.add(f.check_id);
     findings.push({
@@ -195,11 +258,11 @@ export async function analyzeWithGemini(
       severity: f.severity,
       category: CATEGORY_BY_CHECK_ID[f.check_id] ?? "General",
       title: check.check,
-      iosPattern: check.iosPattern,
-      androidPattern: check.androidPattern,
+      sourcePattern: check.sourcePattern,
+      targetPattern: check.targetPattern,
       rationale: check.rationale,
     });
   }
 
-  return { summary: parsed.summary, findings };
+  return { summary: parsed.summary, findings, direction, detectedDirection: detected };
 }
