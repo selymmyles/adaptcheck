@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import type {
   Finding,
   FindingRegion,
@@ -7,8 +8,10 @@ import { DIRECTION_META } from "../lib/taxonomy";
 
 /**
  * A zoomed crop of the finding's region, cut from the uploaded screenshot
- * with pure CSS. The img is scaled so the region fills the container:
- * width = 1000/w of the container, offset by -x_min/w.
+ * on a <canvas>. Canvas avoids the aspect-ratio pitfalls of CSS-percentage
+ * cropping (the old math assumed a square image and misplaced regions on
+ * tall phone screenshots). A small padding ring gives context around the
+ * flagged element.
  */
 function RegionCrop({
   imageUrl,
@@ -19,26 +22,40 @@ function RegionCrop({
   region: FindingRegion;
   alt: string;
 }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const w = region.x_max - region.x_min;
   const h = region.y_max - region.y_min;
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const img = new Image();
+    img.onload = () => {
+      const iw = img.naturalWidth;
+      const ih = img.naturalHeight;
+      // Region in image pixels, with 8% padding clamped to the image.
+      const padX = w * 0.08;
+      const padY = h * 0.08;
+      const sx = Math.max(0, ((region.x_min - padX) / 1000) * iw);
+      const sy = Math.max(0, ((region.y_min - padY) / 1000) * ih);
+      const sw = Math.min(iw - sx, ((w + padX * 2) / 1000) * iw);
+      const sh = Math.min(ih - sy, ((h + padY * 2) / 1000) * ih);
+      // Canvas backing store matches the source pixels; CSS scales it.
+      canvas.width = Math.max(1, Math.round(sw));
+      canvas.height = Math.max(1, Math.round(sh));
+      canvas.getContext("2d")?.drawImage(img, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+    };
+    img.src = imageUrl;
+  }, [imageUrl, region.x_min, region.y_min, region.x_max, region.y_max]);
+
   return (
-    <div
-      className="relative w-28 shrink-0 self-start overflow-hidden rounded-xl border border-stone-200 bg-stone-100 sm:w-36"
+    <canvas
+      ref={canvasRef}
+      role="img"
+      aria-label={alt}
+      className="w-28 shrink-0 self-start rounded-xl border border-stone-200 bg-stone-100 sm:w-36"
       style={{ aspectRatio: `${w} / ${h}` }}
-      aria-hidden="true"
-    >
-      <img
-        src={imageUrl}
-        alt=""
-        aria-label={alt}
-        className="absolute max-w-none"
-        style={{
-          left: `${(-region.x_min / w) * 100}%`,
-          top: `${(-region.y_min / h) * 100}%`,
-          width: `${(1000 / w) * 100}%`,
-        }}
-      />
-    </div>
+    />
   );
 }
 
