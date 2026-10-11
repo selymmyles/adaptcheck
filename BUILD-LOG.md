@@ -202,3 +202,13 @@ source picker: it matched on label prefixes and fell back to the first source,
 so the Material box on the icon check linked Apple's SF Symbols page. Now
 matches on URL host first and never falls back across platforms (no link beats
 a wrong-platform link).
+
+## 2026-10-11 — Tie-breaker judge for consistency
+
+Founder ran 5 analyses of one screenshot: 2-3 findings, touch-target and
+type-scale flipping. 2/3 voting can't settle ~50/50 model judgments. New
+pipeline: 3 parallel passes -> unanimous verdicts stand -> split votes go to
+a focused tie-breaker pass (single-check yes/no with visual evidence, strict:
+ambiguous = drop). Summary prompt constrained to mention only consensus
+findings. Verified: 5/5 identical finding sets on a screenshot that flipped
+before. ~$0.06/analysis.
