@@ -1,4 +1,9 @@
-import type { Finding, Severity } from "../lib/mockAnalysis";
+import type {
+  Finding,
+  Severity,
+  AnalysisDirection,
+} from "../lib/mockAnalysis";
+import { DIRECTION_META } from "../lib/taxonomy";
 
 const SEVERITY_STYLES: Record<
   Severity,
@@ -33,7 +38,14 @@ export function SeverityBadge({ severity }: { severity: Severity }) {
   );
 }
 
-export default function FindingCard({ finding }: { finding: Finding }) {
+export default function FindingCard({
+  finding,
+  direction,
+}: {
+  finding: Finding;
+  direction: AnalysisDirection;
+}) {
+  const meta = DIRECTION_META[direction];
   return (
     <article className="rounded-2xl border border-stone-200 bg-white p-5">
       <div className="flex flex-wrap items-center gap-2">
@@ -50,18 +62,18 @@ export default function FindingCard({ finding }: { finding: Finding }) {
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <div className="rounded-xl bg-stone-50 p-3.5">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-stone-400">
-            iOS pattern
+            {meta.sourcePatternLabel}
           </p>
           <p className="mt-1 text-sm leading-relaxed text-stone-700">
-            {finding.iosPattern}
+            {finding.sourcePattern}
           </p>
         </div>
         <div className="rounded-xl bg-teal-50/60 p-3.5">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-teal-800/70">
-            Android · Material 3
+            {meta.targetPatternLabel}
           </p>
           <p className="mt-1 text-sm leading-relaxed text-stone-700">
-            {finding.androidPattern}
+            {finding.targetPattern}
           </p>
         </div>
       </div>
