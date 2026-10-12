@@ -112,7 +112,9 @@ export default function UploadScreen({ onAnalyze }: UploadScreenProps) {
           setDragging(false);
           addFiles(e.dataTransfer.files);
         }}
-        className={`flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-12 text-center transition-colors ${
+        className={`flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 text-center transition-colors ${
+          picked.length > 0 ? "py-6" : "py-12"
+        } ${
           dragging
             ? "border-teal-700 bg-teal-50"
             : "border-stone-300 bg-white hover:border-stone-400"
@@ -129,63 +131,75 @@ export default function UploadScreen({ onAnalyze }: UploadScreenProps) {
             e.target.value = "";
           }}
         />
-        <svg
-          className="mb-4 h-10 w-10 text-stone-400"
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth={1.5}
-          stroke="currentColor"
-          aria-hidden="true"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
-          />
-        </svg>
-        <p className="text-base font-medium text-stone-900">
-          Drop your screenshots here
-        </p>
-        <p className="mt-1 text-sm text-stone-500">
-          or <span className="font-medium text-teal-700 underline">browse files</span> — PNG or JPG, up to {MAX_FILES}
-        </p>
+        {picked.length === 0 ? (
+          <>
+            <svg
+              className="mb-4 h-10 w-10 text-stone-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
+              />
+            </svg>
+            <p className="text-base font-medium text-stone-900">
+              Drop your screenshots here
+            </p>
+            <p className="mt-1 text-sm text-stone-500">
+              or <span className="font-medium text-teal-700 underline">browse files</span> — PNG or JPG, up to {MAX_FILES}
+            </p>
+          </>
+        ) : (
+          <>
+            <ul className="grid w-full grid-cols-5 gap-3">
+              {picked.map((p, i) => (
+                <li
+                  key={`${p.file.name}-${i}`}
+                  className="group relative overflow-hidden rounded-xl border border-stone-200 bg-white"
+                >
+                  <img
+                    src={p.preview}
+                    alt={`Screenshot ${i + 1} preview`}
+                    className="h-32 w-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeFile(i);
+                    }}
+                    aria-label={`Remove ${p.file.name}`}
+                    className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-sm leading-none text-white opacity-0 transition-opacity hover:bg-black/80 group-hover:opacity-100"
+                  >
+                    ×
+                  </button>
+                  <p
+                    className="truncate px-2 py-1.5 text-center text-[11px] text-stone-500"
+                    title={p.file.name}
+                  >
+                    {p.file.name}
+                  </p>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-4 text-sm text-stone-500">
+              Drop more, or click to{" "}
+              <span className="font-medium text-teal-700 underline">browse</span>{" "}
+              — {picked.length} of {MAX_FILES}
+            </p>
+          </>
+        )}
       </div>
 
       {error && (
         <p className="mt-3 text-sm text-rose-700" role="alert">
           {error}
         </p>
-      )}
-
-      {picked.length > 0 && (
-        <ul className="mt-4 grid grid-cols-5 gap-3">
-          {picked.map((p, i) => (
-            <li
-              key={`${p.file.name}-${i}`}
-              className="group relative overflow-hidden rounded-xl border border-stone-200 bg-white"
-            >
-              <img
-                src={p.preview}
-                alt={`Screenshot ${i + 1} preview`}
-                className="h-32 w-full object-cover"
-              />
-              <button
-                type="button"
-                onClick={() => removeFile(i)}
-                aria-label={`Remove ${p.file.name}`}
-                className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-sm leading-none text-white opacity-0 transition-opacity hover:bg-black/80 group-hover:opacity-100"
-              >
-                ×
-              </button>
-              <p
-                className="truncate px-2 py-1.5 text-center text-[11px] text-stone-500"
-                title={p.file.name}
-              >
-                {p.file.name}
-              </p>
-            </li>
-          ))}
-        </ul>
       )}
 
       <button
