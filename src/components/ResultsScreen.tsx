@@ -370,6 +370,26 @@ export default function ResultsScreen({
         {/* Per-screenshot sections */}
         {items.map((item, si) => {
           const label = `Screenshot ${si + 1}`;
+          if (item.status === "analyzing") {
+            return (
+              <section key={label} className="mt-8">
+                <h2 className="text-lg font-semibold tracking-tight text-stone-900">
+                  {label}
+                  <span className="ml-2 truncate text-sm font-normal text-stone-400">
+                    {item.fileName}
+                  </span>
+                </h2>
+                <div className="mt-3 rounded-2xl border border-stone-200 bg-white p-5">
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-stone-100">
+                    <div className="h-full w-1/3 animate-pulse rounded-full bg-teal-700" />
+                  </div>
+                  <p className="mt-3 text-sm text-stone-500">
+                    Retrying analysis…
+                  </p>
+                </div>
+              </section>
+            );
+          }
           if (item.status !== "done" || !item.result) {
             return (
               <section key={label} className="mt-8">
