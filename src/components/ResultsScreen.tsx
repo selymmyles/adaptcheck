@@ -243,6 +243,27 @@ export default function ResultsScreen({
 }: ResultsScreenProps) {
   const [copied, setCopied] = useState(false);
   const [highlight, setHighlight] = useState<Highlight | null>(null);
+  const [collapsedShots, setCollapsedShots] = useState<ReadonlySet<number>>(
+    new Set(),
+  );
+
+  const toggleShot = (shot: number) => {
+    setCollapsedShots((prev) => {
+      const next = new Set(prev);
+      if (next.has(shot)) next.delete(shot);
+      else next.add(shot);
+      return next;
+    });
+  };
+
+  const expandShot = (shot: number) => {
+    setCollapsedShots((prev) => {
+      if (!prev.has(shot)) return prev;
+      const next = new Set(prev);
+      next.delete(shot);
+      return next;
+    });
+  };
 
   const flashHighlight = (shot: number, id: string) => {
     setHighlight({ shot, id });
@@ -262,6 +283,7 @@ export default function ResultsScreen({
   };
 
   const jumpToFinding = (shot: number, id: string) => {
+    expandShot(shot);
     flashHighlight(shot, id);
     // Let the highlight apply before scrolling into view.
     window.setTimeout(() => {
@@ -496,17 +518,40 @@ export default function ResultsScreen({
 
           return (
             <section key={label} id={`shot-${si}`} className="mt-10 scroll-mt-6">
-              <div className="mb-4 flex flex-wrap items-center gap-3">
-                <h2 className="text-xl font-semibold tracking-tight text-stone-900">
-                  {label}
-                </h2>
-                <span className="inline-flex items-center rounded-full bg-teal-700 px-3 py-1 text-xs font-semibold text-white">
-                  {meta.arrow}
-                </span>
-                <span className="truncate text-sm text-stone-400">
-                  {item.fileName}
-                </span>
+              <div className="mb-4">
+                <button
+                  type="button"
+                  onClick={() => toggleShot(si)}
+                  aria-expanded={!collapsedShots.has(si)}
+                  className="flex flex-wrap items-center gap-3 text-left"
+                >
+                  <svg
+                    className={`h-5 w-5 shrink-0 text-stone-400 transition-transform ${collapsedShots.has(si) ? "" : "rotate-180"}`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2.5}
+                    stroke="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M19.5 8.25l-7.5 7.5-7.5-7.5"
+                    />
+                  </svg>
+                  <h2 className="text-xl font-semibold tracking-tight text-stone-900">
+                    {label}
+                  </h2>
+                  <span className="inline-flex items-center rounded-full bg-teal-700 px-3 py-1 text-xs font-semibold text-white">
+                    {meta.arrow}
+                  </span>
+                  <span className="truncate text-sm text-stone-400">
+                    {item.fileName}
+                  </span>
+                </button>
               </div>
+              {!collapsedShots.has(si) && (
+                <>
               <p className="mb-6 text-[15px] leading-relaxed text-stone-700">
                 {result.summary}
               </p>
@@ -598,6 +643,8 @@ export default function ResultsScreen({
                   </div>
                 </details>
               ))}
+                </>
+              )}
             </section>
           );
         })}
