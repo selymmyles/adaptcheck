@@ -163,6 +163,9 @@ const RESPONSE_SCHEMA = {
     summary: { type: "string" },
     findings: {
       type: "array",
+      // Bounded: 48 taxonomy checks, each occasionally flagging 2-3 elements.
+      // Without this the model can spiral into hundreds of findings.
+      maxItems: 60,
       items: {
         type: "object",
         properties: {
@@ -345,13 +348,22 @@ async function analyzeOnce(
   }
 
   const data = (await res.json()) as {
-    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+    candidates?: Array<{
+      content?: { parts?: Array<{ text?: string }> };
+      finishReason?: string;
+    }>;
     usageMetadata?: {
       promptTokenCount?: number;
       candidatesTokenCount?: number;
       totalTokenCount?: number;
     };
   };
+  const finishReason = data.candidates?.[0]?.finishReason;
+  if (finishReason === "MAX_TOKENS") {
+    throw new Error(
+      "Gemini hit the output limit before finishing. Try a simpler screenshot.",
+    );
+  }
   const usage = {
     promptTokens: data.usageMetadata?.promptTokenCount ?? 0,
     candidateTokens: data.usageMetadata?.candidatesTokenCount ?? 0,
