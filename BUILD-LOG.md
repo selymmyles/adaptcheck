@@ -328,3 +328,19 @@ screenshot 1:47 → 21s, votes byte-consistent (850/850, 343/343 tokens).
 - Missed search bar + zip/location pill, and nav-bar icon findings: expected
   to follow the direction fix; founder to re-test.
 PIPELINE_VERSION 18.
+
+## 2026-10-12 — Red-pen round 5 (6 screenshots, 35s on Pro)
+
+Speed confirmed at scale: 6 screenshots in 35s end-to-end. "Fix once, apply
+everywhere" rollup landed well with the founder.
+- **Lists and menus were unflaggable**: the taxonomy had NO list or menu
+  check at all — model caught icons inside them but had no container check
+  to return. Added 4 checks (52 total): `comp-list`, `comp-menu`,
+  `a2i-comp-list`, `a2i-comp-menu`, each citing both platforms' docs.
+- **Container-scanning rule**: prompt now requires flagging the container's
+  check in addition to the icons inside it.
+- **False "not a UI screenshot" verdicts** (4 of 6 screens wrongly cleared):
+  the empty-findings escape hatch was too easy. Prompt now treats every
+  image as app UI unless it has NO interface elements at all, and a
+  zero-finding summary must name what was verified as native.
+PIPELINE_VERSION 19.

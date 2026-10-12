@@ -370,6 +370,40 @@ export const TAXONOMY: TaxonomyCategory[] = [
         ],
       },
       {
+        id: "comp-list",
+        check: "Grouped lists",
+        direction: "ios-to-android",
+        sourcePattern:
+          "Inset grouped list: rounded card sections floating on a tinted background, rows with leading icons, labels, and trailing chevrons or values.",
+        targetPattern:
+          "Material list: full-bleed rows from edge to edge with dividers, section headers as list subheaders — no inset rounded card floating on a tinted background.",
+        rationale:
+          "The inset grouped list is one of the most recognizable iOS patterns. Material lists are flat and full-bleed; keeping the floating card with side margins reads instantly as an iOS port, even when every row icon is swapped.",
+        fix:
+          "Change the inset grouped list to a flat Material list: full-bleed rows with dividers and subheaders, no floating card.",
+        sources: [
+          { label: "Apple HIG — Lists and tables", url: "https://developer.apple.com/design/human-interface-guidelines/lists-and-tables" },
+          { label: "Material 3 — Lists", url: "https://m3.material.io/components/lists/overview" },
+        ],
+      },
+      {
+        id: "comp-menu",
+        check: "Pop-up menus",
+        direction: "ios-to-android",
+        sourcePattern:
+          "iOS pop-up/context menu: floating rounded card anchored to a control, rows with labels and trailing SF Symbol icons.",
+        targetPattern:
+          "Material menu: standard menu container (shape, elevation, surface color), items with LEADING icons and labels; anchored dropdown or overflow menu.",
+        rationale:
+          "iOS menus put icons on the trailing edge inside a distinctly rounded, translucent card. Material menus lead with the icon and use the opaque menu container — a trailing-icon floating card is a visible port tell even when the glyphs are swapped.",
+        fix:
+          "Change the iOS pop-up menu to a Material menu: leading icons, standard menu container and elevation.",
+        sources: [
+          { label: "Apple HIG — Menus", url: "https://developer.apple.com/design/human-interface-guidelines/menus" },
+          { label: "Material 3 — Menus", url: "https://m3.material.io/components/menus/overview" },
+        ],
+      },
+      {
         id: "comp-fab",
         check: "Floating action button",
         direction: "ios-to-android",
@@ -533,6 +567,40 @@ export const TAXONOMY: TaxonomyCategory[] = [
         sources: [
           { label: "Apple HIG — Lists and tables", url: "https://developer.apple.com/design/human-interface-guidelines/lists-and-tables" },
           { label: "Material 3 — Cards", url: "https://m3.material.io/components/cards/overview" },
+        ],
+      },
+      {
+        id: "a2i-comp-list",
+        check: "Lists → grouped lists",
+        direction: "android-to-ios",
+        sourcePattern:
+          "Flat full-bleed Material list: edge-to-edge rows with dividers, leading icons or avatars on a single surface.",
+        targetPattern:
+          "iOS list style for the context: inset grouped list (Settings-style screens) with rounded sections, or a plain list with inset separators; trailing chevron marks navigation rows.",
+        rationale:
+          "The flat full-bleed list is Material's default; on iOS, settings and content lists use grouped or plain styles with inset separators. Keeping the Android list untouched reads as a port.",
+        fix:
+          "Change the flat Material list to the iOS grouped list style with inset separators.",
+        sources: [
+          { label: "Material 3 — Lists", url: "https://m3.material.io/components/lists/overview" },
+          { label: "Apple HIG — Lists and tables", url: "https://developer.apple.com/design/human-interface-guidelines/lists-and-tables" },
+        ],
+      },
+      {
+        id: "a2i-comp-menu",
+        check: "Menus → iOS menus",
+        direction: "android-to-ios",
+        sourcePattern:
+          "Material menu: opaque container, items with leading icons, dividers between groups.",
+        targetPattern:
+          "iOS menu: floating rounded card anchored to the control, items with TRAILING SF Symbol icons, separators between groups.",
+        rationale:
+          "Material leads menu items with icons; iOS menus trail them and float as a rounded card. A leading-icon opaque menu on iOS is a clear port tell.",
+        fix:
+          "Change the Material menu to an iOS menu: trailing icons, floating rounded card.",
+        sources: [
+          { label: "Material 3 — Menus", url: "https://m3.material.io/components/menus/overview" },
+          { label: "Apple HIG — Menus", url: "https://developer.apple.com/design/human-interface-guidelines/menus" },
         ],
       },
       {
