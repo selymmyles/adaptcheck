@@ -107,6 +107,10 @@ export default function AnalyzingView({ items }: AnalyzingViewProps) {
         <p className="text-base font-medium text-stone-900">
           Analyzing {items.length === 1 ? "your screenshot" : `${items.length} screenshots`}
         </p>
+        <p className="mt-1 text-sm text-stone-500">
+          Deep check takes 1–2 minutes per screenshot — every finding is
+          verified three times before it shows up.
+        </p>
         <ol className="mt-6 space-y-5">
           {items.map((item) => (
             <FileRow key={item.fileName} item={item} />
