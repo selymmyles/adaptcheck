@@ -273,6 +273,12 @@ export default function ResultsScreen({
     }, 30);
   };
 
+  const jumpToScreenshot = (shot: number) => {
+    document
+      .getElementById(`shot-${shot}`)
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   const copyChecklist = async () => {
     try {
       await navigator.clipboard.writeText(toMarkdown(items));
@@ -415,7 +421,7 @@ export default function ResultsScreen({
           const label = `Screenshot ${si + 1}`;
           if (item.status === "analyzing") {
             return (
-              <section key={label} className="mt-8">
+              <section key={label} id={`shot-${si}`} className="mt-8 scroll-mt-6">
                 <h2 className="text-lg font-semibold tracking-tight text-stone-900">
                   {label}
                   <span className="ml-2 truncate text-sm font-normal text-stone-400">
@@ -435,7 +441,7 @@ export default function ResultsScreen({
           }
           if (item.status !== "done" || !item.result) {
             return (
-              <section key={label} className="mt-8">
+              <section key={label} id={`shot-${si}`} className="mt-8 scroll-mt-6">
                 <h2 className="text-lg font-semibold tracking-tight text-stone-900">
                   {label}
                   <span className="ml-2 truncate text-sm font-normal text-stone-400">
@@ -489,7 +495,7 @@ export default function ResultsScreen({
           );
 
           return (
-            <section key={label} className="mt-10">
+            <section key={label} id={`shot-${si}`} className="mt-10 scroll-mt-6">
               <div className="mb-4 flex flex-wrap items-center gap-3">
                 <h2 className="text-xl font-semibold tracking-tight text-stone-900">
                   {label}
@@ -600,6 +606,7 @@ export default function ResultsScreen({
       <ContentIndex
         shots={indexShots}
         onJump={(si, id) => jumpToFinding(si, id)}
+        onJumpToShot={jumpToScreenshot}
       />
     </div>
   );

@@ -16,6 +16,7 @@ export interface IndexShot {
 interface ContentIndexProps {
   shots: IndexShot[];
   onJump: (shotIndex: number, findingId: string) => void;
+  onJumpToShot: (shotIndex: number) => void;
 }
 
 /** One collapsible item: header with count, expands to finding titles. */
@@ -83,6 +84,7 @@ function IndexItemGroup({
 function IndexBody({
   shots,
   onJump,
+  onJumpToShot,
 }: ContentIndexProps) {
   return (
     <nav aria-label="Findings index" className="text-sm">
@@ -94,15 +96,22 @@ function IndexBody({
           );
           return (
             <li key={shot.label}>
-              <p className="font-semibold text-stone-900">
-                {shot.label}
-                <span className="ml-1.5 font-normal text-stone-400">
-                  {total}
+              <button
+                type="button"
+                onClick={() => onJumpToShot(si)}
+                className="block text-left"
+                title={`Jump to ${shot.label}`}
+              >
+                <span className="font-semibold text-stone-900 hover:text-teal-800 hover:underline">
+                  {shot.label}
+                  <span className="ml-1.5 font-normal text-stone-400">
+                    {total}
+                  </span>
                 </span>
-              </p>
-              <p className="truncate text-xs text-stone-400" title={shot.fileName}>
-                {shot.fileName}
-              </p>
+                <span className="block truncate text-xs text-stone-400" title={shot.fileName}>
+                  {shot.fileName}
+                </span>
+              </button>
               {!shot.ready ? (
                 <p className="mt-1 text-xs italic text-stone-400">
                   Analysis failed — no findings.
