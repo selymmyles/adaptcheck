@@ -38,7 +38,7 @@ export const GEMINI_MODEL = "gemini-3.8-flash";
  * 8 = FAB input-cluster -> Search Bar guidance; back-gesture + icon source order fixes,
  * 9 = Search Bar fix names the SearchView modal pattern.
  */
-export const PIPELINE_VERSION = 13;
+export const PIPELINE_VERSION = 16;
 
 export interface ModelRegion {
   x_min: number;
@@ -321,14 +321,18 @@ async function analyzeOnce(
       (err as { statusHint?: number }).statusHint = 429;
       throw err;
     }
-    // 503/500 from Gemini is transient capacity pressure — retry up to twice
-    // with backoff, then surface a "busy, try again" message instead of a
-    // generic failure.
-    if ((res.status === 503 || res.status === 500) && attempt < 3) {
+    // 503/500/524 from Gemini is transient capacity pressure — retry up to
+    // twice with backoff, then surface a "busy, try again" message instead of
+    // a generic failure. 524 is Cloudflare's edge timing out (100s) when
+    // parallel batches queue up at Google's API.
+    if (
+      (res.status === 503 || res.status === 500 || res.status === 524) &&
+      attempt < 3
+    ) {
       await new Promise((r) => setTimeout(r, 2500 * attempt));
       return analyzeOnce(apiKey, mimeType, imageBase64, request, attempt + 1);
     }
-    if (res.status === 503 || res.status === 500) {
+    if (res.status === 503 || res.status === 500 || res.status === 524) {
       const err = new Error("Gemini is busy right now. Try again in a minute.");
       (err as { statusHint?: number }).statusHint = 503;
       throw err;
@@ -759,13 +763,20 @@ export async function analyzeWithGemini(
         s.status === "fulfilled",
     )
     .map((s) => s.value);
-  // Need a majority of runs to succeed; otherwise surface the first failure
-  // (preserves the distinct 429 / busy / 402 messaging from analyzeOnce).
+  // Need a majority of runs to succeed; otherwise surface the distinct
+  // failure reasons (preserves the 429 / busy / 402 messaging from analyzeOnce).
   if (ok.length < Math.ceil(CONSENSUS_RUNS / 2)) {
-    const first = settled.find(
-      (s): s is PromiseRejectedResult => s.status === "rejected",
+    const reasons = settled
+      .filter(
+        (s): s is PromiseRejectedResult => s.status === "rejected",
+      )
+      .map((s) =>
+        s.reason instanceof Error ? s.reason.message : "unknown error",
+      );
+    const summary = [...new Set(reasons)].join(" | ");
+    throw new Error(
+      `Analysis failed (${ok.length}/${CONSENSUS_RUNS} votes succeeded): ${summary}`,
     );
-    throw first ? first.reason : new Error("Analysis failed. Please try again.");
   }
 
   // Direction first: the judge needs it to look up check definitions.

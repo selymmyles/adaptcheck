@@ -7,7 +7,7 @@ import { analyzeDesign, type AnalysisResult } from "./lib/mockAnalysis";
 type Phase = "upload" | "analyzing" | "results";
 
 /** Max concurrent /api/analyze calls — paid Tier 1 quotas are generous. */
-const MAX_CONCURRENT = 4;
+const MAX_CONCURRENT = 2;
 
 const delay = (ms: number) =>
   new Promise<void>((resolve) => setTimeout(resolve, ms));

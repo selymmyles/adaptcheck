@@ -150,7 +150,10 @@ async function handleAnalyze(
         503,
       );
     }
-    return json({ error: "Analysis failed. Please try again." }, 502);
+    // Pass through the specific failure reason (vote breakdown, parse errors)
+    // instead of a generic message — it tells the user whether to retry or
+    // wait, and it makes batch failures diagnosable.
+    return json({ error: message || "Analysis failed. Please try again." }, 502);
   }
 }
 
