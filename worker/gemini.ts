@@ -163,6 +163,9 @@ const RESPONSE_SCHEMA = {
     summary: { type: "string" },
     findings: {
       type: "array",
+      // Hard bound: prevents runaway generations (observed 16K+ tokens /
+      // 300+ findings on a single vote). 40 is ~3x a normal finding count.
+      maxItems: 40,
       items: {
         type: "object",
         properties: {
@@ -281,7 +284,7 @@ function validRegion(value: unknown): value is ModelRegion {
 export interface BackendAnalysisResult {
   summary: string;
   /** Token counts for spend monitoring (not sent to the client). */
-  usage: { promptTokens: number; candidateTokens: number };
+  usage: { promptTokens: number; candidateTokens: number; cachedTokens: number };
   findings: ResolvedFinding[];
   /** The direction the findings belong to (== detected for auto). */
   direction: AnalysisDirection;
@@ -300,6 +303,7 @@ async function analyzeOnce(
   request: DirectionRequest,
   attempt = 1,
 ): Promise<BackendAnalysisResult> {
+  const t0 = Date.now();
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`,
     {
@@ -368,6 +372,7 @@ async function analyzeOnce(
       promptTokenCount?: number;
       candidatesTokenCount?: number;
       totalTokenCount?: number;
+      cachedContentTokenCount?: number;
     };
   };
   const finishReason = data.candidates?.[0]?.finishReason;
@@ -379,7 +384,11 @@ async function analyzeOnce(
   const usage = {
     promptTokens: data.usageMetadata?.promptTokenCount ?? 0,
     candidateTokens: data.usageMetadata?.candidatesTokenCount ?? 0,
+    cachedTokens: data.usageMetadata?.cachedContentTokenCount ?? 0,
   };
+  console.log(
+    `vote took ${Date.now() - t0}ms (prompt=${usage.promptTokens}, cached=${usage.cachedTokens}, out=${usage.candidateTokens})`,
+  );
   const text =
     data.candidates?.[0]?.content?.parts
       ?.map((p) => p.text ?? "")
