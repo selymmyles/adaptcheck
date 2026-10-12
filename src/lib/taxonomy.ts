@@ -111,15 +111,16 @@ export const TAXONOMY: TaxonomyCategory[] = [
     checks: [
       {
         id: "nav-back-behavior",
-        check: "Back gesture and behavior",
+        check: "Top navigation bar and back behavior",
         direction: "ios-to-android",
         sourcePattern:
-          "Edge-swipe from the left plus an in-app back chevron; interactive pop transition tied to the gesture.",
+          "Top-of-screen navigation cluster — in-app back chevron, title, and right-side action buttons as separate floating elements — plus an edge-swipe pop gesture.",
         targetPattern:
-          "System predictive back (Android 14+) that previews the previous destination; back applies to the whole task stack.",
-        rationale: "Android relies on the system back gesture with predictive-back previews. A duplicate iOS-style edge-swipe pop gesture and per-screen chevrons duplicate affordances; only non-standard custom back interception (not a normal leading back arrow) disables predictive-back animations.",
+          "A single Material top app bar: the back chevron becomes the navigation icon and the right-side buttons become actions, all in one bar. System predictive back (Android 14+) replaces the in-app edge-swipe pop.",
+        rationale:
+          "On iOS the top buttons are separate elements; on Material they become one top app bar — navigation icon plus actions in a single bar. The in-app edge-swipe pop duplicates the system predictive-back gesture.",
         fix:
-          "Change the in-app back chevron and edge-swipe pop to the system predictive back gesture.",
+          "Change the floating top buttons to a Material top app bar — the back chevron becomes the navigation icon and the right-side buttons become actions — and use the system predictive back gesture instead of the in-app edge-swipe pop.",
         sources: [
           { label: "Android Developers — Predictive back gesture", url: "https://developer.android.com/guide/navigation/custom-back/predictive-back-gesture" },
           { label: "Material 3 — Top app bar guidelines", url: "https://m3.material.io/components/app-bars/guidelines" },

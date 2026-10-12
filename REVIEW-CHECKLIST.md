@@ -6,9 +6,9 @@ Format per check: **Title** — source pattern → target pattern. **Fix:** the 
 
 ## Navigation — iOS → Android (4 checks)
 
-- **Back gesture and behavior** `[nav-back-behavior]` — Edge-swipe from the left plus an in-app back chevron; interactive pop transition tied to the gesture. → System predictive back (Android 14+) that previews the previous destination; back applies to the whole task stack.
-  - **Fix:** Change the in-app back chevron and edge-swipe pop to the system predictive back gesture.
-  - *Why: Android relies on the system back gesture with predictive-back previews. A duplicate iOS-style edge-swipe pop gesture and per-screen chevrons duplicate affordances; only non-standard custom back interception (not a normal leading back arrow) disables predictive-back animations.*
+- **Top navigation bar and back behavior** `[nav-back-behavior]` — Top-of-screen navigation cluster — in-app back chevron, title, and right-side action buttons as separate floating elements — plus an edge-swipe pop gesture. → A single Material top app bar: the back chevron becomes the navigation icon and the right-side buttons become actions, all in one bar. System predictive back (Android 14+) replaces the in-app edge-swipe pop.
+  - **Fix:** Change the floating top buttons to a Material top app bar — the back chevron becomes the navigation icon and the right-side buttons become actions — and use the system predictive back gesture instead of the in-app edge-swipe pop.
+  - *Why: On iOS the top buttons are separate elements; on Material they become one top app bar — navigation icon plus actions in a single bar. The in-app edge-swipe pop duplicates the system predictive-back gesture.*
   - Sources: [Material 3 — Top app bar guidelines](https://m3.material.io/components/app-bars/guidelines); [Android Developers — Predictive back gesture](https://developer.android.com/guide/navigation/custom-back/predictive-back-gesture); [Apple HIG — Toolbars](https://developer.apple.com/design/human-interface-guidelines/toolbars)
 - **Bottom tab bar styling** `[nav-tab-bar]` — Translucent bottom tab bar, icon above label, no selection container. → Material navigation bar on a tonal surface container with an active-indicator pill behind the selected icon.
   - **Fix:** Change the translucent iOS tab bar to the Material navigation bar with the active-indicator pill.

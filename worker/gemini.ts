@@ -38,7 +38,7 @@ export const GEMINI_MODEL = "gemini-3.8-flash";
  * 8 = FAB input-cluster -> Search Bar guidance; back-gesture + icon source order fixes,
  * 9 = Search Bar fix names the SearchView modal pattern.
  */
-export const PIPELINE_VERSION = 10;
+export const PIPELINE_VERSION = 12;
 
 export interface ModelRegion {
   x_min: number;
@@ -56,6 +56,11 @@ export interface ModelFinding {
    * ("home") for icon checks. Used for deep links; never trusted blindly.
    */
   detail?: string;
+  /**
+   * Model-supplied counterpart icon name on the target platform (exact match
+   * or closest equivalent). Sanitized before use.
+   */
+  counterpart?: string;
 }
 
 interface ModelResult {
@@ -114,8 +119,9 @@ export function buildSystemPrompt(request: DirectionRequest): string {
     "- If the same check applies to multiple DISTINCT elements (e.g. two separate floating buttons), return one finding per element with the same check_id and a different region. Never return the same element twice.",
     "- Scan navigation bars, tab bars, and toolbars icon by icon: each icon that doesn't match the target platform's iconography gets its own finding, even when the icons are small.",
     "- When a finding concerns a group of related elements (e.g. an input bar plus its adjacent action buttons), draw the region around the WHOLE group, not one button.",
-    '- If a finding is about a specific icon, put the icon\'s common name in "detail" (e.g. "home", "search", "settings").',
+    '- If a finding is about a specific icon, you MUST put the exact icon name in "detail" (the SF Symbol name like "magnifyingglass", or the Material Symbol name like "search") and its target-platform counterpart in "counterpart" (exact match, or the closest equivalent if none exists). Never leave these empty on an icon finding.',
     "- The phone's own OS chrome is never a finding: the system status bar (time, battery, signal/wifi icons), the home indicator, and the system navigation bar/gestures belong to the device, not the app. Ignore them completely.",
+    "- The buttons across the top of an iOS screen (back chevron, title, right-side actions) are ONE navigation unit, not separate elements: return a single finding with the region drawn around the whole top bar. On Material that becomes one top app bar (navigation icon + actions) — never separate floating buttons.",
     "- If the image is not an app UI screenshot, or no checks apply, return an empty findings array and say so in the summary.",
     "- Order findings in the same order the checks appear below (they are grouped by category).",
     "",
@@ -172,6 +178,11 @@ const RESPONSE_SCHEMA = {
             required: ["x_min", "y_min", "x_max", "y_max"],
           },
           detail: { type: "string" },
+          counterpart: {
+            type: "string",
+            description:
+              "For icon findings: the exact counterpart icon name on the target platform, or the closest available equivalent if no exact match exists.",
+          },
         },
         required: ["check_id", "region"],
       },
@@ -221,6 +232,9 @@ export interface ResolvedFinding {
   deepLink?: string;
   /** Counterpart name where no web page exists (e.g. the SF Symbol name). */
   counterpartName?: string;
+  /** True when the counterpart came from the curated map (exact); false when
+   *  it's the model's closest-equivalent recommendation. */
+  counterpartExact?: boolean;
 }
 
 /**
@@ -402,6 +416,7 @@ async function analyzeOnce(
         : {}),
       ...(region ? { region } : {}),
       ...(f.detail ? { detail: sanitizeDetail(f.detail) } : {}),
+      ...(f.counterpart ? { counterpart: sanitizeDetail(f.counterpart) } : {}),
     });
   }
 
@@ -454,7 +469,7 @@ const SF_TO_MATERIAL_ICONS: Record<string, string> = {
   mic: "mic",
   phone: "call",
   message: "chat",
-  ellipsis: "more_vert",
+  ellipsis: "more_horiz",
   "line.3.horizontal": "menu",
   "arrow.left": "arrow_back",
   "arrow.right": "arrow_forward",
@@ -520,19 +535,35 @@ function materialIconUrl(materialName: string): string {
 function iconCounterparts(
   direction: AnalysisDirection,
   detail: string | undefined,
-): { deepLink?: string; counterpartName?: string } {
+  modelCounterpart: string | undefined,
+): { deepLink?: string; counterpartName?: string; counterpartExact?: boolean } {
   if (!detail) return {};
   if (direction === "ios-to-android") {
     // Screenshot shows an SF Symbol; dev needs the Material equivalent.
-    const material = SF_TO_MATERIAL_ICONS[detail] ?? detail.replace(/\./g, "_");
+    const exact = detail in SF_TO_MATERIAL_ICONS;
+    const material =
+      SF_TO_MATERIAL_ICONS[detail] ?? modelCounterpart ?? detail.replace(/\./g, "_");
     return {
       deepLink: materialIconUrl(material),
       counterpartName: material,
+      counterpartExact: exact,
     };
   }
   // Screenshot shows a Material Symbol; dev needs the SF Symbol name.
-  const sf = MATERIAL_TO_SF_ICONS[detail] ?? detail;
-  return { counterpartName: sf };
+  const exact = detail in MATERIAL_TO_SF_ICONS;
+  const sf = MATERIAL_TO_SF_ICONS[detail] ?? modelCounterpart ?? detail;
+  return { counterpartName: sf, counterpartExact: exact };
+}
+
+/** Dynamic fix line for icon findings: names the exact swap. */
+function iconFix(
+  direction: AnalysisDirection,
+  detail: string,
+  counterpartName: string,
+): string {
+  return direction === "ios-to-android"
+    ? `Change the iOS ${detail} icon to the Material ${counterpartName} icon.`
+    : `Change the Material ${detail} icon to the iOS ${counterpartName} icon.`;
 }
 
 /** Most frequent value; ties go to the first seen. */
@@ -739,6 +770,7 @@ export async function analyzeWithGemini(
     regions: ModelRegion[];
     finding: ResolvedFinding;
     details: string[];
+    counterparts: string[];
   }[] = [];
   for (const run of ok) {
     for (const f of run.findings) {
@@ -751,6 +783,7 @@ export async function analyzeWithGemini(
         cluster.count++;
         if (f.region) cluster.regions.push(f.region);
         if (f.detail) cluster.details.push(f.detail);
+        if (f.counterpart) cluster.counterparts.push(f.counterpart);
       } else {
         clusters.push({
           id: f.id,
@@ -758,6 +791,7 @@ export async function analyzeWithGemini(
           regions: f.region ? [f.region] : [],
           finding: f,
           details: f.detail ? [f.detail] : [],
+          counterparts: f.counterpart ? [f.counterpart] : [],
         });
       }
     }
@@ -793,9 +827,10 @@ export async function analyzeWithGemini(
 
   const findings: ResolvedFinding[] = kept.map((c) => {
     const detail = mostCommon(c.details);
+    const modelCounterpart = mostCommon(c.counterparts);
     const links =
       ICON_CHECK_IDS.has(c.id) && detail
-        ? iconCounterparts(direction, detail)
+        ? iconCounterparts(direction, detail, modelCounterpart)
         : {};
     return {
       ...c.finding,
@@ -803,6 +838,13 @@ export async function analyzeWithGemini(
       ...(detail ? { detail } : {}),
       ...(links.deepLink ? { deepLink: links.deepLink } : {}),
       ...(links.counterpartName ? { counterpartName: links.counterpartName } : {}),
+      ...(links.counterpartExact !== undefined
+        ? { counterpartExact: links.counterpartExact }
+        : {}),
+      // Name the exact swap instead of the generic library fix.
+      ...(detail && links.counterpartName
+        ? { fix: iconFix(direction, detail, links.counterpartName) }
+        : {}),
     };
   });
   findings.sort((a, b) => (CHECK_ORDER[a.id] ?? 0) - (CHECK_ORDER[b.id] ?? 0));

@@ -336,8 +336,9 @@ export default function FindingCard({
 }: {
   finding: Finding;
   direction: AnalysisDirection;
-  /** 1-based position in the screenshot's list; matches the map badge. */
-  number: number;
+  /** 1-based position in the screenshot's list; matches the map badge.
+   *  Undefined for general (unpinned) findings — no badge is shown. */
+  number?: number;
   /** Object URL of the screenshot this finding came from. */
   imageUrl: string;
   /** Whether this card is the current jump/locate highlight target. */
@@ -383,26 +384,27 @@ export default function FindingCard({
           : "border-stone-200"
       }`}
     >
-      {/* Header: number badge + category pill */}
+      {/* Header: number badge (pinned findings only) + category pill */}
       <div className="flex flex-wrap items-center gap-2">
-        {onLocate ? (
-          <button
-            type="button"
-            onClick={onLocate}
-            title="Show on screenshot"
-            aria-label={`Show finding ${number} on the screenshot`}
-            className="flex h-6 w-6 items-center justify-center rounded-full bg-teal-700 text-[11px] font-bold text-white transition-transform hover:scale-110"
-          >
-            {number}
-          </button>
-        ) : (
-          <span
-            className="flex h-6 w-6 items-center justify-center rounded-full bg-stone-200 text-[11px] font-bold text-stone-500"
-            aria-hidden="true"
-          >
-            {number}
-          </span>
-        )}
+        {number !== undefined &&
+          (onLocate ? (
+            <button
+              type="button"
+              onClick={onLocate}
+              title="Show on screenshot"
+              aria-label={`Show finding ${number} on the screenshot`}
+              className="flex h-6 w-6 items-center justify-center rounded-full bg-teal-700 text-[11px] font-bold text-white transition-transform hover:scale-110"
+            >
+              {number}
+            </button>
+          ) : (
+            <span
+              className="flex h-6 w-6 items-center justify-center rounded-full bg-stone-200 text-[11px] font-bold text-stone-500"
+              aria-hidden="true"
+            >
+              {number}
+            </span>
+          ))}
         <span className="rounded-full bg-stone-100 px-2.5 py-0.5 text-xs font-medium text-stone-600">
           {finding.category}
         </span>

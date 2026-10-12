@@ -47,7 +47,8 @@ const iou = (a: Region, b: Region) => {
  *  item (the nav bar plus its icons, the search bar plus its icons), so each
  *  section reads as one thing on screen rather than one taxonomy bucket.
  *  Ordered bottom of screen first (the nav bar is item one); findings without
- *  a region go in a leading "Whole screen" group. */
+ *  a region go in a leading "General" group (unnumbered — only screen-pinned
+ *  findings get numbers). Icon findings always merge into a single item. */
 function groupByItem(
   findings: Finding[],
 ): { name: string; findings: Finding[] }[] {
@@ -95,7 +96,20 @@ function groupByItem(
     clusters.get(r)!.push(f);
   });
 
-  const itemGroups = [...clusters.values()]
+  // Icon findings merge into one item: swapping the icon set reads as a
+  // single task, not one finding per glyph. Clusters that mix icons with
+  // other checks (e.g. tab-bar icons already merged into the tab-bar item)
+  // stay put.
+  const ICON_CHECK_IDS = new Set(["icon-symbols", "a2i-icon-symbols"]);
+  const iconClusters: Finding[][] = [];
+  const otherClusters: Finding[][] = [];
+  for (const fs of clusters.values()) {
+    (fs.every((f) => ICON_CHECK_IDS.has(f.id)) ? iconClusters : otherClusters).push(fs);
+  }
+  const mergedClusters: Finding[][] = [...otherClusters];
+  if (iconClusters.length > 0) mergedClusters.push(iconClusters.flat());
+
+  const itemGroups = mergedClusters
     .map((fs) => {
       // The item is named after its largest region's finding.
       const primary = fs.reduce((a, b) =>
@@ -115,7 +129,7 @@ function groupByItem(
   const groups: { name: string; findings: Finding[] }[] = [];
   if (withoutRegion.length > 0) {
     groups.push({
-      name: "Whole screen",
+      name: "General",
       findings: [...withoutRegion].sort(byCheckOrder),
     });
   }
@@ -386,12 +400,15 @@ export default function ResultsScreen({
           const meta = DIRECTION_META[direction];
           const groups = groupByItem(result.findings);
 
-          // Stable 1..N numbering per screenshot: whole-screen first, then items bottom-up.
+          // Stable 1..N numbering per screenshot: only findings pinned on the
+          // screenshot get numbers (items bottom-up). General findings are
+          // unnumbered — numbering what isn't highlighted would leave gaps.
           const numberByKey = new Map<string, number>();
           {
             let n = 0;
             for (const g of groups)
-              for (const f of g.findings) numberByKey.set(f.key, ++n);
+              for (const f of g.findings)
+                if (f.region) numberByKey.set(f.key, ++n);
           }
           const markers: MapMarker[] = result.findings.flatMap((f) =>
             f.region
@@ -497,7 +514,7 @@ export default function ResultsScreen({
                         <FindingCard
                           finding={f}
                           direction={direction}
-                          number={numberByKey.get(f.key) ?? 0}
+                          number={numberByKey.get(f.key)}
                           imageUrl={item.imageUrl}
                           active={
                             highlight?.shot === si && highlight.id === f.key
