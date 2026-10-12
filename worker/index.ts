@@ -38,6 +38,47 @@ interface Env {
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // ~10MB
 const ALLOWED_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
 
+/**
+ * Per-IP rate limiting via KV (protects the prepaid Gemini balance).
+ * Two sliding windows: burst (per minute) + sustained (per hour).
+ * Generous enough for heavy dogfooding (10-screenshot batches); tight
+ * enough to make bulk abuse uneconomical. The $20 prepaid hard cap is
+ * the ultimate backstop.
+ */
+const RATE_LIMITS = [
+  { windowSec: 60, max: 20 }, // burst: 20 analyses/minute per IP
+  { windowSec: 3600, max: 100 }, // sustained: 100 analyses/hour per IP
+];
+
+async function checkRateLimit(
+  kv: KVNamespace,
+  ip: string,
+): Promise<{ allowed: boolean; retryAfterSec?: number }> {
+  const now = Math.floor(Date.now() / 1000);
+  try {
+    for (const { windowSec, max } of RATE_LIMITS) {
+      const bucket = Math.floor(now / windowSec);
+      const key = `rl:${ip}:${windowSec}:${bucket}`;
+      const raw = await kv.get(key);
+      const count = raw ? parseInt(raw, 10) || 0 : 0;
+      if (count >= max) {
+        return { allowed: false, retryAfterSec: (bucket + 1) * windowSec - now };
+      }
+    }
+    for (const { windowSec } of RATE_LIMITS) {
+      const bucket = Math.floor(now / windowSec);
+      const key = `rl:${ip}:${windowSec}:${bucket}`;
+      const raw = await kv.get(key);
+      const count = raw ? parseInt(raw, 10) || 0 : 0;
+      await kv.put(key, String(count + 1), { expirationTtl: windowSec * 2 });
+    }
+  } catch (e) {
+    // If KV is unavailable, fail open (don't break the app over the limiter).
+    console.error("rate limit check failed:", e);
+  }
+  return { allowed: true };
+}
+
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
@@ -72,6 +113,30 @@ async function handleAnalyze(
       { error: "Server misconfigured: GEMINI_API_KEY is not set." },
       500,
     );
+  }
+
+  // Rate limit before any expensive work (Gemini calls cost real money).
+  const clientIp =
+    request.headers.get("CF-Connecting-IP") ||
+    request.headers.get("X-Forwarded-For")?.split(",")[0]?.trim() ||
+    "unknown";
+  if (clientIp !== "unknown") {
+    const rl = await checkRateLimit(env.janus_usage, clientIp);
+    if (!rl.allowed) {
+      return new Response(
+        JSON.stringify({
+          error:
+            "Too many analyses from this address — please wait a bit and try again.",
+        }),
+        {
+          status: 429,
+          headers: {
+            "Content-Type": "application/json",
+            "Retry-After": String(rl.retryAfterSec ?? 60),
+          },
+        },
+      );
+    }
   }
 
   let form: FormData;
