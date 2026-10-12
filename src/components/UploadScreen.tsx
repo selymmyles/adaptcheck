@@ -12,11 +12,6 @@ interface PickedFile {
   preview: string;
 }
 
-function formatSize(bytes: number): string {
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
 export default function UploadScreen({ onAnalyze }: UploadScreenProps) {
   const [picked, setPicked] = useState<PickedFile[]>([]);
   const [dragging, setDragging] = useState(false);
@@ -127,32 +122,31 @@ export default function UploadScreen({ onAnalyze }: UploadScreenProps) {
       )}
 
       {picked.length > 0 && (
-        <ul className="mt-4 space-y-2">
+        <ul className="mt-4 grid grid-cols-5 gap-3">
           {picked.map((p, i) => (
             <li
               key={`${p.file.name}-${i}`}
-              className="flex items-center gap-4 rounded-2xl border border-stone-200 bg-white p-4"
+              className="group relative overflow-hidden rounded-xl border border-stone-200 bg-white"
             >
               <img
                 src={p.preview}
                 alt={`Screenshot ${i + 1} preview`}
-                className="h-24 w-auto rounded-lg border border-stone-200 object-cover"
+                className="h-32 w-full object-cover"
               />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-stone-900">
-                  {p.file.name}
-                </p>
-                <p className="text-sm text-stone-500">
-                  {formatSize(p.file.size)}
-                </p>
-              </div>
               <button
                 type="button"
                 onClick={() => removeFile(i)}
-                className="rounded-lg px-3 py-1.5 text-sm font-medium text-stone-500 hover:bg-stone-100 hover:text-stone-800"
+                aria-label={`Remove ${p.file.name}`}
+                className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-sm leading-none text-white opacity-0 transition-opacity hover:bg-black/80 group-hover:opacity-100"
               >
-                Remove
+                ×
               </button>
+              <p
+                className="truncate px-2 py-1.5 text-center text-[11px] text-stone-500"
+                title={p.file.name}
+              >
+                {p.file.name}
+              </p>
             </li>
           ))}
         </ul>
