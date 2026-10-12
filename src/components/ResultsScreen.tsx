@@ -48,7 +48,8 @@ const iou = (a: Region, b: Region) => {
  *  section reads as one thing on screen rather than one taxonomy bucket.
  *  Ordered bottom of screen first (the nav bar is item one); findings without
  *  a region go in a leading "General" group (unnumbered — only screen-pinned
- *  findings get numbers). Icon findings always merge into a single item. */
+ *  findings get numbers). Icon findings merge into a single item per
+ *  screen area (nearby icons together; distant icons separate). */
 function groupByItem(
   findings: Finding[],
 ): { name: string; findings: Finding[] }[] {
@@ -106,8 +107,42 @@ function groupByItem(
   for (const fs of clusters.values()) {
     (fs.every((f) => ICON_CHECK_IDS.has(f.id)) ? iconClusters : otherClusters).push(fs);
   }
-  const mergedClusters: Finding[][] = [...otherClusters];
-  if (iconClusters.length > 0) mergedClusters.push(iconClusters.flat());
+  // Icon findings merge into one item ONLY when they're near each other
+  // (same toolbar, same list, same nav row). Icons in different parts of
+  // the screen — top-of-page buttons vs a mid-page button — are separate
+  // items, because they're separate components to fix.
+  const boxGap = (a: Region, b: Region): number => {
+    const dx = Math.max(0, Math.max(a.x_min - b.x_max, b.x_min - a.x_max));
+    const dy = Math.max(0, Math.max(a.y_min - b.y_max, b.y_min - a.y_max));
+    return Math.hypot(dx, dy);
+  };
+  const iconParent = iconClusters.map((_, i) => i);
+  const iconFind = (i: number): number =>
+    iconParent[i] === i ? i : (iconParent[i] = iconFind(iconParent[i]));
+  for (let i = 0; i < iconClusters.length; i++) {
+    for (let j = i + 1; j < iconClusters.length; j++) {
+      const near = iconClusters[i].some((fi) =>
+        iconClusters[j].some(
+          (fj) => boxGap(fi.region!, fj.region!) <= 90,
+        ),
+      );
+      if (near) {
+        const pi = iconFind(i);
+        const pj = iconFind(j);
+        if (pi !== pj) iconParent[pi] = pj;
+      }
+    }
+  }
+  const iconGroups = new Map<number, Finding[]>();
+  iconClusters.forEach((fs, i) => {
+    const r = iconFind(i);
+    if (!iconGroups.has(r)) iconGroups.set(r, []);
+    iconGroups.get(r)!.push(...fs);
+  });
+  const mergedClusters: Finding[][] = [
+    ...otherClusters,
+    ...iconGroups.values(),
+  ];
 
   const itemGroups = mergedClusters
     .map((fs) => {
@@ -252,6 +287,10 @@ export default function ResultsScreen({
     (n, it) => n + (it.result?.findings.length ?? 0),
     0,
   );
+  const doneItems = items.filter((it) => it.status === "done" && it.result);
+  const screensNeedingWork = doneItems.filter(
+    (it) => (it.result?.findings.length ?? 0) > 0,
+  ).length;
 
   // Cross-screen patterns: checks appearing on 2+ screenshots. Fixing these
   // once (theme, design system) clears them everywhere — the real value of a
@@ -301,9 +340,13 @@ export default function ResultsScreen({
             <span className="font-semibold text-stone-900">
               {totalFindings} {totalFindings === 1 ? "finding" : "findings"}
             </span>{" "}
-            across {items.length}{" "}
-            {items.length === 1 ? "screenshot" : "screenshots"} — every one
-            needs addressing for a native look.
+            across {doneItems.length}{" "}
+            {doneItems.length === 1 ? "screenshot" : "screenshots"}
+            {screensNeedingWork === doneItems.length
+              ? " — every one needs addressing for a native look."
+              : screensNeedingWork === 0
+                ? " — every screen already reads native."
+                : ` — ${screensNeedingWork} of ${doneItems.length} screens need addressing; the rest already read native.`}
           </p>
           <div className="mt-5 flex flex-col gap-2 sm:flex-row">
             <button

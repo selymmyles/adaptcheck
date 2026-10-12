@@ -923,7 +923,6 @@ export const TAXONOMY: TaxonomyCategory[] = [
           "Change SF Symbols to Material Symbols (outlined, rounded, or sharp).",
         sources: [
           { label: "Apple — SF Symbols", url: "https://developer.apple.com/sf-symbols/" },
-          { label: "Apple — Xcode and Apple SDKs Agreement", url: "https://www.apple.com/legal/sla/docs/xcode.pdf" },
           { label: "Material 3 — Icons overview", url: "https://m3.material.io/styles/icons/overview" },
           { label: "Google — material-design-icons (Apache 2.0)", url: "https://github.com/google/material-design-icons" },
         ],
@@ -959,9 +958,9 @@ export const TAXONOMY: TaxonomyCategory[] = [
         fix:
           "Change Material Symbols to SF Symbols, matching weight to the text style.",
         sources: [
-          { label: "Apple HIG — SF Symbols", url: "https://developer.apple.com/design/human-interface-guidelines/sf-symbols/overview/" },
-          { label: "Google — material-design-icons (Apache 2.0)", url: "https://github.com/google/material-design-icons" },
+          { label: "Apple HIG — SF Symbols", url: "https://developer.apple.com/design/human-interface-guidelines/sf-symbols" },
           { label: "Material 3 — Icons overview", url: "https://m3.material.io/styles/icons/overview" },
+          { label: "Google — material-design-icons (Apache 2.0)", url: "https://github.com/google/material-design-icons" },
         ],
       },
       {

@@ -344,3 +344,29 @@ everywhere" rollup landed well with the founder.
   image as app UI unless it has NO interface elements at all, and a
   zero-finding summary must name what was verified as native.
 PIPELINE_VERSION 19.
+
+## 2026-10-12 — Red-pen round 6 (Android batch, a2i direction)
+
+First android-to-ios batch. Screenshot 2 fully correct; screenshot 1 mostly.
+- **Banner lied**: static "every one needs addressing" even when screens had
+  0 findings. Banner now counts done screens and says "N of M need
+  addressing; the rest already read native" when mixed.
+- **Icon doc links broken (a2i)**: SF Symbols source URL had a bogus
+  `/overview/` suffix; the GitHub icon repo was listed before the M3 icons
+  doc and won the link slot. Reordered + URL fixed. Also removed a stray
+  Xcode legal-PDF source from the i2a icon check.
+- **Source icon names missing (a2i)**: model returned counterparts but no
+  `detail`, so cards said "Icon not identified" and exact pairs (history ↔
+  clock.arrow.circlepath, in the map all along) showed as "Closest match".
+  Prompt now demands the screenshot-platform library name with Material
+  examples; sanitizeDetail normalizes spaces→underscores instead of
+  rejecting multi-word answers.
+- **Icon items over-merged**: ALL icon findings collapsed into one item, so
+  top-of-page buttons and a mid-page button shared an item. Icon clusters
+  now merge only when their regions are near (gap ≤ 90/1000) — separate
+  screen areas get separate items.
+- **Button missed around a flagged icon**: container rule now names buttons
+  explicitly — an icon inside a button doesn't discharge the button check.
+- **Photos of screens dismissed as "no interface"**: rule now says a
+  photograph OF a screen counts; analyze the interface in it.
+PIPELINE_VERSION 20.

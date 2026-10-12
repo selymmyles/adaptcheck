@@ -38,7 +38,7 @@ export const GEMINI_MODEL = "gemini-3.1-pro-preview";
  * 8 = FAB input-cluster -> Search Bar guidance; back-gesture + icon source order fixes,
  * 9 = Search Bar fix names the SearchView modal pattern.
  */
-export const PIPELINE_VERSION = 19;
+export const PIPELINE_VERSION = 20;
 
 export interface ModelRegion {
   x_min: number;
@@ -118,12 +118,12 @@ export function buildSystemPrompt(request: DirectionRequest): string {
     "- Use only the check ids listed below, copied verbatim. Never invent ids.",
     "- If the same check applies to multiple DISTINCT elements (e.g. two separate floating buttons), return one finding per element with the same check_id and a different region. Never return the same element twice.",
     "- Scan navigation bars, tab bars, and toolbars icon by icon: each icon that doesn't match the target platform's iconography gets its own finding, even when the icons are small.",
-    "- Scan containers as well as their contents: every grouped list, pop-up menu, sheet, and navigation structure is itself a finding when its pattern is platform-specific. Flag the container's check (e.g. grouped list, pop-up menu) IN ADDITION TO the individual icons inside it — catching the icons does not cover the container.",
+    "- Scan containers as well as their contents: every grouped list, pop-up menu, sheet, button, and navigation structure is itself a finding when its pattern is platform-specific. Flag the container's check (e.g. grouped list, pop-up menu, buttons) IN ADDITION TO the individual icons inside it — an icon inside a button does not discharge the button check, and catching the icons does not cover the container.",
     "- When a finding concerns a group of related elements (e.g. an input bar plus its adjacent action buttons), draw the region around the WHOLE group, not one button.",
-    '- If a finding is about a specific icon, you MUST put the exact icon name in "detail" (the SF Symbol name like "magnifyingglass", or the Material Symbol name like "search") and its target-platform counterpart in "counterpart" (exact match, or the closest equivalent if none exists). Never leave these empty on an icon finding.',
+    '- If a finding is about a specific icon, you MUST put the exact icon name in "detail" — the name from the library of the platform the screenshot is ON (SF Symbol name like "magnifyingglass" for an iOS screenshot; Material Symbol name like "search", "history", "send", or "settings" for an Android screenshot) — and its target-platform counterpart in "counterpart" (exact match, or the closest equivalent if none exists). Use the single-token library name only, no spaces or descriptions. Never leave these empty on an icon finding.',
     "- The phone's own OS chrome is never a finding: the system status bar (time, battery, signal/wifi icons), the home indicator, and the system navigation bar/gestures belong to the device, not the app. Never flag them — BUT do use the chrome as the primary signal for platform detection (see TASK): it tells you which OS the screenshot was taken on even when the app's own components borrow the other platform's styling.",
     "- The buttons across the top of an iOS screen (back chevron, title, right-side actions) are ONE navigation unit, not separate elements: return a single finding with the region drawn around the whole top bar. On Material that becomes one top app bar (navigation icon + actions) — never separate floating buttons.",
-    "- Treat every attached image as an app UI screenshot unless it plainly contains NO interface elements at all (a photograph, a document scan, or artwork). Chat screens, settings screens, menus, dialogs, media screens, and in-app web views are all app UI — analyze them. Return an empty findings array only when you truly find no applicable checks after scanning everything, and say in the summary which checks you verified as already native.",
+    "- Treat every attached image as an app UI screenshot unless it plainly contains NO interface elements at all (a photograph of people or places, a document scan, or artwork). A photograph OF a screen still counts — analyze the interface visible in it. Chat screens, settings screens, menus, dialogs, media screens, and in-app web views are all app UI — analyze them. Return an empty findings array only when you truly find no applicable checks after scanning everything, and say in the summary which checks you verified as already native.",
     "- Order findings in the same order the checks appear below (they are grouped by category).",
     "",
   ];
@@ -474,10 +474,12 @@ async function analyzeOnce(
  */
 const CONSENSUS_RUNS = 3;
 
-/** Keep model-supplied detail short and safe (icon names like "home"). */
+/** Keep model-supplied detail short and safe (icon names like "home").
+ *  Material names are underscore-style: normalize spaces to underscores
+ *  before validating so "open in new" survives as "open_in_new". */
 function sanitizeDetail(value: unknown): string | undefined {
   if (typeof value !== "string") return undefined;
-  const clean = value.trim().toLowerCase().slice(0, 40);
+  const clean = value.trim().toLowerCase().replace(/\s+/g, "_").slice(0, 40);
   return /^[a-z0-9._-]+$/.test(clean) ? clean : undefined;
 }
 
