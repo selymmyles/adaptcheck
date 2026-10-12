@@ -301,3 +301,30 @@ pin icon to the Material push_pin icon." When no exact counterpart exists,
 the card shows the model's closest-equivalent recommendation with a "Closest
 match" badge. Model must now name the icon (detail) and its counterpart on
 every icon finding — never empty. External deep links kept. PIPELINE_VERSION 11.
+
+## 2026-10-12 — Speed diagnosis + Pro swap + red-pen round 4
+
+**Speed (founder-timed):** 4 screenshots = 7:26; 7 = 13:59. Four optimizations
+(progressive consensus, low thinking, image downscale, prompt caching) barely
+moved it. Worker timing logs found the truth: one Flash vote took 7.7s/716 out
+tokens, its pair took 90.6s/**16,483 out tokens** — occasional runaway
+generations dominate everything. API can't bound output: `maxOutputTokens` and
+schema `maxItems` both return 400 on this endpoint (verified by isolation).
+
+**Model swap (founder's call):** votes moved Flash → `gemini-3.1-pro-preview`
+(`gemini-3.8-pro` doesn't exist; `gemini-3-pro-preview` retired). Result: same
+screenshot 1:47 → 21s, votes byte-consistent (850/850, 343/343 tokens).
+
+**Red-pen round 4 (Fandango "Movies" screenshot):**
+- Direction was flipped: model read Material-style components and ignored the
+  iOS chrome. Fix: prompt now decides platform from OS CHROME first; chrome
+  wins over component styling (cross-platform apps borrow components); the
+  "ignore chrome" rule now carves out direction detection.
+- Item order: groups were sorted bottom-up; pins/list now run top-down in
+  on-screen order (`groupByItem` sort flipped).
+- Source symmetry: card showed an iOS source link but no Material one on the
+  font finding. Audit found 15/48 checks missing one platform's citation —
+  all 15 filled from already-verified doc URLs (incl. Apple HIG — Motion).
+- Missed search bar + zip/location pill, and nav-bar icon findings: expected
+  to follow the direction fix; founder to re-test.
+PIPELINE_VERSION 18.
