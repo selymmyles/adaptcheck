@@ -18,13 +18,17 @@ interface PickedFile {
  * process much faster. Returns the original file if already small enough.
  */
 async function downscaleImage(file: File, maxDim = 1024): Promise<File> {
-  const bitmap = await createImageBitmap(file);
-  const { width, height } = bitmap;
-  if (Math.max(width, height) <= maxDim) {
-    bitmap.close();
+  let bitmap: ImageBitmap;
+  try {
+    bitmap = await createImageBitmap(file);
+  } catch {
+    // The browser can't decode this file (e.g. HEIC bytes behind a .jpg
+    // name). Never drop it silently and never upload a guess — hand the
+    // original to the server, which will either read it or error honestly.
     return file;
   }
-  const scale = maxDim / Math.max(width, height);
+  const { width, height } = bitmap;
+  const scale = Math.min(1, maxDim / Math.max(width, height));
   const canvas = document.createElement("canvas");
   canvas.width = Math.round(width * scale);
   canvas.height = Math.round(height * scale);
@@ -35,6 +39,25 @@ async function downscaleImage(file: File, maxDim = 1024): Promise<File> {
   }
   ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
   bitmap.close();
+  // Blank guard: some decoders "succeed" but draw nothing (uniform canvas).
+  // A real screenshot always has luminance range — text, icons, chrome.
+  // If the canvas is effectively one flat color, keep the original file
+  // instead of uploading a blank image that would fake a "native" verdict.
+  try {
+    const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    let min = 255;
+    let max = 0;
+    for (let i = 0; i < data.length; i += 1604) {
+      const lum = data[i];
+      if (lum < min) min = lum;
+      if (lum > max) max = lum;
+      if (max - min >= 8) break;
+    }
+    if (max - min < 8) return file;
+  } catch {
+    // Pixel read blocked — proceed with the downscale as before.
+  }
+  if (scale >= 1) return file;
   const blob = await new Promise<Blob | null>((resolve) =>
     canvas.toBlob(resolve, "image/jpeg", 0.9),
   );
@@ -61,7 +84,16 @@ export default function UploadScreen({ onAnalyze }: UploadScreenProps) {
     // Downscale to max 1024px before upload: UI analysis doesn't need
     // full resolution, and smaller images upload + process much faster.
     void (async () => {
-      const downscaled = await Promise.all(valid.map(downscaleImage));
+      // Per-file isolation: one undecodable image must not kill the batch.
+      const downscaled = await Promise.all(
+        valid.map(async (f) => {
+          try {
+            return await downscaleImage(f);
+          } catch {
+            return f;
+          }
+        }),
+      );
       setPicked((prev) => {
         const room = MAX_FILES - prev.length;
         if (room <= 0) {
