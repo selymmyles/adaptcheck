@@ -12,6 +12,37 @@ interface PickedFile {
   preview: string;
 }
 
+/**
+ * Downscales an image to max 1024px on the longest edge via canvas.
+ * UI analysis doesn't need full resolution; smaller images upload and
+ * process much faster. Returns the original file if already small enough.
+ */
+async function downscaleImage(file: File, maxDim = 1024): Promise<File> {
+  const bitmap = await createImageBitmap(file);
+  const { width, height } = bitmap;
+  if (Math.max(width, height) <= maxDim) {
+    bitmap.close();
+    return file;
+  }
+  const scale = maxDim / Math.max(width, height);
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(width * scale);
+  canvas.height = Math.round(height * scale);
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    bitmap.close();
+    return file;
+  }
+  ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close();
+  const blob = await new Promise<Blob | null>((resolve) =>
+    canvas.toBlob(resolve, "image/jpeg", 0.9),
+  );
+  if (!blob) return file;
+  const name = file.name.replace(/\.(png|webp)$/i, ".jpg");
+  return new File([blob], name, { type: "image/jpeg" });
+}
+
 export default function UploadScreen({ onAnalyze }: UploadScreenProps) {
   const [picked, setPicked] = useState<PickedFile[]>([]);
   const [dragging, setDragging] = useState(false);
@@ -27,24 +58,29 @@ export default function UploadScreen({ onAnalyze }: UploadScreenProps) {
     } else {
       setError(null);
     }
-    setPicked((prev) => {
-      const room = MAX_FILES - prev.length;
-      if (room <= 0) {
-        setError(`Up to ${MAX_FILES} screenshots per batch.`);
-        return prev;
-      }
-      const accepted = valid.slice(0, room);
-      if (valid.length > accepted.length) {
-        setError(`Up to ${MAX_FILES} screenshots per batch.`);
-      }
-      return [
-        ...prev,
-        ...accepted.map((file) => ({
-          file,
-          preview: URL.createObjectURL(file),
-        })),
-      ];
-    });
+    // Downscale to max 1024px before upload: UI analysis doesn't need
+    // full resolution, and smaller images upload + process much faster.
+    void (async () => {
+      const downscaled = await Promise.all(valid.map(downscaleImage));
+      setPicked((prev) => {
+        const room = MAX_FILES - prev.length;
+        if (room <= 0) {
+          setError(`Up to ${MAX_FILES} screenshots per batch.`);
+          return prev;
+        }
+        const accepted = downscaled.slice(0, room);
+        if (downscaled.length > accepted.length) {
+          setError(`Up to ${MAX_FILES} screenshots per batch.`);
+        }
+        return [
+          ...prev,
+          ...accepted.map((file) => ({
+            file,
+            preview: URL.createObjectURL(file),
+          })),
+        ];
+      });
+    })();
   };
 
   const removeFile = (index: number) => {

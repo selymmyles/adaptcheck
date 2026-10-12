@@ -191,9 +191,25 @@ const RESPONSE_SCHEMA = {
   required: ["detected_direction", "summary", "findings"],
 } as const;
 
+/**
+ * Jaccard similarity of two votes' finding sets (by check_id).
+ * Used for progressive consensus: if two votes agree substantially,
+ * the third vote is skipped.
+ */
+function findingAgreement(
+  a: BackendAnalysisResult,
+  b: BackendAnalysisResult,
+): number {
+  const setA = new Set(a.findings.map((f) => f.id));
+  const setB = new Set(b.findings.map((f) => f.id));
+  if (setA.size === 0 && setB.size === 0) return 1;
+  const intersection = [...setA].filter((x) => setB.has(x)).length;
+  const union = new Set([...setA, ...setB]).size;
+  return union === 0 ? 1 : intersection / union;
+}
+
 /** Intersection-over-union for two normalized boxes; used to spot duplicate regions. */
-function iou(a: ModelRegion, b: ModelRegion): number {
-  const x1 = Math.max(a.x_min, b.x_min);
+function iou(a: ModelRegion, b: ModelRegion): number {  const x1 = Math.max(a.x_min, b.x_min);
   const y1 = Math.max(a.y_min, b.y_min);
   const x2 = Math.min(a.x_max, b.x_max);
   const y2 = Math.min(a.y_max, b.y_max);
@@ -305,6 +321,9 @@ async function analyzeOnce(
           // findings every run. (0.2 let borderline checks flip in and out
           // between runs — founder caught 5→4 on the same screenshot.)
           temperature: 0,
+          // Low thinking: the votes do structured checklist matching, not
+          // deep reasoning. Cuts per-call latency substantially.
+          thinkingConfig: { thinkingLevel: "LOW" },
           responseMimeType: "application/json",
           responseSchema: RESPONSE_SCHEMA,
         },
@@ -761,32 +780,78 @@ export async function analyzeWithGemini(
   imageBase64: string,
   request: DirectionRequest,
 ): Promise<BackendAnalysisResult> {
-  const settled = await Promise.allSettled(
-    Array.from({ length: CONSENSUS_RUNS }, () =>
-      analyzeOnce(apiKey, mimeType, imageBase64, request),
-    ),
-  );
-  const ok = settled
+  // Progressive consensus: run 2 votes in parallel first. If they agree
+  // substantially (Jaccard >= 0.7 on finding check_ids), build consensus
+  // from 2 votes and skip the 3rd entirely — the common case, cutting ~33%
+  // of API calls. On disagreement or failure, fall back to a 3rd vote.
+  const [s1, s2] = await Promise.allSettled([
+    analyzeOnce(apiKey, mimeType, imageBase64, request),
+    analyzeOnce(apiKey, mimeType, imageBase64, request),
+  ]);
+  const phase1Ok = [s1, s2]
     .filter(
       (s): s is PromiseFulfilledResult<BackendAnalysisResult> =>
         s.status === "fulfilled",
     )
     .map((s) => s.value);
-  // Need a majority of runs to succeed; otherwise surface the distinct
+
+  if (
+    phase1Ok.length === 2 &&
+    findingAgreement(phase1Ok[0], phase1Ok[1]) >= 0.7
+  ) {
+    return buildConsensusFromVotes(apiKey, mimeType, imageBase64, phase1Ok);
+  }
+
+  // Phase 2: disagreement or a failed vote — run the 3rd vote.
+  const s3 = await analyzeOnce(apiKey, mimeType, imageBase64, request).then(
+    (value) => ({ status: "fulfilled" as const, value }),
+    (reason: unknown) => ({ status: "rejected" as const, reason }),
+  );
+  type SettledVote =
+    | PromiseFulfilledResult<BackendAnalysisResult>
+    | PromiseRejectedResult
+    | { status: "fulfilled"; value: BackendAnalysisResult }
+    | { status: "rejected"; reason: unknown };
+  const all: SettledVote[] = [s1, s2, s3];
+  const allOk = all
+    .filter(
+      (
+        s,
+      ): s is
+        | PromiseFulfilledResult<BackendAnalysisResult>
+        | { status: "fulfilled"; value: BackendAnalysisResult } =>
+        s.status === "fulfilled",
+    )
+    .map((s) => s.value);
+  // Need at least 2 of 3 to succeed; otherwise surface the distinct
   // failure reasons (preserves the 429 / busy / 402 messaging from analyzeOnce).
-  if (ok.length < Math.ceil(CONSENSUS_RUNS / 2)) {
-    const reasons = settled
-      .filter(
-        (s): s is PromiseRejectedResult => s.status === "rejected",
-      )
+  if (allOk.length < 2) {
+    const reasons = all
+      .filter((s) => s.status === "rejected")
       .map((s) =>
-        s.reason instanceof Error ? s.reason.message : "unknown error",
+        (s as PromiseRejectedResult).reason instanceof Error
+          ? ((s as PromiseRejectedResult).reason as Error).message
+          : "unknown error",
       );
     const summary = [...new Set(reasons)].join(" | ");
     throw new Error(
-      `Analysis failed (${ok.length}/${CONSENSUS_RUNS} votes succeeded): ${summary}`,
+      `Analysis failed (${allOk.length}/3 votes succeeded): ${summary}`,
     );
   }
+
+  return buildConsensusFromVotes(apiKey, mimeType, imageBase64, allOk);
+}
+
+/**
+ * Builds the final consensus result from 2 or 3 successful votes:
+ * clusters findings, sends contested clusters to the judge, merges verdicts.
+ */
+async function buildConsensusFromVotes(
+  apiKey: string,
+  mimeType: string,
+  imageBase64: string,
+  ok: BackendAnalysisResult[],
+): Promise<BackendAnalysisResult> {
 
   // Direction first: the judge needs it to look up check definitions.
   const dirVotes = new Map<AnalysisDirection, number>();
