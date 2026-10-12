@@ -370,3 +370,22 @@ First android-to-ios batch. Screenshot 2 fully correct; screenshot 1 mostly.
 - **Photos of screens dismissed as "no interface"**: rule now says a
   photograph OF a screen counts; analyze the interface in it.
 PIPELINE_VERSION 20.
+
+## 2026-10-12 — Round 6 verification + upload hardening + results nav
+
+- **Blank-upload bug (the real cause of "no interface elements")**: the two
+  .jpg test files (LocalSend Settings/Selection — dense Material UI) decoded
+  to a BLANK canvas in the browser downscale (suspected HEIC bytes behind a
+  .jpg name), and the blank JPEG was uploaded silently, producing a fake
+  "already native" verdict. Proven by running the same content through the
+  pipeline server-side: rich findings, incl. the new grouped-list check.
+  Fix: downscaler verifies its canvas isn't flat/uniform, falls back to the
+  original file on blank or decode failure, and one bad file can't kill the
+  batch. Honest errors over fake verdicts.
+- **Results navigation**: findings index labels (Screenshot N) now click to
+  jump to that section; screenshot sections are collapsible from their
+  headers; jumps auto-expand a collapsed section.
+- **Testing process**: founder flagged the manual dogfood loop as slow.
+  Agreed to trial a regression harness LATER (saved corpus + encoded
+  expectations from his red-pens; Muse runs it before deploys). Deferred
+  by his call 2026-10-12 — not yet built.
