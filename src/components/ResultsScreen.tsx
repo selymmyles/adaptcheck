@@ -119,7 +119,7 @@ function groupByItem(
     })
     .sort(
       (a, b) =>
-        regionCenterY(b.primary.region!) - regionCenterY(a.primary.region!),
+        regionCenterY(a.primary.region!) - regionCenterY(b.primary.region!),
     )
     .map((g, i) => ({
       name: `Item ${i + 1} — ${g.primary.title}`,
@@ -421,7 +421,8 @@ export default function ResultsScreen({
           const groups = groupByItem(result.findings);
 
           // Stable 1..N numbering per screenshot: only findings pinned on the
-          // screenshot get numbers (items bottom-up). General findings are
+          // screenshot get numbers (items top-down, in on-screen order, and the
+          // item groups below follow the same order). General findings are
           // unnumbered — numbering what isn't highlighted would leave gaps.
           const numberByKey = new Map<string, number>();
           {

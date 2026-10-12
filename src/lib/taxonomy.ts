@@ -193,6 +193,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
         sources: [
           { label: "Apple HIG — Toolbars", url: "https://developer.apple.com/design/human-interface-guidelines/toolbars" },
           { label: "Apple HIG — Navigation", url: "https://developer.apple.com/design/human-interface-guidelines/navigation" },
+          { label: "Android Developers — Predictive back gesture", url: "https://developer.android.com/guide/navigation/custom-back/predictive-back-gesture" },
+        
         ],
       },
       {
@@ -309,6 +311,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
         sources: [
           { label: "Apple HIG — Typography", url: "https://developer.apple.com/design/human-interface-guidelines/typography" },
           { label: "Apple Fonts", url: "https://developer.apple.com/fonts/" },
+          { label: "Material 3 — Typography overview", url: "https://m3.material.io/styles/typography/overview" },
+        
         ],
       },
       {
@@ -381,6 +385,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
           { label: "Material 3 — FAB", url: "https://m3.material.io/components/floating-action-button/overview" },
           { label: "Material 3 — Search bar", url: "https://m3.material.io/components/search/overview" },
           { label: "Material Components Android — FloatingActionButton", url: "https://github.com/material-components/material-components-android/blob/master/docs/components/FloatingActionButton.md" },
+          { label: "Apple HIG — Buttons", url: "https://developer.apple.com/design/human-interface-guidelines/buttons" },
+        
         ],
       },
       {
@@ -459,6 +465,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
         sources: [
           { label: "Apple HIG — Toolbars", url: "https://developer.apple.com/design/human-interface-guidelines/toolbars" },
           { label: "Apple HIG — Buttons", url: "https://developer.apple.com/design/human-interface-guidelines/buttons" },
+          { label: "Material 3 — FAB", url: "https://m3.material.io/components/floating-action-button/overview" },
+        
         ],
       },
       {
@@ -652,6 +660,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
         sources: [
           { label: "Android Developers — Window insets", url: "https://developer.android.com/develop/ui/views/layout/insets" },
           { label: "Android Developers — Edge-to-edge", url: "https://developer.android.com/develop/ui/views/layout/edge-to-edge" },
+          { label: "Apple HIG — Layout", url: "https://developer.apple.com/design/human-interface-guidelines/layout" },
+        
         ],
       },
       {
@@ -669,6 +679,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
         sources: [
           { label: "Android Developers — Edge-to-edge", url: "https://developer.android.com/develop/ui/views/layout/edge-to-edge" },
           { label: "Android Developers — WindowInsetsController", url: "https://developer.android.com/reference/android/view/WindowInsetsController" },
+          { label: "Apple HIG — Layout", url: "https://developer.apple.com/design/human-interface-guidelines/layout" },
+        
         ],
       },
       {
@@ -699,6 +711,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
           "Change the edge-to-edge layout to respect the iOS safe area (notch, Dynamic Island, home indicator).",
         sources: [
           { label: "Apple HIG — Layout", url: "https://developer.apple.com/design/human-interface-guidelines/layout" },
+          { label: "Android Developers — Edge-to-edge", url: "https://developer.android.com/develop/ui/views/layout/edge-to-edge" },
+        
         ],
       },
       {
@@ -715,6 +729,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
           "Change the transparent status bar to per-screen preferredStatusBarStyle.",
         sources: [
           { label: "Apple HIG — Layout", url: "https://developer.apple.com/design/human-interface-guidelines/layout" },
+          { label: "Android Developers — Edge-to-edge", url: "https://developer.android.com/develop/ui/views/layout/edge-to-edge" },
+        
         ],
       },
       {
@@ -728,6 +744,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
           "Change edge-adjacent controls to clear the system gesture insets.",
         sources: [
           { label: "Android Developers — Window insets", url: "https://developer.android.com/develop/ui/views/layout/insets" },
+          { label: "Apple HIG — Layout", url: "https://developer.apple.com/design/human-interface-guidelines/layout" },
+        
         ],
       },
     ],
@@ -748,6 +766,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
         sources: [
           { label: "Material 3 — Transition patterns", url: "https://m3.material.io/styles/motion/transitions/transition-patterns" },
           { label: "Material 3 — Easing and duration", url: "https://m3.material.io/styles/motion/easing-and-duration/tokens-specs" },
+          { label: "Apple HIG — Motion", url: "https://developer.apple.com/design/human-interface-guidelines/motion" },
+        
         ],
       },
       {
@@ -764,6 +784,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
         sources: [
           { label: "Material 3 — Easing and duration", url: "https://m3.material.io/styles/motion/easing-and-duration/tokens-specs" },
           { label: "Material Components Android — Motion theming", url: "https://github.com/material-components/material-components-android/blob/master/docs/theming/Motion.md" },
+          { label: "Apple HIG — Motion", url: "https://developer.apple.com/design/human-interface-guidelines/motion" },
+        
         ],
       },
       {
@@ -778,6 +800,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
           "Change the Material transitions to the iOS parallax push/pop with interactive swipe-back.",
         sources: [
           { label: "Material 3 — Transition patterns", url: "https://m3.material.io/styles/motion/transitions/transition-patterns" },
+          { label: "Apple HIG — Motion", url: "https://developer.apple.com/design/human-interface-guidelines/motion" },
+        
         ],
       },
       {
@@ -794,6 +818,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
           "Change the Material motion tokens to UIView animation curves (ease-in-out, spring).",
         sources: [
           { label: "Material 3 — Easing and duration", url: "https://m3.material.io/styles/motion/easing-and-duration/tokens-specs" },
+          { label: "Apple HIG — Motion", url: "https://developer.apple.com/design/human-interface-guidelines/motion" },
+        
         ],
       },
       {
@@ -808,6 +834,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
         sources: [
           { label: "Android Developers — Predictive back gesture", url: "https://developer.android.com/guide/navigation/custom-back/predictive-back-gesture" },
           { label: "Material 3 — Transition patterns", url: "https://m3.material.io/styles/motion/transitions/transition-patterns" },
+          { label: "Apple HIG — Motion", url: "https://developer.apple.com/design/human-interface-guidelines/motion" },
+        
         ],
       },
     ],
@@ -846,6 +874,8 @@ export const TAXONOMY: TaxonomyCategory[] = [
           "Change tint-only tab icons to Material icons with state layers and the active-indicator pill.",
         sources: [
           { label: "Material 3 — Navigation bar specs", url: "https://m3.material.io/components/navigation-bar/specs" },
+          { label: "Apple HIG — Tab bars", url: "https://developer.apple.com/design/human-interface-guidelines/tab-bars" },
+        
         ],
       },
       {

@@ -26,7 +26,7 @@ import {
 // NOTE (2026-10-10): gemini-2.5-flash returns 404 for new API users ("no longer
 // available to new users" per Google); gemini-3.8-flash verified working with
 // vision on the free tier the same day. DO NOT revert to 2.5-flash.
-export const GEMINI_MODEL = "gemini-3.8-flash";
+export const GEMINI_MODEL = "gemini-3.1-pro-preview";
 
 /**
  * Bump this whenever the prompt, taxonomy, or voting logic changes — it is
@@ -38,7 +38,7 @@ export const GEMINI_MODEL = "gemini-3.8-flash";
  * 8 = FAB input-cluster -> Search Bar guidance; back-gesture + icon source order fixes,
  * 9 = Search Bar fix names the SearchView modal pattern.
  */
-export const PIPELINE_VERSION = 16;
+export const PIPELINE_VERSION = 18;
 
 export interface ModelRegion {
   x_min: number;
@@ -120,7 +120,7 @@ export function buildSystemPrompt(request: DirectionRequest): string {
     "- Scan navigation bars, tab bars, and toolbars icon by icon: each icon that doesn't match the target platform's iconography gets its own finding, even when the icons are small.",
     "- When a finding concerns a group of related elements (e.g. an input bar plus its adjacent action buttons), draw the region around the WHOLE group, not one button.",
     '- If a finding is about a specific icon, you MUST put the exact icon name in "detail" (the SF Symbol name like "magnifyingglass", or the Material Symbol name like "search") and its target-platform counterpart in "counterpart" (exact match, or the closest equivalent if none exists). Never leave these empty on an icon finding.',
-    "- The phone's own OS chrome is never a finding: the system status bar (time, battery, signal/wifi icons), the home indicator, and the system navigation bar/gestures belong to the device, not the app. Ignore them completely.",
+    "- The phone's own OS chrome is never a finding: the system status bar (time, battery, signal/wifi icons), the home indicator, and the system navigation bar/gestures belong to the device, not the app. Never flag them — BUT do use the chrome as the primary signal for platform detection (see TASK): it tells you which OS the screenshot was taken on even when the app's own components borrow the other platform's styling.",
     "- The buttons across the top of an iOS screen (back chevron, title, right-side actions) are ONE navigation unit, not separate elements: return a single finding with the region drawn around the whole top bar. On Material that becomes one top app bar (navigation icon + actions) — never separate floating buttons.",
     "- If the image is not an app UI screenshot, or no checks apply, return an empty findings array and say so in the summary.",
     "- Order findings in the same order the checks appear below (they are grouped by category).",
@@ -131,7 +131,7 @@ export function buildSystemPrompt(request: DirectionRequest): string {
     return [
       ...intro,
       "TASK",
-      "First, determine the platform of the attached app screenshot: is it an iOS app (Apple HIG conventions — SF typography, tab bar, back chevron, grouped lists) or an Android app (Material Design 3 conventions — Roboto, navigation bar with active-indicator pill, FAB, tonal surfaces)?",
+      "First, determine the platform of the attached app screenshot. Decide from the OS CHROME before the app's components: an iOS status bar (time at left, iOS signal/wifi/battery glyphs, notch or Dynamic Island) plus the iOS home indicator means an iOS screenshot; an Android status bar plus the Android gesture pill or three-button navigation means an Android screenshot. Chrome wins over component styling — cross-platform apps routinely borrow the other platform's components (an iOS app can ship a Material-style active pill in its bottom bar), and a bottom bar with glyph icons above text labels is an iOS tab bar when the chrome is iOS, regardless of how the selected state is drawn.",
       'Set "detected_direction" accordingly, then identify which of THAT direction\'s adaptation checks visibly apply.',
       "",
       ...output,
@@ -163,9 +163,6 @@ const RESPONSE_SCHEMA = {
     summary: { type: "string" },
     findings: {
       type: "array",
-      // Hard bound: prevents runaway generations (observed 16K+ tokens /
-      // 300+ findings on a single vote). 40 is ~3x a normal finding count.
-      maxItems: 40,
       items: {
         type: "object",
         properties: {
@@ -304,6 +301,7 @@ async function analyzeOnce(
   attempt = 1,
 ): Promise<BackendAnalysisResult> {
   const t0 = Date.now();
+  console.log(`vote started (attempt ${attempt})`);
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`,
     {
