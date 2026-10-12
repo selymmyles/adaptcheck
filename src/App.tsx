@@ -29,18 +29,27 @@ export default function App() {
 
   const analyzeOne = async (index: number, file: File) => {
     markItem(index, { status: "analyzing", error: undefined });
-    try {
-      const result: AnalysisResult = await analyzeDesign(
-        file,
-        directionRequest,
-      );
-      markItem(index, { status: "done", result, error: undefined });
-    } catch (err) {
-      markItem(index, {
-        status: "error",
-        error:
-          err instanceof Error ? err.message : "Analysis failed. Please try again.",
-      });
+    // One automatic retry: the AI service flakes (dropped connections,
+    // timeouts) often enough that a single retry saves most failures.
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const result: AnalysisResult = await analyzeDesign(
+          file,
+          directionRequest,
+        );
+        markItem(index, { status: "done", result, error: undefined });
+        return;
+      } catch (err) {
+        if (attempt === 0) {
+          await delay(3000);
+          continue;
+        }
+        markItem(index, {
+          status: "error",
+          error:
+            err instanceof Error ? err.message : "Analysis failed. Please try again.",
+        });
+      }
     }
   };
 
