@@ -165,8 +165,8 @@ export default function UploadScreen({ onAnalyze }: UploadScreenProps) {
         className="mt-6 w-full rounded-xl bg-teal-700 px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-teal-800 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:text-stone-500"
       >
         {picked.length <= 1
-          ? "Analyze design"
-          : `Analyze ${picked.length} designs`}
+          ? "Analyze screen"
+          : `Analyze ${picked.length} screens`}
       </button>
       <p className="mt-3 text-center text-xs text-stone-400">
         Screenshots are sent securely for AI analysis and are never stored.
