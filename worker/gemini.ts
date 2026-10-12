@@ -38,7 +38,7 @@ export const GEMINI_MODEL = "gemini-3.8-flash";
  * 8 = FAB input-cluster -> Search Bar guidance; back-gesture + icon source order fixes,
  * 9 = Search Bar fix names the SearchView modal pattern.
  */
-export const PIPELINE_VERSION = 12;
+export const PIPELINE_VERSION = 13;
 
 export interface ModelRegion {
   x_min: number;
@@ -537,12 +537,15 @@ function iconCounterparts(
   detail: string | undefined,
   modelCounterpart: string | undefined,
 ): { deepLink?: string; counterpartName?: string; counterpartExact?: boolean } {
-  if (!detail) return {};
+  if (!detail && !modelCounterpart) return {};
   if (direction === "ios-to-android") {
     // Screenshot shows an SF Symbol; dev needs the Material equivalent.
-    const exact = detail in SF_TO_MATERIAL_ICONS;
+    const exact = !!detail && detail in SF_TO_MATERIAL_ICONS;
     const material =
-      SF_TO_MATERIAL_ICONS[detail] ?? modelCounterpart ?? detail.replace(/\./g, "_");
+      (detail && SF_TO_MATERIAL_ICONS[detail]) ??
+      modelCounterpart ??
+      (detail ? detail.replace(/\./g, "_") : undefined);
+    if (!material) return {};
     return {
       deepLink: materialIconUrl(material),
       counterpartName: material,
@@ -550,20 +553,29 @@ function iconCounterparts(
     };
   }
   // Screenshot shows a Material Symbol; dev needs the SF Symbol name.
-  const exact = detail in MATERIAL_TO_SF_ICONS;
-  const sf = MATERIAL_TO_SF_ICONS[detail] ?? modelCounterpart ?? detail;
+  const exact = !!detail && detail in MATERIAL_TO_SF_ICONS;
+  const sf =
+    (detail && MATERIAL_TO_SF_ICONS[detail]) ?? modelCounterpart ?? detail;
+  if (!sf) return {};
   return { counterpartName: sf, counterpartExact: exact };
 }
 
 /** Dynamic fix line for icon findings: names the exact swap. */
 function iconFix(
   direction: AnalysisDirection,
-  detail: string,
+  detail: string | undefined,
   counterpartName: string,
 ): string {
-  return direction === "ios-to-android"
-    ? `Change the iOS ${detail} icon to the Material ${counterpartName} icon.`
-    : `Change the Material ${detail} icon to the iOS ${counterpartName} icon.`;
+  const target =
+    direction === "ios-to-android"
+      ? `the Material ${counterpartName} icon`
+      : `the iOS ${counterpartName} icon`;
+  const source = detail
+    ? direction === "ios-to-android"
+      ? `the iOS ${detail} icon`
+      : `the Material ${detail} icon`
+    : "this icon";
+  return `Change ${source} to ${target}.`;
 }
 
 /** Most frequent value; ties go to the first seen. */
@@ -829,7 +841,7 @@ export async function analyzeWithGemini(
     const detail = mostCommon(c.details);
     const modelCounterpart = mostCommon(c.counterparts);
     const links =
-      ICON_CHECK_IDS.has(c.id) && detail
+      ICON_CHECK_IDS.has(c.id) && (detail || modelCounterpart)
         ? iconCounterparts(direction, detail, modelCounterpart)
         : {};
     return {
@@ -842,7 +854,7 @@ export async function analyzeWithGemini(
         ? { counterpartExact: links.counterpartExact }
         : {}),
       // Name the exact swap instead of the generic library fix.
-      ...(detail && links.counterpartName
+      ...(links.counterpartName
         ? { fix: iconFix(direction, detail, links.counterpartName) }
         : {}),
     };
