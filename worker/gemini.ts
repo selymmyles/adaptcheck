@@ -163,9 +163,6 @@ const RESPONSE_SCHEMA = {
     summary: { type: "string" },
     findings: {
       type: "array",
-      // Bounded: 48 taxonomy checks, each occasionally flagging 2-3 elements.
-      // Without this the model can spiral into hundreds of findings.
-      maxItems: 60,
       items: {
         type: "object",
         properties: {
@@ -308,10 +305,6 @@ async function analyzeOnce(
           // findings every run. (0.2 let borderline checks flip in and out
           // between runs — founder caught 5→4 on the same screenshot.)
           temperature: 0,
-          // Hard cap: findings JSON for 48 checks never legitimately exceeds
-          // ~2K tokens. Uncapped output burned $17.80 in one day (2026-10-11)
-          // when runaway generations averaged 6K+ tokens per call.
-          maxOutputTokens: 8192,
           responseMimeType: "application/json",
           responseSchema: RESPONSE_SCHEMA,
         },
@@ -715,8 +708,6 @@ async function judgeContested(
           ],
           generationConfig: {
             temperature: 0,
-            // Judge output is small (picks the best vote); cap it tight.
-            maxOutputTokens: 4096,
             responseMimeType: "application/json",
             responseSchema: JUDGE_SCHEMA,
           },
