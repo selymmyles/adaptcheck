@@ -549,3 +549,19 @@ The icon copy button was pushed to the box's right edge (ml-auto),
 visually disconnected from the name it copies. At the founder's
 direction it now sits directly beside the icon name chip in the
 glyph row — glyph, name, copy — one glanceable unit.
+
+## 2026-10-13 (night) — Findings become collapsible accordion items
+
+Founder's proposal: the findings back into an accordion — per finding
+this time — as a way to save space. With 38 findings a results page
+is a wall; now each finding collapses to one row (pin number, category
+badge, title) and expands on tap. Index and map jumps open the target
+finding first, then scroll.
+
+The border lesson shaped the build: the finding's outline lives on
+the AccordionItem itself, not on a box nested inside the panel (the
+exact nesting GPU Chrome dropped), and everything inside the panel
+is borderless filled boxes. The panel's stock <p>-margin cascade is
+neutralized so box spacing is unchanged. Founder's browser is the
+verification, as always with this bug: if a line vanishes, this
+reverts in one commit.

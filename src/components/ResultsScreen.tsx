@@ -272,6 +272,11 @@ export default function ResultsScreen({
   );
   /** Shots whose annotated-screenshot accordion is open (closed by default). */
   const [openMaps, setOpenMaps] = useState<ReadonlySet<number>>(new Set());
+  /** Findings expanded in their accordions, keyed `${shot}:${findingKey}`.
+   *  Collapsed by default — the results page reads as a scan list. */
+  const [openFindings, setOpenFindings] = useState<ReadonlySet<string>>(
+    new Set(),
+  );
   const toggleShot = (shot: number) => {
     setCollapsedShots((prev) => {
       const next = new Set(prev);
@@ -313,6 +318,18 @@ export default function ResultsScreen({
   const jumpToFinding = (shot: number, id: string) => {
     expandShot(shot);
     flashHighlight(shot, id);
+    // Findings are collapsed by default — open this one and give its
+    // accordion time to expand before scrolling to it.
+    const key = `${shot}:${id}`;
+    if (!openFindings.has(key)) {
+      setOpenFindings((prev) => new Set(prev).add(key));
+      window.setTimeout(() => {
+        document
+          .getElementById(`finding-${shot}-${id}`)
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 300);
+      return;
+    }
     // Let the highlight apply before scrolling into view.
     window.setTimeout(() => {
       document
@@ -633,8 +650,25 @@ export default function ResultsScreen({
                           {group.findings.length}
                         </span>
                       </h3>
-                      <div className="pt-2">
-                          <ItemGroup>
+                      <Accordion
+                        multiple
+                        className="mt-2 gap-2.5"
+                        value={group.findings
+                          .filter((f) => openFindings.has(`${si}:${f.key}`))
+                          .map((f) => f.key)}
+                        onValueChange={(v) => {
+                          const open = new Set(v as string[]);
+                          setOpenFindings((prev) => {
+                            const next = new Set(prev);
+                            for (const f of group.findings) {
+                              const k = `${si}:${f.key}`;
+                              if (open.has(f.key)) next.add(k);
+                              else next.delete(k);
+                            }
+                            return next;
+                          });
+                        }}
+                      >
                           {group.findings.map((f) => (
                             <div
                               key={f.key}
@@ -659,8 +693,7 @@ export default function ResultsScreen({
                               />
                             </div>
                           ))}
-                          </ItemGroup>
-                      </div>
+                      </Accordion>
                     </section>
                   ))}
                 </div>

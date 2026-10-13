@@ -69,10 +69,16 @@ the change here.
   Material); at his direction the button is now icon-only (Copy glyph,
   Check on copied) — the platform meaning lives in the accessible
   label / hover title, not face text.
-- **Findings are Items, not Cards.** FindingCard composes the stock
-  `Item` primitives (`variant="outline"`, `size="sm"`) inside an
-  `ItemGroup` — findings are items in a list, not cards within cards.
-  Summary / patterns / analyzing surfaces remain Cards.
+- **Findings are collapsible accordion items** (2026-10-13, founder:
+  save space — supersedes "Findings are Items"). FindingCard composes
+  an `AccordionItem`: collapsed row = pin number + category badge +
+  title; FIX / platform boxes / crop live in the panel, all collapsed
+  by default. The outline sits on the AccordionItem itself, never on
+  a box inside the panel (the nesting GPU Chrome dropped); the inner
+  boxes are borderless fills. The panel's stock paragraph-margin
+  cascade is neutralized (`[&_p:not(:last-child)]:mb-0`) so the boxes
+  keep their own spacing. Pattern rows inside the patterns Card remain
+  `Item` primitives; summary / analyzing surfaces remain Cards.
 - **ScrollArea is the React Aria variant** (`aria-nova` registry file:
   native scroll + thin themed scrollbar), used in the findings sidebar,
   which follows the bordered-panel + title-header pattern of the shadcn

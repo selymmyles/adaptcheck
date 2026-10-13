@@ -3,12 +3,10 @@ import { Check, ChevronDown, Copy, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
-  Item,
-  ItemContent,
-  ItemFooter,
-  ItemHeader,
-  ItemTitle,
-} from "@/components/ui/item";
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { cn } from "@/lib/utils";
 import type {
   Finding,
@@ -400,10 +398,15 @@ export default function FindingCard({
     iconFields.counterpartExact === false && !!finding.counterpartName;
 
   return (
-    <Item variant="outline" size="sm">
-      <ItemHeader>
-      {/* Header: number badge (pinned findings only) + category pill */}
-      <div className="flex flex-wrap items-center gap-2">
+    <AccordionItem
+      value={finding.key}
+      className="rounded-lg border border-border"
+    >
+      {/* Collapsed row: the pin number (its own button, beside the
+          trigger) + category badge + title. The finding's outline lives
+          on the accordion item itself — never on a box inside the
+          panel; that nesting is what GPU Chrome dropped (2026-10-13). */}
+      <div className="flex items-center gap-2 px-3.5">
         {number !== undefined &&
           (onLocate ? (
             <button
@@ -423,21 +426,25 @@ export default function FindingCard({
               {number}
             </span>
           ))}
-        <Badge variant="secondary">{finding.category}</Badge>
-        {finding.unverified && (
-          <span
-            className="text-xs italic text-muted-foreground"
-            title={finding.unverifiedNote ?? "Community convention"}
-          >
-            Community convention
+        <AccordionTrigger className="hover:no-underline">
+          <span className="flex min-w-0 items-center gap-2">
+            <Badge variant="secondary">{finding.category}</Badge>
+            <span className="line-clamp-1" title={finding.title}>
+              {finding.title}
+            </span>
+            {finding.unverified && (
+              <span
+                className="shrink-0 text-xs font-normal italic text-muted-foreground"
+                title={finding.unverifiedNote ?? "Community convention"}
+              >
+                Community convention
+              </span>
+            )}
           </span>
-        )}
+        </AccordionTrigger>
       </div>
-
-      </ItemHeader>
-      <ItemContent>
-      <ItemTitle title={finding.title}>{finding.title}</ItemTitle>
-      <div className="mt-1.5 w-full space-y-2">
+      <AccordionContent className="[&_p:not(:last-child)]:mb-0">
+        <div className="space-y-2 px-3.5 pt-1">
 
       {/* FIX */}
       <div className="rounded-xl bg-muted p-3">
@@ -528,13 +535,9 @@ export default function FindingCard({
           </>
         )}
 
-      </div>
-      </ItemContent>
-
-      {/* Screenshot crop, collapsed by default */}
-      {finding.region && (
-        <ItemFooter>
-        <div className="w-full">
+        {/* Screenshot crop, collapsed by default */}
+        {finding.region && (
+          <div className="w-full">
           <Button
             type="button"
             variant="ghost"
@@ -564,9 +567,10 @@ export default function FindingCard({
               </button>
             </div>
           )}
+          </div>
+        )}
         </div>
-        </ItemFooter>
-      )}
+      </AccordionContent>
       {lightbox && finding.region && (
         <CropLightbox
           imageUrl={imageUrl}
@@ -575,6 +579,6 @@ export default function FindingCard({
           onClose={() => setLightbox(false)}
         />
       )}
-    </Item>
+    </AccordionItem>
   );
 }
