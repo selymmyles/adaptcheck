@@ -709,3 +709,8 @@ tagline ("See your design through the other platform's eyes"). Now
 Founder: the hero block (headline + sub) was centered; it's now
 left-aligned at the page column's edge, still capped at max-w-xl
 for line length.
+
+## 2026-10-13 (night) — Hero alignment reverted to centered
+
+Founder: "nvm go back" — hero is centered again, exactly as before
+the left-align change.

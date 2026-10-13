@@ -120,7 +120,7 @@ export default function App() {
       <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
         {phase === "upload" && (
           <>
-            <div className="mb-8 max-w-xl text-left">
+            <div className="mx-auto mb-8 max-w-xl text-center">
               <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
                 Find what needs fixing to make your app look native.
               </h1>
