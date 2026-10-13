@@ -667,3 +667,11 @@ the card outlines). The pair now reads as one system: FIX = filled,
 references = outlined. Applies to both pattern boxes and icon boxes;
 source/target fills no longer differ (labels carry the distinction).
 In dark theme the primary token inverts and the pairing survives.
+
+## 2026-10-13 (night) — Platform-box outline treatment REVERTED
+
+Founder tried the white + primary-outline platform boxes live and
+didn't like them ("revert the outline thing"). Both pattern and icon
+boxes are back to the stock fills (source muted, target accent).
+The inverted FIX box stays — that part he likes. Do not re-propose
+the outline treatment.

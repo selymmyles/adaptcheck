@@ -194,7 +194,11 @@ function PatternBox({
 }) {
   return (
     <div
-      className="rounded-xl border border-primary bg-card p-3"
+      className={
+        tone === "source"
+          ? "rounded-xl bg-muted p-3"
+          : "rounded-xl bg-accent p-3"
+      }
     >
       <p
         className={
@@ -273,7 +277,11 @@ function IconBox({
   };
   return (
     <div
-      className="rounded-xl border border-primary bg-card p-3"
+      className={
+        tone === "source"
+          ? "rounded-xl bg-muted p-3"
+          : "rounded-xl bg-accent p-3"
+      }
     >
       <div className="flex items-center justify-between gap-2">
         <p
