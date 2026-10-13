@@ -1,0 +1,10 @@
+name = "janus-preview"
+main = "worker.js"
+compatibility_date = "2025-10-01"
+workers_dev = true
+
+# Same namespace as the janus worker's usage ledger; the preview
+# pointer lives under key "preview:latest_url".
+[[kv_namespaces]]
+binding = "PREVIEW_KV"
+id = "aa23cdea1ac041a6b86930609ed99a83"

@@ -764,3 +764,14 @@ rounded-xl all around. The pair keeps it: source box top = rounded-md,
 meeting corners 4px, target box bottom = rounded-md. (2) All badges
 (category, Closest match, direction pill) switch to the outline
 variant — no filled badges in the results UI.
+
+## 2026-10-13 — One stable preview link
+
+Myles asked for a single preview address instead of a new link per
+change. Set up `janus-preview.mylezlan3.workers.dev`: a tiny redirect
+worker (source in `preview-redirect/`) that reads the newest version
+snapshot URL from KV (`preview:latest_url` in janus-usage) and 302s
+to it. Version history is unaffected — it lives in git + Cloudflare's
+version list as before. Workflow addition: after every versions
+upload, refresh the KV pointer. Verified end-to-end: the stable
+address lands on the current build (200, current asset hashes).

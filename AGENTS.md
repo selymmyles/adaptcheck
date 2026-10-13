@@ -73,6 +73,14 @@ the change here.
   Material). Spacing is the original 8px — a tightened gap was
   reverted at his direction. The region-crop image takes the same
   step down (rounded-md).
+  **Stable preview link (2026-10-13):** Myles reviews previews at
+  ONE permanent address — https://janus-preview.mylezlan3.workers.dev
+  — a tiny redirect worker (`preview-redirect/` in this repo) that
+  302s to the newest version snapshot. The target URL lives in the
+  janus-usage KV under `preview:latest_url`. **After every
+  `wrangler versions upload`, update it** (`wrangler kv key put
+  --remote`) or his link lands on a stale build. Production stays
+  janus.mylezlan3.workers.dev.
   **Badges are outline variant (2026-10-13):** category badge,
   "Closest match", and the direction pill — all `variant="outline"`,
   no filled badges in the results UI.
