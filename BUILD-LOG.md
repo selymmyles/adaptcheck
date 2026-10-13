@@ -755,3 +755,12 @@ unchanged: a tightened 2px internal gap was tried and reverted at
 his direction — he likes the original 8px separation; only the
 radii changed. The region-crop image takes the same step down
 (xl → md).
+
+## 2026-10-13 — Corners only for the platform pair; badges outlined
+
+Founder refinements: (1) the grouped-corner treatment applies ONLY
+to the iOS/Material boxes — the FIX box goes back to regular
+rounded-xl all around. The pair keeps it: source box top = rounded-md,
+meeting corners 4px, target box bottom = rounded-md. (2) All badges
+(category, Closest match, direction pill) switch to the outline
+variant — no filled badges in the results UI.

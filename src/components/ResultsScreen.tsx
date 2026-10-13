@@ -695,7 +695,7 @@ export default function ResultsScreen({
                   <h2 className="text-xl font-semibold tracking-tight text-foreground">
                     {label}
                   </h2>
-                  <Badge>{meta.arrow}</Badge>
+                  <Badge variant="outline">{meta.arrow}</Badge>
                   <span className="truncate text-sm text-muted-foreground">
                     {item.fileName}
                   </span>

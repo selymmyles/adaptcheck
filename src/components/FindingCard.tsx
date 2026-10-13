@@ -196,7 +196,7 @@ function PatternBox({
     <div
       className={
         tone === "source"
-          ? "rounded-[4px] bg-muted p-3"
+          ? "rounded-t-md rounded-b-[4px] bg-muted p-3"
           : "rounded-t-[4px] rounded-b-md bg-accent p-3"
       }
     >
@@ -279,7 +279,7 @@ function IconBox({
     <div
       className={
         tone === "source"
-          ? "rounded-[4px] bg-muted p-3"
+          ? "rounded-t-md rounded-b-[4px] bg-muted p-3"
           : "rounded-t-[4px] rounded-b-md bg-accent p-3"
       }
     >
@@ -294,7 +294,7 @@ function IconBox({
           {platformLabel}
         </p>
         {closest && (
-          <Badge variant="secondary">Closest match</Badge>
+          <Badge variant="outline">Closest match</Badge>
         )}
       </div>
       {iconName ? (
@@ -428,7 +428,7 @@ export default function FindingCard({
           ))}
         <AccordionTrigger className="hover:no-underline">
           <span className="flex min-w-0 items-center gap-2">
-            <Badge variant="secondary">{finding.category}</Badge>
+            <Badge variant="outline">{finding.category}</Badge>
             <span className="line-clamp-1" title={finding.title}>
               {finding.title}
             </span>
@@ -449,13 +449,14 @@ export default function FindingCard({
       {/* FIX — inverted on purpose (founder, 2026-10-13): it is the
           action item, so it is the one dark surface in the stack; the
           two platform boxes below are reference and stay quiet fills.
-          The three boxes form ONE grouped stack (founder, 2026-10-13):
-          outer corners take rounded-md (8px — one step under the item's
-          rounded-lg, concentric-style), corners that MEET take 4px (small but still rounded —
-          founder correction: 2px read as sharp),
-          Spacing stays the original 8px — a tight 2px internal gap
-          was tried and reverted at his direction; only radii changed. */}
-      <div className="rounded-t-md rounded-b-[4px] bg-primary p-3 text-primary-foreground">
+          The two PLATFORM boxes form a grouped pair (founder,
+          2026-10-13): their outer corners take rounded-md (8px — one
+          step under the item's rounded-lg, concentric-style) and the
+          corners where they MEET take 4px (small but still rounded;
+          2px read as sharp). The FIX box is exempt — regular
+          rounded-xl all around, at his direction. Spacing is the
+          original 8px everywhere. */}
+      <div className="rounded-xl bg-primary p-3 text-primary-foreground">
         <p className="text-[11px] font-semibold uppercase tracking-wider text-primary-foreground/70">
           Fix
         </p>

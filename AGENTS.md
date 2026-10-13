@@ -64,13 +64,18 @@ the change here.
   ResultsScreen renders groups as static headed sections (the
   annotated-map accordion and the screenshot collapse toggle are
   separate and stay).
-  **Finding boxes are a grouped stack (2026-10-13):** the FIX +
-  two platform boxes read as ONE group: outer corners rounded-md
-  (8px, one step under the item's rounded-lg — never larger than
-  their container), meeting corners 4px (half the outer; 2px read
-  as sharp). Spacing is the original 8px — a tightened gap was
+  **Platform boxes are a grouped pair (2026-10-13):** the two
+  platform boxes (iOS/Material) read as one group: outer corners
+  rounded-md (8px, one step under the item's rounded-lg — never
+  larger than their container), meeting corners 4px (half the
+  outer; 2px read as sharp). The FIX box is EXEMPT — regular
+  rounded-xl all around (founder: corners thing only for iOS and
+  Material). Spacing is the original 8px — a tightened gap was
   reverted at his direction. The region-crop image takes the same
   step down (rounded-md).
+  **Badges are outline variant (2026-10-13):** category badge,
+  "Closest match", and the direction pill — all `variant="outline"`,
+  no filled badges in the results UI.
   **FIX box is inverted (2026-10-13):** the finding's FIX box uses
   `bg-primary` / `text-primary-foreground` — the one dark surface in
   the finding stack, so the action stands out from the two platform
