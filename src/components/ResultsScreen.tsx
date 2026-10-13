@@ -416,8 +416,8 @@ export default function ResultsScreen({
   const jumpToFinding = (shot: number, id: string) => {
     expandShot(shot);
     flashHighlight(shot, id);
-    // Reopen the finding's group first if the user collapsed it
-    // (instant — the group toggle mounts content immediately).
+    // Reopen the finding's group first if the user collapsed it —
+    // the group rolls down over ~300ms, so scrolling waits it out.
     const result = items[shot]?.result;
     const group = result
       ? groupByItem(result.findings).find((g) =>
@@ -438,11 +438,14 @@ export default function ResultsScreen({
         next.delete(key);
         return next;
       });
-      window.setTimeout(() => {
-        document
-          .getElementById(`finding-${shot}-${id}`)
-          ?.scrollIntoView({ behavior: "smooth", block: "center" });
-      }, 300);
+      window.setTimeout(
+        () => {
+          document
+            .getElementById(`finding-${shot}-${id}`)
+            ?.scrollIntoView({ behavior: "smooth", block: "center" });
+        },
+        waited ? 340 : 300,
+      );
       return;
     }
     // Let the highlight apply (and a reopened group mount) before
@@ -453,7 +456,7 @@ export default function ResultsScreen({
           .getElementById(`finding-${shot}-${id}`)
           ?.scrollIntoView({ behavior: "smooth", block: "center" });
       },
-      waited ? 120 : 30,
+      waited ? 340 : 30,
     );
   };
 
@@ -784,9 +787,11 @@ export default function ResultsScreen({
                           />
                         </button>
                       </h3>
-                      {!closedGroups.has(`${si}:${group.name}`) && (
-                        <>
-                          <Separator className="mt-2" />
+                      <Separator className="mt-2" />
+                      <div
+                        className={`grid transition-[grid-template-rows] duration-300 ease-out ${closedGroups.has(`${si}:${group.name}`) ? "[grid-template-rows:0fr]" : "[grid-template-rows:1fr]"}`}
+                      >
+                        <div className="min-h-0 overflow-hidden">
                       <Accordion
                         multiple
                         className="mt-2.5 gap-2.5"
@@ -831,8 +836,8 @@ export default function ResultsScreen({
                             </div>
                           ))}
                       </Accordion>
-                        </>
-                      )}
+                        </div>
+                      </div>
                     </section>
                   ))}
                 </div>

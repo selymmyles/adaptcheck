@@ -729,3 +729,15 @@ screenshot in a radius/padding-matched Card, inverted FIX boxes,
 and the "look native" hero copy. This tree is the canonical Janus
 source going forward; the janus-foundation clone is the merged
 branch's archive.
+
+## 2026-10-13 (night) — Group divider stays; findings roll up/down
+
+Founder: when a group collapses, its divider vanished with the
+findings, and the collapse was instant. The Separator now renders
+outside the collapsible region (always under the group header), and
+the findings roll: a 300ms grid-template-rows transition slides them
+up under the divider on collapse and back down on expand (content
+stays mounted; sidebar jumps wait out the roll before scrolling).
+QA-verified: divider present under a settled collapsed group, roll
+both ways, jump-into-collapsed-group reopens + scrolls. (Groups
+remain house toggles, not Accordion panels — GPU border rule.)
