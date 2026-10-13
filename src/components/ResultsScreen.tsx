@@ -1,10 +1,35 @@
 import { useMemo, useState } from "react";
+import { Check, ChevronDown, Copy } from "lucide-react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import type {
   AnalysisResult,
   Finding,
   AnalysisDirection,
 } from "../lib/mockAnalysis";
 import { DIRECTION_META, CHECK_ORDER } from "../lib/taxonomy";
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemGroup,
+  ItemTitle,
+} from "@/components/ui/item";
+import { Separator } from "@/components/ui/separator";
 import FindingCard from "./FindingCard";
 import ScreenshotMap, { type MapMarker } from "./ScreenshotMap";
 import ContentIndex, { type IndexShot } from "./ContentIndex";
@@ -50,6 +75,69 @@ const iou = (a: Region, b: Region) => {
  *  a region go in a leading "General" group (unnumbered — only screen-pinned
  *  findings get numbers). Icon findings merge into a single item per
  *  screen area (nearby icons together; distant icons separate). */
+/**
+ * Plain-language conversion names for item groups, keyed by check id
+ * (founder, 2026-10-13): an item is named for what the element IS and
+ * what it BECOMES — "iOS sheet to Material bottom sheet" — not the
+ * check's title ("Modal presentation and dismissal"). Ids are
+ * directional, so each pair is already in conversion order. A check
+ * with no entry falls back to its finding's title.
+ */
+const ITEM_NAMES: Record<string, [string, string]> = {
+  "nav-back-behavior": ["iOS nav bar", "Material top app bar"],
+  "nav-tab-bar": ["iOS tab bar", "Material navigation bar"],
+  "nav-large-titles": ["iOS large title", "Material top app bar"],
+  "nav-modal": ["iOS sheet", "Material bottom sheet"],
+  "a2i-nav-back": ["System back only", "iOS back chevron"],
+  "a2i-nav-drawer": ["Hamburger drawer", "iOS tab bar"],
+  "a2i-nav-tabs": ["Material tab row", "iOS segmented control"],
+  "a2i-nav-bottombar": ["Material navigation bar", "iOS tab bar"],
+  "a2i-nav-fullscreen-dialog": ["Material full-screen dialog", "iOS full-screen cover"],
+  "type-font": ["SF Pro", "Roboto"],
+  "type-scale": ["iOS text styles", "Material type scale"],
+  "a2i-type-font": ["Roboto", "SF Pro"],
+  "a2i-type-scale": ["Material type scale", "iOS text styles"],
+  "comp-alert": ["iOS alert", "Material dialog"],
+  "comp-action-sheet": ["iOS action sheet", "Material bottom sheet"],
+  "comp-list": ["iOS grouped list", "Material list"],
+  "comp-menu": ["iOS pop-up menu", "Material menu"],
+  "comp-fab": ["iOS floating button", "Material FAB"],
+  "comp-searchbar": ["iOS search bar", "Material search bar"],
+  "comp-segmented": ["iOS segmented control", "Material segmented buttons"],
+  "comp-date-picker": ["iOS date wheels", "Material date picker"],
+  "comp-switch": ["iOS switch", "Material switch"],
+  "comp-time-picker": ["iOS time wheels", "Material time picker"],
+  "comp-stepper": ["iOS stepper", "Material icon buttons"],
+  "a2i-comp-fab": ["Material FAB", "iOS nav-bar button"],
+  "a2i-comp-searchbar": ["Material search bar", "iOS search field"],
+  "a2i-comp-dynamic-color": ["Dynamic color palette", "Fixed palette"],
+  "a2i-comp-dialog": ["Material dialog", "iOS alert"],
+  "a2i-comp-cards": ["Elevated cards", "Grouped backgrounds"],
+  "a2i-comp-list": ["Material list", "iOS grouped list"],
+  "a2i-comp-menu": ["Material menu", "iOS menu"],
+  "a2i-comp-switch": ["Material switch", "iOS switch"],
+  "a2i-comp-snackbar": ["Material snackbar", "iOS status indicator"],
+  "a2i-comp-buttons": ["Material buttons", "iOS buttons"],
+  "a2i-comp-pickers": ["Material date/time pickers", "iOS pickers"],
+  "touch-targets": ["44pt touch targets", "48dp touch targets"],
+  "layout-safe-area": ["iOS safe area layout", "Android edge-to-edge layout"],
+  "layout-status-bar": ["Opaque status bar", "Transparent status bar"],
+  "a2i-touch-targets": ["48dp touch targets", "44pt touch targets"],
+  "a2i-layout-edge": ["Edge-to-edge layout", "iOS safe area"],
+  "a2i-layout-statusbar": ["Transparent status bar", "Per-screen status bar style"],
+  "layout-gesture-insets": ["iOS edge gestures", "Android gesture insets"],
+  "motion-transitions": ["iOS transitions", "Material motion"],
+  "motion-duration": ["iOS durations", "Material motion tokens"],
+  "a2i-motion-transitions": ["Material transitions", "iOS parallax push/pop"],
+  "a2i-motion-tokens": ["Material motion tokens", "iOS animation curves"],
+  "motion-predictive-back": ["Custom swipe-back", "Predictive back gesture"],
+  "icon-symbols": ["SF Symbols", "Material Symbols"],
+  "icon-tab-sizing": ["Tint-only tab icons", "Material tab icons"],
+  "a2i-icon-symbols": ["Material Symbols", "SF Symbols"],
+  "a2i-icon-adaptive": ["Adaptive icon", "Full-bleed app icon"],
+  "a2i-icon-themed": ["Themed icon", "Full-color app icon"],
+};
+
 function groupByItem(
   findings: Finding[],
 ): { name: string; findings: Finding[] }[] {
@@ -156,10 +244,24 @@ function groupByItem(
       (a, b) =>
         regionCenterY(a.primary.region!) - regionCenterY(b.primary.region!),
     )
-    .map((g, i) => ({
-      name: `Item ${i + 1} — ${g.primary.title}`,
+    .map((g) => {
+      const pair = ITEM_NAMES[g.primary.id];
+      return {
+        base: pair ? `${pair[0]} to ${pair[1]}` : g.primary.title,
+        findings: g.findings,
+      };
+    });
+  // Two clusters on one screen can be the same conversion (two
+  // sheets); suffix repeats so headers stay distinguishable.
+  const seen = new Map<string, number>();
+  const named = itemGroups.map((g) => {
+    const n = (seen.get(g.base) ?? 0) + 1;
+    seen.set(g.base, n);
+    return {
+      name: n > 1 ? `${g.base} ${n}` : g.base,
       findings: g.findings,
-    }));
+    };
+  });
 
   const groups: { name: string; findings: Finding[] }[] = [];
   if (withoutRegion.length > 0) {
@@ -168,7 +270,7 @@ function groupByItem(
       findings: [...withoutRegion].sort(byCheckOrder),
     });
   }
-  groups.push(...itemGroups);
+  groups.push(...named);
   return groups;
 }
 
@@ -246,7 +348,33 @@ export default function ResultsScreen({
   const [collapsedShots, setCollapsedShots] = useState<ReadonlySet<number>>(
     new Set(),
   );
+  /** Shots whose annotated-screenshot accordion is open (closed by default). */
+  const [openMaps, setOpenMaps] = useState<ReadonlySet<number>>(new Set());
+  /** Findings the user collapsed, keyed `${shot}:${findingKey}`.
+   *  Expanded by default (founder: don't default closed) — findings
+   *  that arrive later are open too, since only closures are tracked. */
+  const [closedFindings, setClosedFindings] = useState<ReadonlySet<string>>(
+    new Set(),
+  );
+  /** Item groups the user collapsed, keyed `${shot}:${groupName}`.
+   *  Groups are expanded by default too. Collapse uses the same house
+   *  toggle as the screenshot sections (button + conditional render),
+   *  NOT the Accordion component: a real accordion would nest the
+   *  finding items inside another animated panel — the exact nesting
+   *  whose borders GPU Chrome dropped. */
+  const [closedGroups, setClosedGroups] = useState<ReadonlySet<string>>(
+    new Set(),
+  );
 
+  const toggleGroup = (shot: number, name: string) => {
+    const key = `${shot}:${name}`;
+    setClosedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
   const toggleShot = (shot: number) => {
     setCollapsedShots((prev) => {
       const next = new Set(prev);
@@ -276,23 +404,57 @@ export default function ResultsScreen({
 
   const locateOnMap = (shot: number, id: string) => {
     flashHighlight(shot, id);
-    // The annotated screenshot is collapsed by default — open it first.
-    const map = document.getElementById(`map-${shot}`) as HTMLDetailsElement | null;
-    if (map && !map.open) map.open = true;
-    map?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    // The annotated screenshot accordion is closed by default — open it.
+    setOpenMaps((prev) => new Set(prev).add(shot));
+    window.setTimeout(() => {
+      document
+        .getElementById(`map-${shot}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }, 30);
   };
 
   const jumpToFinding = (shot: number, id: string) => {
     expandShot(shot);
     flashHighlight(shot, id);
-    // Let the highlight apply before scrolling into view.
-    window.setTimeout(() => {
-      const el = document.getElementById(`finding-${shot}-${id}`);
-      // Open the category accordion first if the user collapsed it.
-      const details = el?.closest("details");
-      if (details && !details.open) details.open = true;
-      el?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 30);
+    // Reopen the finding's group first if the user collapsed it
+    // (instant — the group toggle mounts content immediately).
+    const result = items[shot]?.result;
+    const group = result
+      ? groupByItem(result.findings).find((g) =>
+          g.findings.some((f) => f.key === id),
+        )
+      : undefined;
+    let waited = false;
+    if (group && closedGroups.has(`${shot}:${group.name}`)) {
+      toggleGroup(shot, group.name);
+      waited = true;
+    }
+    // If the user collapsed this finding, reopen it and give its
+    // accordion time to expand before scrolling to it.
+    const key = `${shot}:${id}`;
+    if (closedFindings.has(key)) {
+      setClosedFindings((prev) => {
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
+      });
+      window.setTimeout(() => {
+        document
+          .getElementById(`finding-${shot}-${id}`)
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 300);
+      return;
+    }
+    // Let the highlight apply (and a reopened group mount) before
+    // scrolling into view.
+    window.setTimeout(
+      () => {
+        document
+          .getElementById(`finding-${shot}-${id}`)
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      },
+      waited ? 120 : 30,
+    );
   };
 
   const jumpToScreenshot = (shot: number) => {
@@ -363,9 +525,10 @@ export default function ResultsScreen({
     <div className="flex items-start gap-6">
       <div className="mx-auto w-full max-w-3xl flex-1">
         {/* Summary header */}
-        <section className="rounded-2xl border border-stone-200 bg-white p-6">
-          <p className="text-[15px] leading-relaxed text-stone-700">
-            <span className="font-semibold text-stone-900">
+        <Card>
+          <CardContent>
+          <p className="text-[15px] leading-relaxed text-foreground">
+            <span className="font-semibold text-foreground">
               {totalFindings} {totalFindings === 1 ? "finding" : "findings"}
             </span>{" "}
             across {doneItems.length}{" "}
@@ -377,65 +540,58 @@ export default function ResultsScreen({
                 : ` — ${screensNeedingWork} of ${doneItems.length} screens need addressing; the rest already read native.`}
           </p>
           <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-            <button
-              type="button"
-              onClick={copyChecklist}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-800"
-            >
+            <Button type="button" onClick={copyChecklist}>
               {copied ? (
                 <>
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                  </svg>
+                  <Check aria-hidden="true" />
                   Copied to clipboard
                 </>
               ) : (
                 <>
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5" />
-                  </svg>
+                  <Copy aria-hidden="true" />
                   Copy checklist
                 </>
               )}
-            </button>
-            <button
-              type="button"
-              onClick={onReset}
-              className="inline-flex items-center justify-center rounded-xl border border-stone-300 bg-white px-5 py-2.5 text-sm font-semibold text-stone-700 transition-colors hover:bg-stone-50"
-            >
+            </Button>
+            <Button type="button" variant="outline" onClick={onReset}>
               Analyze more
-            </button>
+            </Button>
           </div>
-        </section>
+          </CardContent>
+        </Card>
 
         {/* Cross-screen patterns: fix once, apply everywhere */}
         {patterns.length > 0 && (
-          <section className="mt-6 rounded-2xl border border-stone-200 bg-white p-6">
-            <h2 className="text-base font-semibold tracking-tight text-stone-900">
-              Fix once, apply everywhere
-            </h2>
-            <p className="mt-1 text-sm leading-relaxed text-stone-500">
-              These patterns repeat across your screens — handle them globally
-              (theme, design system) instead of screen by screen.
-            </p>
-            <ul className="mt-4 space-y-3">
+          <div className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Fix once, apply everywhere</CardTitle>
+              <CardDescription>
+                These patterns repeat across your screens — handle them
+                globally (theme, design system) instead of screen by screen.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+            <ItemGroup>
               {patterns.map((p) => (
-                <li key={p.id} className="rounded-xl bg-stone-50 p-4">
-                  <div className="flex items-baseline justify-between gap-3">
-                    <p className="text-sm font-semibold text-stone-900">
-                      {p.title}
+                <Item key={p.id} variant="muted">
+                  <ItemContent>
+                    <ItemTitle>{p.title}</ItemTitle>
+                    <p className="text-[13px] leading-relaxed text-foreground">
+                      {p.fix}
                     </p>
-                    <p className="shrink-0 text-xs font-medium text-teal-700">
+                  </ItemContent>
+                  <ItemActions>
+                    <span className="text-xs font-medium text-primary">
                       {p.screens.size} of {items.length} screens
-                    </p>
-                  </div>
-                  <p className="mt-1 text-[13px] leading-relaxed text-stone-600">
-                    {p.fix}
-                  </p>
-                </li>
+                    </span>
+                  </ItemActions>
+                </Item>
               ))}
-            </ul>
-          </section>
+            </ItemGroup>
+            </CardContent>
+          </Card>
+          </div>
         )}
 
         {/* Per-screenshot sections */}
@@ -444,19 +600,23 @@ export default function ResultsScreen({
           if (item.status === "analyzing") {
             return (
               <section key={label} id={`shot-${si}`} className="mt-8 scroll-mt-6">
-                <h2 className="text-lg font-semibold tracking-tight text-stone-900">
+                <h2 className="text-lg font-semibold tracking-tight text-foreground">
                   {label}
-                  <span className="ml-2 truncate text-sm font-normal text-stone-400">
+                  <span className="ml-2 truncate text-sm font-normal text-muted-foreground">
                     {item.fileName}
                   </span>
                 </h2>
-                <div className="mt-3 rounded-2xl border border-stone-200 bg-white p-5">
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-stone-100">
-                    <div className="h-full w-1/3 animate-pulse rounded-full bg-teal-700" />
+                <div className="mt-3">
+                <Card>
+                  <CardContent>
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                    <div className="h-full w-1/3 animate-pulse rounded-full bg-primary" />
                   </div>
-                  <p className="mt-3 text-sm text-stone-500">
+                  <p className="mt-3 text-sm text-muted-foreground">
                     Retrying analysis…
                   </p>
+                  </CardContent>
+                </Card>
                 </div>
               </section>
             );
@@ -464,23 +624,27 @@ export default function ResultsScreen({
           if (item.status !== "done" || !item.result) {
             return (
               <section key={label} id={`shot-${si}`} className="mt-8 scroll-mt-6">
-                <h2 className="text-lg font-semibold tracking-tight text-stone-900">
+                <h2 className="text-lg font-semibold tracking-tight text-foreground">
                   {label}
-                  <span className="ml-2 truncate text-sm font-normal text-stone-400">
+                  <span className="ml-2 truncate text-sm font-normal text-muted-foreground">
                     {item.fileName}
                   </span>
                 </h2>
-                <div className="mt-3 rounded-2xl border border-rose-200 bg-rose-50 p-5">
-                  <p className="text-sm text-rose-800">
+                <div className="mt-3">
+                <Alert variant="destructive">
+                  <AlertDescription>
                     {item.error ?? "Analysis failed. Please try again."}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => onRetry(si)}
-                    className="mt-3 rounded-xl bg-rose-700 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-800"
-                  >
-                    Retry this screenshot
-                  </button>
+                  </AlertDescription>
+                  <div className="mt-3">
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      onClick={() => onRetry(si)}
+                    >
+                      Retry this screenshot
+                    </Button>
+                  </div>
+                </Alert>
                 </div>
               </section>
             );
@@ -523,126 +687,156 @@ export default function ResultsScreen({
                   type="button"
                   onClick={() => toggleShot(si)}
                   aria-expanded={!collapsedShots.has(si)}
-                  className="flex flex-wrap items-center gap-3 text-left"
+                  className="flex w-full flex-wrap items-center gap-3 text-left"
                 >
-                  <svg
-                    className={`h-5 w-5 shrink-0 text-stone-400 transition-transform ${collapsedShots.has(si) ? "" : "rotate-180"}`}
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={2.5}
-                    stroke="currentColor"
-                    aria-hidden="true"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M19.5 8.25l-7.5 7.5-7.5-7.5"
-                    />
-                  </svg>
-                  <h2 className="text-xl font-semibold tracking-tight text-stone-900">
+                  <h2 className="text-xl font-semibold tracking-tight text-foreground">
                     {label}
                   </h2>
-                  <span className="inline-flex items-center rounded-full bg-teal-700 px-3 py-1 text-xs font-semibold text-white">
-                    {meta.arrow}
-                  </span>
-                  <span className="truncate text-sm text-stone-400">
+                  <Badge>{meta.arrow}</Badge>
+                  <span className="truncate text-sm text-muted-foreground">
                     {item.fileName}
                   </span>
+                  <ChevronDown
+                    className={`ml-auto h-5 w-5 shrink-0 text-muted-foreground transition-transform ${collapsedShots.has(si) ? "" : "rotate-180"}`}
+                    strokeWidth={2.5}
+                    aria-hidden="true"
+                  />
                 </button>
               </div>
               {!collapsedShots.has(si) && (
                 <>
-              <p className="mb-6 text-[15px] leading-relaxed text-stone-700">
+              <p className="mb-6 text-[15px] leading-relaxed text-foreground">
                 {result.summary}
               </p>
 
               {markers.length > 0 && (
-                <details id={`map-${si}`} className="mb-8 scroll-mt-6 group/map">
-                  <summary className="mb-3 cursor-pointer list-none">
-                    <span className="inline-flex items-center gap-2 text-sm font-semibold text-stone-700">
-                      <svg
-                        className="h-4 w-4 text-stone-400 transition-transform group-open/map:rotate-180"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth={2.5}
-                        stroke="currentColor"
-                        aria-hidden="true"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M19.5 8.25l-7.5 7.5-7.5-7.5"
-                        />
-                      </svg>
-                      Annotated screenshot
-                      <span className="font-normal text-stone-400">
-                        {markers.length} {markers.length === 1 ? "pin" : "pins"}
+                <div className="mb-8">
+                <Card className="rounded-lg py-0">
+                  <CardContent className="px-3.5">
+                <Accordion
+                  value={openMaps.has(si) ? ["map"] : []}
+                  onValueChange={(v) =>
+                    setOpenMaps((prev) => {
+                      const next = new Set(prev);
+                      if ((v as string[]).includes("map")) next.add(si);
+                      else next.delete(si);
+                      return next;
+                    })
+                  }
+                >
+                  <AccordionItem
+                    value="map"
+                    id={`map-${si}`}
+                    className="scroll-mt-6"
+                  >
+                    <AccordionTrigger>
+                      <span>
+                        Annotated screenshot
+                        <span className="ml-1.5 font-normal text-muted-foreground">
+                          {markers.length}{" "}
+                          {markers.length === 1 ? "pin" : "pins"}
+                        </span>
                       </span>
-                    </span>
-                  </summary>
-                  <ScreenshotMap
-                    imageUrl={item.imageUrl}
-                    markers={markers}
-                    onSelectMarker={(id) => jumpToFinding(si, id)}
-                  />
-                </details>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <ScreenshotMap
+                        imageUrl={item.imageUrl}
+                        markers={markers}
+                        onSelectMarker={(id) => jumpToFinding(si, id)}
+                      />
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+                  </CardContent>
+                </Card>
+                </div>
               )}
 
               {groups.length === 0 && (
-                <p className="rounded-2xl border border-stone-200 bg-white p-5 text-sm text-stone-500">
-                  No adaptation issues found — this screen already reads
-                  native on {meta.targetShort}.
-                </p>
+                <Card>
+                  <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    No adaptation issues found — this screen already reads
+                    native on {meta.targetShort}.
+                  </p>
+                  </CardContent>
+                </Card>
               )}
 
-              {groups.map((group) => (
-                <details key={group.name} open className="mb-8 group/acc">
-                  <summary className="mb-3 cursor-pointer list-none">
-                    <span className="inline-flex items-center gap-2 text-lg font-semibold tracking-tight text-stone-900">
-                      <svg
-                        className="h-4 w-4 text-stone-400 transition-transform group-open/acc:rotate-180"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth={2.5}
-                        stroke="currentColor"
-                        aria-hidden="true"
+              {groups.length > 0 && (
+                <div className="mb-8 space-y-8">
+                  {groups.map((group) => (
+                    <section key={group.name} aria-label={group.name}>
+                      <h3 className="text-sm font-medium text-foreground">
+                        <button
+                          type="button"
+                          onClick={() => toggleGroup(si, group.name)}
+                          aria-expanded={!closedGroups.has(`${si}:${group.name}`)}
+                          className="flex w-full items-center text-left"
+                        >
+                          {group.name}
+                          <span className="ml-1.5 font-normal text-muted-foreground">
+                            {group.findings.length}
+                          </span>
+                          <ChevronDown
+                            className={`ml-auto h-4 w-4 shrink-0 text-muted-foreground transition-transform ${closedGroups.has(`${si}:${group.name}`) ? "" : "rotate-180"}`}
+                            aria-hidden="true"
+                          />
+                        </button>
+                      </h3>
+                      {!closedGroups.has(`${si}:${group.name}`) && (
+                        <>
+                          <Separator className="mt-2" />
+                      <Accordion
+                        multiple
+                        className="mt-2.5 gap-2.5"
+                        value={group.findings
+                          .filter((f) => !closedFindings.has(`${si}:${f.key}`))
+                          .map((f) => f.key)}
+                        onValueChange={(v) => {
+                          const open = new Set(v as string[]);
+                          setClosedFindings((prev) => {
+                            const next = new Set(prev);
+                            for (const f of group.findings) {
+                              const k = `${si}:${f.key}`;
+                              if (open.has(f.key)) next.delete(k);
+                              else next.add(k);
+                            }
+                            return next;
+                          });
+                        }}
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M19.5 8.25l-7.5 7.5-7.5-7.5"
-                        />
-                      </svg>
-                      {group.name}
-                      <span className="text-sm font-medium text-stone-400">
-                        {group.findings.length}
-                      </span>
-                    </span>
-                  </summary>
-                  <div className="space-y-3">
-                    {group.findings.map((f) => (
-                      <div
-                        key={f.key}
-                        id={`finding-${si}-${f.key}`}
-                        className="scroll-mt-6"
-                      >
-                        <FindingCard
-                          finding={f}
-                          direction={direction}
-                          number={numberByKey.get(f.key)}
-                          imageUrl={item.imageUrl}
-                          active={
-                            highlight?.shot === si && highlight.id === f.key
-                          }
-                          onLocate={
-                            f.region ? () => locateOnMap(si, f.key) : null
-                          }
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </details>
-              ))}
+                          {group.findings.map((f) => (
+                            <div
+                              key={f.key}
+                              id={`finding-${si}-${f.key}`}
+                              className={`scroll-mt-6 rounded-xl ${
+                                highlight?.shot === si &&
+                                highlight.id === f.key
+                                  ? "ring-2 ring-ring"
+                                  : ""
+                              }`}
+                            >
+                              <FindingCard
+                                finding={f}
+                                direction={direction}
+                                number={numberByKey.get(f.key)}
+                                imageUrl={item.imageUrl}
+                                onLocate={
+                                  f.region
+                                    ? () => locateOnMap(si, f.key)
+                                    : null
+                                }
+                              />
+                            </div>
+                          ))}
+                      </Accordion>
+                        </>
+                      )}
+                    </section>
+                  ))}
+                </div>
+              )}
                 </>
               )}
             </section>

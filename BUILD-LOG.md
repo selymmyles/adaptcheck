@@ -389,3 +389,328 @@ PIPELINE_VERSION 20.
   Agreed to trial a regression harness LATER (saved corpus + encoded
   expectations from his red-pens; Muse runs it before deploys). Deferred
   by his call 2026-10-12 — not yet built.
+
+## 2026-10-12 night — Foundation reset to stock shadcn defaults (branch)
+
+Founder correction: the look the foundation rebuild preserved (teal,
+Inter, stone) was AI-improvised styling from the original generation,
+not his design. Direction: start from stock defaults; he directs token
+customization from there, one change at a time.
+
+- Theme reset to the exact shadcn base-nova defaults (harvested from a
+  fresh CLI scaffold, not memory): neutral oklch palette, primary
+  near-black, radius 0.625rem, Geist Variable font. `--primary-dark`
+  removed; ui primitives regenerated to stock; `accordion` added.
+- 125 hardcoded palette classes (teal/stone/rose/amber) across the app
+  components swept to semantic tokens.
+- Accordion conversions: findings-sidebar item groups, results item
+  groups, and the annotated-screenshot panel now use the stock shadcn
+  Accordion (controlled state wired into jump-to-finding / locate-on-map).
+- Verified: build clean, lint 0 errors; preview version 0d83458f serves
+  the stock theme (primary oklch(20.5% 0 0), no teal hex in CSS).
+- Still unmerged/unpushed-to-production: branch `ui-foundation-shadcn`.
+
+## 2026-10-12 night — Out-of-the-box strip (branch)
+
+Founder: "completely strip everything, I want it out the box." Every
+shadcn component is now used exactly as shipped — no className
+overrides on Card/Badge/Button/Alert/Progress/Separator/Accordion.
+Finding cards compose from stock CardHeader/CardTitle/CardContent;
+the jump highlight ring moved to the results wrapper div; pattern
+boxes are uniform stock muted/accent; PatternBox link decorations and
+the dead `hover:text-primary-dark` reference removed. Build clean,
+lint 0 errors. Preview version 73f5f861.
+
+## 2026-10-13 — Founder-directed UI pass: findings become Items
+
+The founder reviewed the stock build against the shadcn docs demos and
+directed a five-part pass, then amended it mid-flight:
+
+- **Findings are Items, not Cards** — "they are items within a card, not
+  a card within a card." FindingCard now composes the stock Item
+  primitives (outline variant, sm size) inside an ItemGroup; the FIX /
+  platform boxes inside were tightened (p-3.5 → p-3, stack space-y-3 →
+  space-y-2). Summary, patterns, and analyzing surfaces remain Cards.
+- **Card outline investigation:** the founder disputed that the docs
+  cards read clearer "because of the background." Verified by pulling
+  both sites' code: the stock Card edge is `ring-1 ring-foreground/10`
+  on Janus AND on ui.shadcn.com — identical class lists, no border at
+  all. The docs shot was a magnified crop plus the preview panel's own
+  real border. At his direction, `ui/card.tsx` now uses a real
+  `border border-border` so cards have a visible outline.
+- **Progress is stock everywhere** — the custom per-file bars and their
+  keyframes are deleted; per-file rows use Progress with value=null
+  (Base UI indeterminate). QA caught that the stock Progress file
+  leaves the indeterminate state completely unstyled (invisible bar),
+  so the primitive carries a documented functional patch:
+  data-indeterminate slide classes + a --animate-progress-indeterminate
+  theme token in index.css.
+- **Findings sidebar** follows the shadcn Tags scroll-area demo he
+  picked: bordered panel, "Findings" header over a hairline, and the
+  React Aria ScrollArea variant (aria-nova registry file) scrolling it.
+- **Source links** use the stock Button link variant (shadcn has no
+  link component/default link style).
+
+Two previews: 36cab641 (QA caught the dead indeterminate bar) →
+ecc78653 (verified: sliding segment renders, panel clean, findings
+read as bordered items). Branch only — production untouched, merge is
+still the founder's call.
+
+## 2026-10-13 (later) — The case of the vanishing side borders
+
+The founder reported the finding Items' side borders were absent in HIS
+Chrome while present in every QA capture — no flicker on resize, scaling
+and per-site zoom both verified 100% on his PC. Research found the bug
+class: Chromium's GPU-accelerated painting drops hairline borders on
+elements inside composited, overflow-hidden containers (the accordion
+panel); accordion-specific vanishing-border reports exist, and the
+documented workaround is drawing the line as an inset box-shadow,
+which paints with the element instead of as a border. The QA browser
+renders in software (VM), which is why it never reproduced. Fix: Card,
+the Item outline variant, and the findings panel now carry
+`ring-1 ring-inset ring-border` behind the border. Verification is the
+founder's own browser this time — preview ecc78653 superseded.
+
+## 2026-10-13 (later still) — Ring backing reverted; accordion is the suspect
+
+The founder rejected the inset-ring backing (reads as a thickened
+border where border and ring both paint) and directed it reverted —
+done, outlines are plain `border border-border` again. His diagnosis,
+which the evidence supports: every element that loses its sides for
+him lives inside the results group accordion; every card that renders
+fine sits outside one. Removing the findings from the group accordion
+(static group sections instead) is teed up as his call.
+
+## 2026-10-13 (night) — Findings leave the accordion
+
+At the founder's direction, the results item-groups are no longer a
+shadcn Accordion: each group is now a static section (header + count +
+ItemGroup). The accordion panel — an overflow-hidden, height-animated,
+composited container — is the prime suspect in the vanishing-side-
+borders bug on GPU-accelerated Chrome, and every element he reported
+as fine sat outside one. Group collapsing goes away; index jumps
+simplify (no closed group to open before scrolling). The annotated-
+map accordion and the screenshot-section collapse toggle are separate
+mechanisms and stay. His browser is the verification: if the Items'
+side borders now render for him, the diagnosis is proven.
+
+## 2026-10-13 (night) — Vanishing borders: VERIFIED FIXED; patterns become Items
+
+The founder loaded the de-accordioned preview in his own Chrome:
+"yep all cards are fixed now." His diagnosis was the correct one —
+the group accordion's composited panel was eating the Items' side
+borders on GPU-accelerated rendering; outside it, they paint. Saga
+closed (two of my earlier explanations — border tint, sub-pixel
+flicker — were wrong; his screen was the ground truth throughout).
+
+Same night, same rule applied one level up: the "Fix once, apply
+everywhere" Card held card-looking rows (`rounded-xl bg-muted` list
+items). Per his direction they're now shadcn Items (ItemGroup +
+Item variant="muted" — the filled variant, closest to the old rows;
+title + fix in ItemContent, the "N of M screens" count in
+ItemActions). Standalone surfaces (summary, analyzing, error) remain
+Cards, per the standing rule: stands alone → Card; sits in a list →
+Item.
+
+## 2026-10-13 (night) — Icon copy button goes icon-only
+
+The founder's standard for the icon copy button: a dev expects it to
+hand over the exact thing they'd paste into code to get the icon
+they're looking at — which it already did (SwiftUI snippet for SF
+Symbols, the bare name for Material). His refinement: say it in as
+little text as possible — ideally none. The labeled outline button
+("Copy SwiftUI" / "Copy name") is now an icon-only button (Copy glyph,
+swapping to a Check when copied); the words moved to the accessible
+label and hover title.
+
+## 2026-10-13 (night) — Screenshot crops get breathing room
+
+"Some of these screenshots need the spacing tweaked" meant the region
+CROP inside a finding: for small regions (a lone chevron button) the
+flat 8% padding was a few pixels — the icon nearly touched the crop
+edges and looked cramped, while large regions (a toolbar) looked
+fine. Crop padding is now proportional (35% of the region) with a
+floor of 28 per-mille units, so every crop carries a minimum ring of
+context around the flagged element. Applies to the lightbox too
+(same component).
+
+## 2026-10-13 (night) — Pin number matches the badge
+
+The numbered pin button beside the category badge was h-6 (24px)
+against the badge's h-5 (20px) — a small height mismatch in the
+finding header row. At the founder's direction ("same size as the
+badge, for cohesion") the number is now h-5 w-5 with the digit at
+10px, so the two sit at one height in the row. Applies to the muted
+non-button fallback too.
+
+## 2026-10-13 (night) — Copy button sits next to the icon name
+
+The icon copy button was pushed to the box's right edge (ml-auto),
+visually disconnected from the name it copies. At the founder's
+direction it now sits directly beside the icon name chip in the
+glyph row — glyph, name, copy — one glanceable unit.
+
+## 2026-10-13 (night) — Findings become collapsible accordion items
+
+Founder's proposal: the findings back into an accordion — per finding
+this time — as a way to save space. With 38 findings a results page
+is a wall; now each finding collapses to one row (pin number, category
+badge, title) and expands on tap. Index and map jumps open the target
+finding first, then scroll.
+
+The border lesson shaped the build: the finding's outline lives on
+the AccordionItem itself, not on a box nested inside the panel (the
+exact nesting GPU Chrome dropped), and everything inside the panel
+is borderless filled boxes. The panel's stock <p>-margin cascade is
+neutralized so box spacing is unchanged. Founder's browser is the
+verification, as always with this bug: if a line vanishes, this
+reverts in one commit.
+
+## 2026-10-13 (night) — Accordion findings: founder-verified, now default-open
+
+The founder loaded the collapsible-findings build in his own Chrome:
+"it worked" — the accordion-item outlines hold on his GPU (the
+structure change did its job), and the collapse interaction works.
+His one correction: don't default closed. The state model inverted
+to match — ResultsScreen now tracks only the findings the user
+collapses, so findings are expanded by default and late-arriving
+results (retries) come up open too.
+
+## 2026-10-13 (night) — Accordion chevron to the right edge
+
+The collapsed-row chevron trailed the title text instead of sitting
+at the row's right edge: the stock trigger's header wrapper shrink-
+wraps its content inside the finding's header row, so the trigger
+never spanned the row. The header row now grows that wrapper
+([&>h3]:flex-1), letting the trigger — and its right-aligned
+chevron — span the full row width.
+
+## 2026-10-13 (night) — Annotated screenshot gets a Card; section chevron right
+
+Two founder directions from his screenshots: (1) the annotated
+screenshot now lives inside a Card — the map accordion (header +
+panel) composes inside CardContent, so the map surface reads as a
+card like the other standalone surfaces; (2) the screenshot-section
+collapse chevron moved from the left of the "Screenshot N" header to
+the right edge (button is now full-width, chevron last with ml-auto)
+— every disclosure arrow in the results UI now sits on the right.
+
+## 2026-10-13 (night) — Item groups (and General) collapse too
+
+Founder: "give the items themselves an accordion — same with
+general." The groups (Item 1, Item 2, …, General) now collapse from
+their headers, chevron on the right, expanded by default. Deliberate
+implementation choice: groups use the screenshot-section house
+toggle (button + conditional render), not the Accordion component —
+a real accordion would nest every finding item inside another
+animated overflow-hidden panel, the exact configuration whose
+borders GPU Chrome dropped. Same interaction, no panel. Index jumps
+reopen a collapsed group before scrolling.
+
+## 2026-10-13 (night) — Annotated screenshot padding mirrors the findings
+
+Founder: decrease the annotated screenshot's padding and make it
+mirror the findings. The map card carried the stock Card spacing
+(16px) around an accordion, and the map figure had its own border —
+two frames, deep inset. Now: the Card's vertical padding is zeroed
+and its content inset is the findings' px-3.5, so the map header row
+sits exactly like a finding header row; the figure drops its own
+border (the Card's is the one frame now) and its radius matches the
+finding boxes (rounded-xl); the caption inset follows to px-3.5.
+
+## 2026-10-13 (night) — Divider between group title and findings
+
+Founder: a divider between the item title (group header) and the
+findings cards. A stock Separator now sits under each group header,
+rendered only while the group is open (a collapsed group keeps just
+its header row). Findings keep their rhythm below it (mt-2.5).
+
+## 2026-10-13 (night) — Annotated screenshot card radius matches findings
+
+Founder spotted it from two screenshots: the finding items are
+rounded-lg (the theme radius, 10px) while stock Cards are
+rounded-xl (+4px) — side by side, the annotated screenshot card's
+corners were visibly rounder than every finding row around it. The
+map card now carries rounded-lg. (The summary and patterns Cards
+remain stock rounded-xl — they're page-level surfaces, not adjacent
+to findings; flagged to the founder, his call if they should match
+too.)
+
+## 2026-10-13 (night) — FIX box inverted
+
+Founder: "in some way emphasize the fix item so it stands out from
+the other two." The FIX box was bg-muted — identical to the source
+platform box — so the three boxes read as equals. The FIX is the
+action, so it now takes the one treatment nothing else in the stack
+uses: bg-primary with primary-foreground text (near-black in the
+stock light theme, inverts in dark). The platform boxes stay quiet
+muted/accent reference fills.
+
+## 2026-10-13 (night) — Item groups get plain conversion names
+
+Founder: instead of "Item 1 — Modal presentation and dismissal",
+name the group for what the element is and what it becomes —
+"iOS sheet to Material bottom sheet". Group names now come from a
+plain-language pair map keyed by the primary finding's check id (all
+52 checks covered, each pair in its check's conversion order); a
+check with no pair falls back to its title. The "Item N —" prefix is
+gone everywhere (headers, sidebar index, copied checklist — all read
+from the same grouping). Two clusters with the same conversion on
+one screen suffix the repeat ("… 2"). General keeps its name.
+
+## 2026-10-13 (night) — Platform boxes: white with the FIX black as outline
+
+Founder: playing off the inverted FIX — the two platform boxes drop
+their light-gray fills for a white (card) surface with a thin
+outline in the same black as the FIX fill (border-primary, 1px like
+the card outlines). The pair now reads as one system: FIX = filled,
+references = outlined. Applies to both pattern boxes and icon boxes;
+source/target fills no longer differ (labels carry the distinction).
+In dark theme the primary token inverts and the pairing survives.
+
+## 2026-10-13 (night) — Platform-box outline treatment REVERTED
+
+Founder tried the white + primary-outline platform boxes live and
+didn't like them ("revert the outline thing"). Both pattern and icon
+boxes are back to the stock fills (source muted, target accent).
+The inverted FIX box stays — that part he likes. Do not re-propose
+the outline treatment.
+
+## 2026-10-13 (night) — Sidebar screenshots are accordions too
+
+Founder (with a screenshot of the Findings sidebar): the screenshot
+level of the index should collapse like the groups under it. Each
+screenshot in the sidebar is now an AccordionItem — header row with
+label, count, and the stock chevron; expanded by default, and a
+screenshot opens as its analysis lands. The filename line under the
+header stays a jump link to that screenshot's section (the header
+click itself now toggles instead of jumping). Groups and findings
+inside are unchanged.
+
+## 2026-10-13 (night) — Hero copy reframed: spotter, not converter
+
+Founder: the copy should be about helping you pick out what needs
+fixing to make your app look native. Hero H1 "Will your design
+survive the other platform?" → "Find what needs fixing to make your
+app look native." Sub now: Janus picks out the patterns that make an
+app look ported and gives the fix for each. Header tagline "See your
+design through the other platform's eyes" → "Look native on both
+platforms." Matches the standing product truth: Janus is a spotter,
+not a translator.
+
+## 2026-10-13 (night) — Browser tab title follows the new tagline
+
+The QA text check caught the page <title> still carrying the old
+tagline ("See your design through the other platform's eyes"). Now
+"Janus — Look native on both platforms", matching the header.
+
+## 2026-10-13 (night) — Hero left-aligned
+
+Founder: the hero block (headline + sub) was centered; it's now
+left-aligned at the page column's edge, still capped at max-w-xl
+for line length.
+
+## 2026-10-13 (night) — Hero alignment reverted to centered
+
+Founder: "nvm go back" — hero is centered again, exactly as before
+the left-align change.

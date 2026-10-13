@@ -1,10 +1,30 @@
 import { useEffect, useRef, useState } from "react";
+import { Check, ChevronDown, Copy, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { cn } from "@/lib/utils";
 import type {
   Finding,
   FindingRegion,
   AnalysisDirection,
 } from "../lib/mockAnalysis";
 import { DIRECTION_META } from "../lib/taxonomy";
+
+/**
+ * The worker also sends these icon fields on findings at runtime, but they
+ * are not declared on the shared Finding type (pre-existing gap on main —
+ * the proper fix is adding them to src/lib/mockAnalysis.ts). Declared
+ * locally here so the UI typechecks without touching src/lib.
+ */
+type FindingWithIconFields = Finding & {
+  detail?: string;
+  counterpartExact?: boolean;
+};
 
 /**
  * Pick the citation most relevant to a platform, matched on URL host first
@@ -66,9 +86,13 @@ function RegionCrop({
     img.onload = () => {
       const iw = img.naturalWidth;
       const ih = img.naturalHeight;
-      // Region in image pixels, with 8% padding clamped to the image.
-      const padX = w * 0.08;
-      const padY = h * 0.08;
+      // Region in image pixels, padded and clamped to the image. The
+      // padding is proportional (35%) but floored in per-mille units:
+      // small regions (a lone icon button) got almost no absolute
+      // padding at a flat percentage and rendered cramped, the flagged
+      // element nearly touching the crop edges (founder, 2026-10-13).
+      const padX = Math.max(w * 0.35, 28);
+      const padY = Math.max(h * 0.35, 28);
       const sx = Math.max(0, ((region.x_min - padX) / 1000) * iw);
       const sy = Math.max(0, ((region.y_min - padY) / 1000) * ih);
       const sw = Math.min(iw - sx, ((w + padX * 2) / 1000) * iw);
@@ -90,7 +114,7 @@ function RegionCrop({
       aria-label={alt}
       className={
         className ??
-        "h-auto max-w-full rounded-xl border border-stone-200 bg-stone-100"
+        "h-auto max-w-full rounded-xl border border-border bg-muted"
       }
     />
   );
@@ -126,33 +150,22 @@ function CropLightbox({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/70 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-label={alt}
     >
-      <button
+      <Button
         type="button"
+        variant="secondary"
+        size="icon-lg"
         onClick={onClose}
         aria-label="Close"
-        className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+        className="absolute right-4 top-4"
       >
-        <svg
-          className="h-5 w-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth={2}
-          stroke="currentColor"
-          aria-hidden="true"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M6 18L18 6M6 6l12 12"
-          />
-        </svg>
-      </button>
+        <X className="h-5 w-5" aria-hidden="true" />
+      </Button>
       <div onClick={(e) => e.stopPropagation()}>
         <RegionCrop
           imageUrl={imageUrl}
@@ -183,24 +196,24 @@ function PatternBox({
     <div
       className={
         tone === "source"
-          ? "rounded-xl bg-stone-50 p-3.5"
-          : "rounded-xl bg-teal-50/60 p-3.5"
+          ? "rounded-xl bg-muted p-3"
+          : "rounded-xl bg-accent p-3"
       }
     >
       <p
         className={
           tone === "source"
-            ? "text-[11px] font-semibold uppercase tracking-wider text-stone-400"
-            : "text-[11px] font-semibold uppercase tracking-wider text-teal-800/70"
+            ? "text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
+            : "text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
         }
       >
         {platformLabel}
       </p>
-      <p className="mt-1 text-sm leading-relaxed text-stone-700">{pattern}</p>
+      <p className="mt-1 text-sm leading-relaxed text-foreground">{pattern}</p>
       {note && (
-        <p className="mt-1.5 text-xs text-stone-500">
+        <p className="mt-1.5 text-xs text-muted-foreground">
           Counterpart:{" "}
-          <code className="rounded bg-stone-100 px-1 py-0.5 font-mono text-[11px] text-stone-700">
+          <code className="rounded bg-muted px-1 py-0.5 font-mono text-[11px] text-foreground">
             {note}
           </code>
         </p>
@@ -211,7 +224,7 @@ function PatternBox({
           target="_blank"
           rel="noopener noreferrer"
           title={cite.label}
-          className="mt-2 inline-block text-xs font-medium text-teal-700 underline decoration-teal-200 underline-offset-2 hover:decoration-teal-500"
+          className={cn(buttonVariants({ variant: "link", size: "xs" }), "mt-1.5 h-auto px-0")}
         >
           source
         </a>
@@ -223,6 +236,10 @@ function PatternBox({
 /**
  * Icon findings lead with the symbol itself: the rendered glyph, its exact
  * name, and a copy button for the code — not a paragraph describing it.
+ * The button is icon-only (founder direction 2026-10-13): it copies the
+ * exact paste-ready artifact for that platform — the SwiftUI snippet
+ * `Image(systemName: "…")` for SF Symbols, the bare name for Material —
+ * and says so via its accessible label / hover title, not face text.
  */
 function IconBox({
   platformLabel,
@@ -262,24 +279,22 @@ function IconBox({
     <div
       className={
         tone === "source"
-          ? "rounded-xl bg-stone-50 p-3.5"
-          : "rounded-xl bg-teal-50/60 p-3.5"
+          ? "rounded-xl bg-muted p-3"
+          : "rounded-xl bg-accent p-3"
       }
     >
       <div className="flex items-center justify-between gap-2">
         <p
           className={
             tone === "source"
-              ? "text-[11px] font-semibold uppercase tracking-wider text-stone-400"
-              : "text-[11px] font-semibold uppercase tracking-wider text-teal-800/70"
+              ? "text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
+              : "text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
           }
         >
           {platformLabel}
         </p>
         {closest && (
-          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800">
-            Closest match
-          </span>
+          <Badge variant="secondary">Closest match</Badge>
         )}
       </div>
       {iconName ? (
@@ -292,32 +307,40 @@ function IconBox({
               onError={() => setImgOk(false)}
             />
           )}
-          <code className="rounded bg-white/70 px-2 py-1 font-mono text-sm font-semibold text-stone-900">
+          <code className="rounded bg-card px-2 py-1 font-mono text-sm font-semibold text-foreground">
             {iconName}
           </code>
           {copyText && (
-            <button
+            <Button
               type="button"
+              variant="outline"
+              size="icon-sm"
               onClick={copy}
-              className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2.5 py-1.5 text-xs font-medium text-stone-600 transition-colors hover:bg-stone-50"
+              className="shrink-0"
+              aria-label={copied ? "Copied" : copyLabel}
+              title={copied ? "Copied" : copyLabel}
             >
-              {copied ? "Copied" : copyLabel}
-            </button>
+              {copied ? (
+                <Check aria-hidden="true" />
+              ) : (
+                <Copy aria-hidden="true" />
+              )}
+            </Button>
           )}
         </div>
       ) : (
-        <p className="mt-2 text-sm italic text-stone-400">
+        <p className="mt-2 text-sm italic text-muted-foreground">
           Icon not identified — see the pattern below.
         </p>
       )}
-      <p className="mt-2 text-[13px] leading-relaxed text-stone-500">{pattern}</p>
+      <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">{pattern}</p>
       {cite && (
         <a
           href={cite.url}
           target="_blank"
           rel="noopener noreferrer"
           title={cite.label}
-          className="mt-1.5 inline-block text-xs font-medium text-teal-700 underline decoration-teal-200 underline-offset-2 hover:decoration-teal-500"
+          className={cn(buttonVariants({ variant: "link", size: "xs" }), "mt-1 h-auto px-0")}
         >
           source
         </a>
@@ -331,7 +354,6 @@ export default function FindingCard({
   direction,
   number,
   imageUrl,
-  active,
   onLocate,
 }: {
   finding: Finding;
@@ -341,8 +363,6 @@ export default function FindingCard({
   number?: number;
   /** Object URL of the screenshot this finding came from. */
   imageUrl: string;
-  /** Whether this card is the current jump/locate highlight target. */
-  active: boolean;
   /** Tap-to-locate on the screenshot map; null when the finding has no region. */
   onLocate: (() => void) | null;
 }) {
@@ -369,23 +389,24 @@ export default function FindingCard({
   // Icon findings name the exact symbols instead of describing them.
   const isIconFinding =
     finding.id === "icon-symbols" || finding.id === "a2i-icon-symbols";
+  const iconFields = finding as FindingWithIconFields;
   const sfName =
-    direction === "ios-to-android" ? finding.detail : finding.counterpartName;
+    direction === "ios-to-android" ? iconFields.detail : finding.counterpartName;
   const materialName =
-    direction === "ios-to-android" ? finding.counterpartName : finding.detail;
+    direction === "ios-to-android" ? finding.counterpartName : iconFields.detail;
   const closestCounterpart =
-    finding.counterpartExact === false && !!finding.counterpartName;
+    iconFields.counterpartExact === false && !!finding.counterpartName;
 
   return (
-    <article
-      className={`rounded-2xl border bg-white p-5 transition-shadow ${
-        active
-          ? "border-teal-500 shadow-lg shadow-teal-100"
-          : "border-stone-200"
-      }`}
+    <AccordionItem
+      value={finding.key}
+      className="rounded-lg border border-border"
     >
-      {/* Header: number badge (pinned findings only) + category pill */}
-      <div className="flex flex-wrap items-center gap-2">
+      {/* Collapsed row: the pin number (its own button, beside the
+          trigger) + category badge + title. The finding's outline lives
+          on the accordion item itself — never on a box inside the
+          panel; that nesting is what GPU Chrome dropped (2026-10-13). */}
+      <div className="flex items-center gap-2 px-3.5 [&>h3]:min-w-0 [&>h3]:flex-1">
         {number !== undefined &&
           (onLocate ? (
             <button
@@ -393,47 +414,51 @@ export default function FindingCard({
               onClick={onLocate}
               title="Show on screenshot"
               aria-label={`Show finding ${number} on the screenshot`}
-              className="flex h-6 w-6 items-center justify-center rounded-full bg-teal-700 text-[11px] font-bold text-white transition-transform hover:scale-110"
+              className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground transition-transform hover:scale-110"
             >
               {number}
             </button>
           ) : (
             <span
-              className="flex h-6 w-6 items-center justify-center rounded-full bg-stone-200 text-[11px] font-bold text-stone-500"
+              className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[10px] font-bold text-muted-foreground"
               aria-hidden="true"
             >
               {number}
             </span>
           ))}
-        <span className="rounded-full bg-stone-100 px-2.5 py-0.5 text-xs font-medium text-stone-600">
-          {finding.category}
-        </span>
-        {finding.unverified && (
-          <span
-            className="text-xs italic text-stone-400"
-            title={finding.unverifiedNote ?? "Community convention"}
-          >
-            Community convention
+        <AccordionTrigger className="hover:no-underline">
+          <span className="flex min-w-0 items-center gap-2">
+            <Badge variant="secondary">{finding.category}</Badge>
+            <span className="line-clamp-1" title={finding.title}>
+              {finding.title}
+            </span>
+            {finding.unverified && (
+              <span
+                className="shrink-0 text-xs font-normal italic text-muted-foreground"
+                title={finding.unverifiedNote ?? "Community convention"}
+              >
+                Community convention
+              </span>
+            )}
           </span>
-        )}
+        </AccordionTrigger>
       </div>
+      <AccordionContent className="[&_p:not(:last-child)]:mb-0">
+        <div className="space-y-2 px-3.5 pt-1">
 
-      <h3 className="mt-2.5 text-base font-semibold tracking-tight text-stone-900">
-        {finding.title}
-      </h3>
-
-      {/* FIX */}
-      <div className="mt-3 rounded-xl bg-teal-700/[0.07] p-3.5">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-teal-800/70">
+      {/* FIX — inverted on purpose (founder, 2026-10-13): it is the
+          action item, so it is the one dark surface in the stack; the
+          two platform boxes below are reference and stay quiet fills. */}
+      <div className="rounded-xl bg-primary p-3 text-primary-foreground">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-primary-foreground/70">
           Fix
         </p>
-        <p className="mt-1 text-sm font-medium leading-relaxed text-stone-800">
+        <p className="mt-1 text-sm font-medium leading-relaxed">
           {finding.fix}
         </p>
       </div>
 
       {/* Pattern boxes, stacked vertically — icon findings lead with the symbols */}
-      <div className="mt-3 space-y-3">
         {isIconFinding ? (
           <>
             <IconBox
@@ -511,33 +536,22 @@ export default function FindingCard({
             />
           </>
         )}
-      </div>
 
-      {/* Screenshot crop, collapsed by default */}
-      {finding.region && (
-        <div className="mt-3">
-          <button
+        {/* Screenshot crop, collapsed by default */}
+        {finding.region && (
+          <div className="w-full">
+          <Button
             type="button"
+            variant="ghost"
             onClick={() => setShowShot((v) => !v)}
             aria-expanded={showShot}
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-teal-700 hover:text-teal-800"
           >
-            <svg
+            <ChevronDown
               className={`h-4 w-4 transition-transform ${showShot ? "rotate-180" : ""}`}
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={2}
-              stroke="currentColor"
               aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M19.5 8.25l-7.5 7.5-7.5-7.5"
-              />
-            </svg>
+            />
             {showShot ? "Hide screenshot" : "Show screenshot"}
-          </button>
+          </Button>
           {showShot && (
             <div className="mt-2">
               <button
@@ -555,8 +569,10 @@ export default function FindingCard({
               </button>
             </div>
           )}
+          </div>
+        )}
         </div>
-      )}
+      </AccordionContent>
       {lightbox && finding.region && (
         <CropLightbox
           imageUrl={imageUrl}
@@ -565,6 +581,6 @@ export default function FindingCard({
           onClose={() => setLightbox(false)}
         />
       )}
-    </article>
+    </AccordionItem>
   );
 }

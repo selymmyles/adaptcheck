@@ -27,7 +27,7 @@ export default function ScreenshotMap({
   onSelectMarker,
 }: ScreenshotMapProps) {
   return (
-    <figure className="overflow-hidden rounded-2xl border border-stone-200 bg-stone-100">
+    <figure className="overflow-hidden rounded-xl bg-muted">
       <div className="relative mx-auto w-fit max-w-full">
         <img
           src={imageUrl}
@@ -40,7 +40,7 @@ export default function ScreenshotMap({
             <div
               aria-hidden="true"
               className={`pointer-events-none absolute rounded-md border-2 transition-colors ${
-                m.highlighted ? "border-teal-500" : "border-teal-700/30"
+                m.highlighted ? "border-primary" : "border-primary/30"
               }`}
               style={{
                 left: pct(m.region.x_min),
@@ -56,8 +56,8 @@ export default function ScreenshotMap({
               aria-label={`Highlight finding ${m.number}`}
               className={`absolute flex h-6 w-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full text-[11px] font-bold text-white shadow-md transition-transform ${
                 m.highlighted
-                  ? "scale-125 animate-pulse bg-teal-600"
-                  : "bg-teal-700/90 hover:scale-110"
+                  ? "scale-125 animate-pulse bg-primary"
+                  : "bg-primary/90 hover:scale-110"
               }`}
               style={{
                 left: pct(m.region.x_min),
@@ -69,7 +69,7 @@ export default function ScreenshotMap({
           </div>
         ))}
       </div>
-      <figcaption className="border-t border-stone-200 bg-white px-4 py-2.5 text-xs text-stone-500">
+      <figcaption className="border-t border-border bg-card px-3.5 py-2.5 text-xs text-muted-foreground">
         Numbered markers point at each flagged element — tap a finding's number
         to pulse its marker.
       </figcaption>

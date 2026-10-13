@@ -1,4 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export interface IndexItem {
   name: string;
@@ -19,128 +26,111 @@ interface ContentIndexProps {
   onJumpToShot: (shotIndex: number) => void;
 }
 
-/** One collapsible item: header with count, expands to finding titles. */
-function IndexItemGroup({
-  shotIndex,
-  item,
-  defaultOpen,
-  onJump,
-}: {
-  shotIndex: number;
-  item: IndexItem;
-  defaultOpen: boolean;
-  onJump: (shotIndex: number, findingId: string) => void;
-}) {
-  const [open, setOpen] = useState(defaultOpen);
-  return (
-    <li>
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        className="flex w-full items-center justify-between gap-2 py-0.5 text-left"
-      >
-        <span className="text-xs font-semibold uppercase tracking-wide text-stone-500">
-          {item.name}
-          <span className="ml-1 font-normal text-stone-400">
-            {item.findings.length}
-          </span>
-        </span>
-        <svg
-          className={`h-3.5 w-3.5 shrink-0 text-stone-400 transition-transform ${open ? "rotate-180" : ""}`}
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth={2.5}
-          stroke="currentColor"
-          aria-hidden="true"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M19.5 8.25l-7.5 7.5-7.5-7.5"
-          />
-        </svg>
-      </button>
-      {open && (
-        <ol className="mt-1 space-y-1">
-          {item.findings.map((f) => (
-            <li key={f.id}>
-              <button
-                type="button"
-                onClick={() => onJump(shotIndex, f.id)}
-                className="block w-full truncate text-left text-[13px] text-stone-600 hover:text-teal-800 hover:underline"
-                title={f.title}
-              >
-                {f.title}
-              </button>
-            </li>
-          ))}
-        </ol>
-      )}
-    </li>
-  );
-}
-
 function IndexBody({
   shots,
   onJump,
   onJumpToShot,
 }: ContentIndexProps) {
+  // Screenshots are an accordion level too (founder, 2026-10-13),
+  // expanded by default — a screenshot that finishes analyzing opens
+  // as it lands. The filename under the header stays a jump link.
+  const [openShots, setOpenShots] = useState<string[]>(() =>
+    shots.map((_, si) => `shot-${si}`),
+  );
+  useEffect(() => {
+    setOpenShots(shots.map((_, si) => `shot-${si}`));
+    // Only re-open-all when a screenshot is added, not on re-renders.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shots.length]);
   return (
     <nav aria-label="Findings index" className="text-sm">
-      <ol className="space-y-4">
+      <Accordion
+        multiple
+        value={openShots}
+        onValueChange={(value) => setOpenShots(value as string[])}
+      >
         {shots.map((shot, si) => {
           const total = shot.items.reduce(
             (n, c) => n + c.findings.length,
             0,
           );
           return (
-            <li key={shot.label}>
-              <button
-                type="button"
-                onClick={() => onJumpToShot(si)}
-                className="block text-left"
-                title={`Jump to ${shot.label}`}
-              >
-                <span className="font-semibold text-stone-900 hover:text-teal-800 hover:underline">
+            <AccordionItem key={shot.label} value={`shot-${si}`}>
+              <AccordionTrigger>
+                <span className="font-semibold text-foreground">
                   {shot.label}
-                  <span className="ml-1.5 font-normal text-stone-400">
+                  <span className="ml-1.5 font-normal text-muted-foreground">
                     {total}
                   </span>
                 </span>
-                <span className="block truncate text-xs text-stone-400" title={shot.fileName}>
-                  {shot.fileName}
-                </span>
+              </AccordionTrigger>
+              <button
+                type="button"
+                onClick={() => onJumpToShot(si)}
+                className="block max-w-full truncate pb-1 text-left text-xs text-muted-foreground hover:underline"
+                title={shot.fileName}
+              >
+                {shot.fileName}
               </button>
+              <AccordionContent>
               {!shot.ready ? (
-                <p className="mt-1 text-xs italic text-stone-400">
+                <p className="text-xs italic text-muted-foreground">
                   Analysis failed — no findings.
                 </p>
               ) : (
-                <ol className="mt-1.5 space-y-2 border-l border-stone-200 pl-3">
-                  {shot.items.map((it, ii) => (
-                    <IndexItemGroup
-                      key={it.name}
-                      shotIndex={si}
-                      item={it}
-                      defaultOpen={si === 0 && ii === 0}
-                      onJump={onJump}
-                    />
+                <Accordion
+                  multiple
+                  defaultValue={
+                    si === 0 && shot.items.length > 0
+                      ? [shot.items[0].name]
+                      : []
+                  }
+                >
+                  {shot.items.map((it) => (
+                    <AccordionItem key={it.name} value={it.name}>
+                      <AccordionTrigger>
+                        <span>
+                          {it.name}
+                          <span className="ml-1 font-normal text-muted-foreground">
+                            {it.findings.length}
+                          </span>
+                        </span>
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <ol className="space-y-1">
+                          {it.findings.map((f) => (
+                            <li key={f.id}>
+                              <button
+                                type="button"
+                                onClick={() => onJump(si, f.id)}
+                                className="block w-full truncate text-left text-muted-foreground hover:text-foreground hover:underline"
+                                title={f.title}
+                              >
+                                {f.title}
+                              </button>
+                            </li>
+                          ))}
+                        </ol>
+                      </AccordionContent>
+                    </AccordionItem>
                   ))}
-                </ol>
+                </Accordion>
               )}
-            </li>
+              </AccordionContent>
+            </AccordionItem>
           );
         })}
-      </ol>
+      </Accordion>
     </nav>
   );
 }
 
 /**
- * Jump index: Screenshot → collapsible item → finding. Sidebar on
+ * Jump index: Screenshot → accordion item → finding. Sidebar on
  * desktop, collapsible drawer on mobile. Clicking a finding scrolls to its
- * card and briefly highlights it.
+ * card and briefly highlights it. The item groups are the stock shadcn
+ * Accordion — no custom styling (founder direction, 2026-10-12: defaults
+ * first, token customization only at his direction).
  *
  * Sticky note: `sticky` is on the <aside> flex item itself (with
  * self-start so it doesn't stretch). The old code put sticky on an inner
@@ -150,22 +140,31 @@ function IndexBody({
 export default function ContentIndex(props: ContentIndexProps) {
   return (
     <>
-      {/* Desktop sidebar — sticky within the results flex row */}
-      <aside className="sticky top-6 hidden max-h-[calc(100vh-3rem)] w-64 shrink-0 self-start overflow-y-auto rounded-2xl border border-stone-200 bg-white p-4 lg:block">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-stone-400">
+      {/* Desktop sidebar — sticky within the results flex row. Panel
+          pattern after the shadcn Tags scroll-area demo (founder pick,
+          2026-10-13): bordered box, title header over a hairline, and the
+          React Aria ScrollArea variant doing the scrolling. */}
+      <aside className="sticky top-6 hidden max-h-[calc(100vh-3rem)] w-64 shrink-0 self-start overflow-hidden rounded-2xl border border-border bg-card lg:block">
+        <p className="border-b border-border px-4 py-3 text-sm font-semibold text-foreground">
           Findings
         </p>
-        <IndexBody {...props} />
+        <ScrollArea className="max-h-[calc(100vh-6rem)] overflow-x-hidden">
+          <div className="px-4 py-3">
+            <IndexBody {...props} />
+          </div>
+        </ScrollArea>
       </aside>
 
       {/* Mobile collapsible */}
-      <details className="mb-6 rounded-2xl border border-stone-200 bg-white lg:hidden">
-        <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-stone-800">
+      <details className="mb-6 rounded-2xl border border-border bg-card lg:hidden">
+        <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-foreground">
           Findings index
         </summary>
-        <div className="border-t border-stone-100 px-4 py-3">
-          <IndexBody {...props} />
-        </div>
+        <ScrollArea className="max-h-[60vh] overflow-x-hidden border-t border-border">
+          <div className="px-4 py-3">
+            <IndexBody {...props} />
+          </div>
+        </ScrollArea>
       </details>
     </>
   );

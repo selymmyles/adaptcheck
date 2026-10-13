@@ -1,4 +1,6 @@
 import { useRef, useState } from "react";
+import { Upload, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const ACCEPTED_TYPES = ["image/png", "image/jpeg", "image/webp"];
 const MAX_FILES = 10;
@@ -148,8 +150,8 @@ export default function UploadScreen({ onAnalyze }: UploadScreenProps) {
           picked.length > 0 ? "py-6" : "py-12"
         } ${
           dragging
-            ? "border-teal-700 bg-teal-50"
-            : "border-stone-300 bg-white hover:border-stone-400"
+            ? "border-primary bg-accent"
+            : "border-border bg-card hover:border-muted-foreground"
         }`}
       >
         <input
@@ -165,25 +167,16 @@ export default function UploadScreen({ onAnalyze }: UploadScreenProps) {
         />
         {picked.length === 0 ? (
           <>
-            <svg
-              className="mb-4 h-10 w-10 text-stone-400"
-              fill="none"
-              viewBox="0 0 24 24"
+            <Upload
+              className="mb-4 h-10 w-10 text-muted-foreground"
               strokeWidth={1.5}
-              stroke="currentColor"
               aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
-              />
-            </svg>
-            <p className="text-base font-medium text-stone-900">
+            />
+            <p className="text-base font-medium text-foreground">
               Drop your screenshots here
             </p>
-            <p className="mt-1 text-sm text-stone-500">
-              or <span className="font-medium text-teal-700 underline">browse files</span> — PNG or JPG, up to {MAX_FILES}
+            <p className="mt-1 text-sm text-muted-foreground">
+              or <span className="font-medium text-primary underline">browse files</span> — PNG or JPG, up to {MAX_FILES}
             </p>
           </>
         ) : (
@@ -192,7 +185,7 @@ export default function UploadScreen({ onAnalyze }: UploadScreenProps) {
               {picked.map((p, i) => (
                 <li
                   key={`${p.file.name}-${i}`}
-                  className="group relative overflow-hidden rounded-xl border border-stone-200 bg-white"
+                  className="group relative overflow-hidden rounded-xl border border-border bg-card"
                 >
                   <img
                     src={p.preview}
@@ -206,12 +199,12 @@ export default function UploadScreen({ onAnalyze }: UploadScreenProps) {
                       removeFile(i);
                     }}
                     aria-label={`Remove ${p.file.name}`}
-                    className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-sm leading-none text-white opacity-0 transition-opacity hover:bg-black/80 group-hover:opacity-100"
+                    className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity hover:bg-black/80 group-hover:opacity-100"
                   >
-                    ×
+                    <X className="h-3.5 w-3.5" aria-hidden="true" />
                   </button>
                   <p
-                    className="truncate px-2 py-1.5 text-center text-[11px] text-stone-500"
+                    className="truncate px-2 py-1.5 text-center text-[11px] text-muted-foreground"
                     title={p.file.name}
                   >
                     {p.file.name}
@@ -219,9 +212,9 @@ export default function UploadScreen({ onAnalyze }: UploadScreenProps) {
                 </li>
               ))}
             </ul>
-            <p className="mt-4 text-sm text-stone-500">
+            <p className="mt-4 text-sm text-muted-foreground">
               Drop more, or click to{" "}
-              <span className="font-medium text-teal-700 underline">browse</span>{" "}
+              <span className="font-medium text-primary underline">browse</span>{" "}
               — {picked.length} of {MAX_FILES}
             </p>
           </>
@@ -229,22 +222,23 @@ export default function UploadScreen({ onAnalyze }: UploadScreenProps) {
       </div>
 
       {error && (
-        <p className="mt-3 text-sm text-rose-700" role="alert">
+        <p className="mt-3 text-sm text-destructive" role="alert">
           {error}
         </p>
       )}
 
-      <button
+      <Button
         type="button"
         disabled={picked.length === 0}
         onClick={() => onAnalyze(picked.map((p) => p.file))}
-        className="mt-6 w-full rounded-xl bg-teal-700 px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-teal-800 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:text-stone-500"
+        size="lg"
+        className="mt-6 w-full"
       >
         {picked.length <= 1
           ? "Analyze screen"
           : `Analyze ${picked.length} screens`}
-      </button>
-      <p className="mt-3 text-center text-xs text-stone-400">
+      </Button>
+      <p className="mt-3 text-center text-xs text-muted-foreground">
         Screenshots are sent securely for AI analysis and are never stored.
       </p>
     </div>
