@@ -50,15 +50,17 @@ the change here.
   founder's direction, `ui/card.tsx` uses `border border-border`
   instead of the ring so cards have a visible outline. This is a
   deliberate deviation from stock — do not "restore" the ring.
-  **GPU-paint backing (2026-10-13):** on the founder's Windows/NVIDIA
-  Chrome, hairline borders on elements inside the accordion panel
-  (findings, which are Items) were dropped entirely on the sides while
-  rendering fine in software-rendered browsers — a known Chromium
-  GPU-compositing/clipping bug class (accordion-specific reports exist;
-  the standard workaround is drawing the line as an inset shadow).
-  Card, the Item `outline` variant, and the findings panel therefore
-  ALSO carry `ring-1 ring-inset ring-border`: an inset box-shadow line
-  painted with the element itself, backing the border. Keep both.
+  **Vanishing side borders (2026-10-13, open):** on the founder's
+  Windows/NVIDIA Chrome, hairline borders on elements inside the
+  accordion panel (findings, which are Items) are dropped on the sides
+  while rendering fine in software-rendered browsers — a known
+  Chromium GPU-compositing/clipping bug class with accordion-specific
+  reports. An inset box-shadow backing (`ring-1 ring-inset ring-border`)
+  was tried and REVERTED at his direction (it read as a thickened
+  border where both paint). His diagnosis: the accordion container is
+  the culprit — cards outside accordions render fine for him.
+  Removing findings from the group accordion is the pending decision;
+  do not re-add the ring backing.
 - **Findings are Items, not Cards.** FindingCard composes the stock
   `Item` primitives (`variant="outline"`, `size="sm"`) inside an
   `ItemGroup` — findings are items in a list, not cards within cards.

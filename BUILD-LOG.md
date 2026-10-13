@@ -470,3 +470,13 @@ renders in software (VM), which is why it never reproduced. Fix: Card,
 the Item outline variant, and the findings panel now carry
 `ring-1 ring-inset ring-border` behind the border. Verification is the
 founder's own browser this time — preview ecc78653 superseded.
+
+## 2026-10-13 (later still) — Ring backing reverted; accordion is the suspect
+
+The founder rejected the inset-ring backing (reads as a thickened
+border where border and ring both paint) and directed it reverted —
+done, outlines are plain `border border-border` again. His diagnosis,
+which the evidence supports: every element that loses its sides for
+him lives inside the results group accordion; every card that renders
+fine sits outside one. Removing the findings from the group accordion
+(static group sections instead) is teed up as his call.

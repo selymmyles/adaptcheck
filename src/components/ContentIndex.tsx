@@ -126,7 +126,7 @@ export default function ContentIndex(props: ContentIndexProps) {
           pattern after the shadcn Tags scroll-area demo (founder pick,
           2026-10-13): bordered box, title header over a hairline, and the
           React Aria ScrollArea variant doing the scrolling. */}
-      <aside className="sticky top-6 hidden max-h-[calc(100vh-3rem)] w-64 shrink-0 self-start overflow-hidden rounded-2xl border border-border bg-card ring-1 ring-inset ring-border lg:block">
+      <aside className="sticky top-6 hidden max-h-[calc(100vh-3rem)] w-64 shrink-0 self-start overflow-hidden rounded-2xl border border-border bg-card lg:block">
         <p className="border-b border-border px-4 py-3 text-sm font-semibold text-foreground">
           Findings
         </p>
@@ -138,7 +138,7 @@ export default function ContentIndex(props: ContentIndexProps) {
       </aside>
 
       {/* Mobile collapsible */}
-      <details className="mb-6 rounded-2xl border border-border bg-card ring-1 ring-inset ring-border lg:hidden">
+      <details className="mb-6 rounded-2xl border border-border bg-card lg:hidden">
         <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-foreground">
           Findings index
         </summary>
