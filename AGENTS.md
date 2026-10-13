@@ -72,8 +72,10 @@ the change here.
 - **Findings are collapsible accordion items** (2026-10-13, founder:
   save space — supersedes "Findings are Items"). FindingCard composes
   an `AccordionItem`: collapsed row = pin number + category badge +
-  title; FIX / platform boxes / crop live in the panel, all collapsed
-  by default. The outline sits on the AccordionItem itself, never on
+  title; FIX / platform boxes / crop live in the panel. **Expanded by
+  default** (founder: "dont make it default closed") — ResultsScreen
+  tracks only the findings the user collapsed. The structure is
+  founder-verified in his Chrome (2026-10-13): borders hold. The outline sits on the AccordionItem itself, never on
   a box inside the panel (the nesting GPU Chrome dropped); the inner
   boxes are borderless fills. The panel's stock paragraph-margin
   cascade is neutralized (`[&_p:not(:last-child)]:mb-0`) so the boxes

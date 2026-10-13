@@ -565,3 +565,13 @@ is borderless filled boxes. The panel's stock <p>-margin cascade is
 neutralized so box spacing is unchanged. Founder's browser is the
 verification, as always with this bug: if a line vanishes, this
 reverts in one commit.
+
+## 2026-10-13 (night) — Accordion findings: founder-verified, now default-open
+
+The founder loaded the collapsible-findings build in his own Chrome:
+"it worked" — the accordion-item outlines hold on his GPU (the
+structure change did its job), and the collapse interaction works.
+His one correction: don't default closed. The state model inverted
+to match — ResultsScreen now tracks only the findings the user
+collapses, so findings are expanded by default and late-arriving
+results (retries) come up open too.

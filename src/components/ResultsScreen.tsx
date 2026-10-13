@@ -272,9 +272,10 @@ export default function ResultsScreen({
   );
   /** Shots whose annotated-screenshot accordion is open (closed by default). */
   const [openMaps, setOpenMaps] = useState<ReadonlySet<number>>(new Set());
-  /** Findings expanded in their accordions, keyed `${shot}:${findingKey}`.
-   *  Collapsed by default — the results page reads as a scan list. */
-  const [openFindings, setOpenFindings] = useState<ReadonlySet<string>>(
+  /** Findings the user collapsed, keyed `${shot}:${findingKey}`.
+   *  Expanded by default (founder: don't default closed) — findings
+   *  that arrive later are open too, since only closures are tracked. */
+  const [closedFindings, setClosedFindings] = useState<ReadonlySet<string>>(
     new Set(),
   );
   const toggleShot = (shot: number) => {
@@ -318,11 +319,15 @@ export default function ResultsScreen({
   const jumpToFinding = (shot: number, id: string) => {
     expandShot(shot);
     flashHighlight(shot, id);
-    // Findings are collapsed by default — open this one and give its
+    // If the user collapsed this finding, reopen it and give its
     // accordion time to expand before scrolling to it.
     const key = `${shot}:${id}`;
-    if (!openFindings.has(key)) {
-      setOpenFindings((prev) => new Set(prev).add(key));
+    if (closedFindings.has(key)) {
+      setClosedFindings((prev) => {
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
+      });
       window.setTimeout(() => {
         document
           .getElementById(`finding-${shot}-${id}`)
@@ -654,16 +659,16 @@ export default function ResultsScreen({
                         multiple
                         className="mt-2 gap-2.5"
                         value={group.findings
-                          .filter((f) => openFindings.has(`${si}:${f.key}`))
+                          .filter((f) => !closedFindings.has(`${si}:${f.key}`))
                           .map((f) => f.key)}
                         onValueChange={(v) => {
                           const open = new Set(v as string[]);
-                          setOpenFindings((prev) => {
+                          setClosedFindings((prev) => {
                             const next = new Set(prev);
                             for (const f of group.findings) {
                               const k = `${si}:${f.key}`;
-                              if (open.has(f.key)) next.add(k);
-                              else next.delete(k);
+                              if (open.has(f.key)) next.delete(k);
+                              else next.add(k);
                             }
                             return next;
                           });
