@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   Accordion,
   AccordionContent,
@@ -30,34 +31,50 @@ function IndexBody({
   onJump,
   onJumpToShot,
 }: ContentIndexProps) {
+  // Screenshots are an accordion level too (founder, 2026-10-13),
+  // expanded by default — a screenshot that finishes analyzing opens
+  // as it lands. The filename under the header stays a jump link.
+  const [openShots, setOpenShots] = useState<string[]>(() =>
+    shots.map((_, si) => `shot-${si}`),
+  );
+  useEffect(() => {
+    setOpenShots(shots.map((_, si) => `shot-${si}`));
+    // Only re-open-all when a screenshot is added, not on re-renders.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shots.length]);
   return (
     <nav aria-label="Findings index" className="text-sm">
-      <ol className="space-y-4">
+      <Accordion
+        multiple
+        value={openShots}
+        onValueChange={(value) => setOpenShots(value as string[])}
+      >
         {shots.map((shot, si) => {
           const total = shot.items.reduce(
             (n, c) => n + c.findings.length,
             0,
           );
           return (
-            <li key={shot.label}>
-              <button
-                type="button"
-                onClick={() => onJumpToShot(si)}
-                className="block text-left"
-                title={`Jump to ${shot.label}`}
-              >
-                <span className="font-semibold text-foreground hover:underline">
+            <AccordionItem key={shot.label} value={`shot-${si}`}>
+              <AccordionTrigger>
+                <span className="font-semibold text-foreground">
                   {shot.label}
                   <span className="ml-1.5 font-normal text-muted-foreground">
                     {total}
                   </span>
                 </span>
-                <span className="block truncate text-xs text-muted-foreground" title={shot.fileName}>
-                  {shot.fileName}
-                </span>
+              </AccordionTrigger>
+              <button
+                type="button"
+                onClick={() => onJumpToShot(si)}
+                className="block max-w-full truncate pb-1 text-left text-xs text-muted-foreground hover:underline"
+                title={shot.fileName}
+              >
+                {shot.fileName}
               </button>
+              <AccordionContent>
               {!shot.ready ? (
-                <p className="mt-1 text-xs italic text-muted-foreground">
+                <p className="text-xs italic text-muted-foreground">
                   Analysis failed — no findings.
                 </p>
               ) : (
@@ -99,10 +116,11 @@ function IndexBody({
                   ))}
                 </Accordion>
               )}
-            </li>
+              </AccordionContent>
+            </AccordionItem>
           );
         })}
-      </ol>
+      </Accordion>
     </nav>
   );
 }

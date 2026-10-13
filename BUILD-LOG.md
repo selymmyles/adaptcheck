@@ -675,3 +675,14 @@ didn't like them ("revert the outline thing"). Both pattern and icon
 boxes are back to the stock fills (source muted, target accent).
 The inverted FIX box stays — that part he likes. Do not re-propose
 the outline treatment.
+
+## 2026-10-13 (night) — Sidebar screenshots are accordions too
+
+Founder (with a screenshot of the Findings sidebar): the screenshot
+level of the index should collapse like the groups under it. Each
+screenshot in the sidebar is now an AccordionItem — header row with
+label, count, and the stock chevron; expanded by default, and a
+screenshot opens as its analysis lands. The filename line under the
+header stays a jump link to that screenshot's section (the header
+click itself now toggles instead of jumping). Groups and findings
+inside are unchanged.
