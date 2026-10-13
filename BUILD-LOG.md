@@ -635,3 +635,13 @@ map card now carries rounded-lg. (The summary and patterns Cards
 remain stock rounded-xl — they're page-level surfaces, not adjacent
 to findings; flagged to the founder, his call if they should match
 too.)
+
+## 2026-10-13 (night) — FIX box inverted
+
+Founder: "in some way emphasize the fix item so it stands out from
+the other two." The FIX box was bg-muted — identical to the source
+platform box — so the three boxes read as equals. The FIX is the
+action, so it now takes the one treatment nothing else in the stack
+uses: bg-primary with primary-foreground text (near-black in the
+stock light theme, inverts in dark). The platform boxes stay quiet
+muted/accent reference fills.

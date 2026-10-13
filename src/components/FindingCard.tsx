@@ -446,12 +446,14 @@ export default function FindingCard({
       <AccordionContent className="[&_p:not(:last-child)]:mb-0">
         <div className="space-y-2 px-3.5 pt-1">
 
-      {/* FIX */}
-      <div className="rounded-xl bg-muted p-3">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+      {/* FIX — inverted on purpose (founder, 2026-10-13): it is the
+          action item, so it is the one dark surface in the stack; the
+          two platform boxes below are reference and stay quiet fills. */}
+      <div className="rounded-xl bg-primary p-3 text-primary-foreground">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-primary-foreground/70">
           Fix
         </p>
-        <p className="mt-1 text-sm font-medium leading-relaxed text-foreground">
+        <p className="mt-1 text-sm font-medium leading-relaxed">
           {finding.fix}
         </p>
       </div>

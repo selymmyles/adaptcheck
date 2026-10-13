@@ -64,6 +64,11 @@ the change here.
   ResultsScreen renders groups as static headed sections (the
   annotated-map accordion and the screenshot collapse toggle are
   separate and stay).
+  **FIX box is inverted (2026-10-13):** the finding's FIX box uses
+  `bg-primary` / `text-primary-foreground` — the one dark surface in
+  the finding stack, so the action stands out from the two platform
+  reference boxes (muted/accent fills). Founder: "emphasize the fix
+  item so it stands out from the other two."
   **Icon copy button (2026-10-13):** icon findings already copied the
   paste-ready artifact (SwiftUI snippet for SF Symbols, bare name for
   Material); at his direction the button is now icon-only (Copy glyph,
