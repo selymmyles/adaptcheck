@@ -75,6 +75,69 @@ const iou = (a: Region, b: Region) => {
  *  a region go in a leading "General" group (unnumbered — only screen-pinned
  *  findings get numbers). Icon findings merge into a single item per
  *  screen area (nearby icons together; distant icons separate). */
+/**
+ * Plain-language conversion names for item groups, keyed by check id
+ * (founder, 2026-10-13): an item is named for what the element IS and
+ * what it BECOMES — "iOS sheet to Material bottom sheet" — not the
+ * check's title ("Modal presentation and dismissal"). Ids are
+ * directional, so each pair is already in conversion order. A check
+ * with no entry falls back to its finding's title.
+ */
+const ITEM_NAMES: Record<string, [string, string]> = {
+  "nav-back-behavior": ["iOS nav bar", "Material top app bar"],
+  "nav-tab-bar": ["iOS tab bar", "Material navigation bar"],
+  "nav-large-titles": ["iOS large title", "Material top app bar"],
+  "nav-modal": ["iOS sheet", "Material bottom sheet"],
+  "a2i-nav-back": ["System back only", "iOS back chevron"],
+  "a2i-nav-drawer": ["Hamburger drawer", "iOS tab bar"],
+  "a2i-nav-tabs": ["Material tab row", "iOS segmented control"],
+  "a2i-nav-bottombar": ["Material navigation bar", "iOS tab bar"],
+  "a2i-nav-fullscreen-dialog": ["Material full-screen dialog", "iOS full-screen cover"],
+  "type-font": ["SF Pro", "Roboto"],
+  "type-scale": ["iOS text styles", "Material type scale"],
+  "a2i-type-font": ["Roboto", "SF Pro"],
+  "a2i-type-scale": ["Material type scale", "iOS text styles"],
+  "comp-alert": ["iOS alert", "Material dialog"],
+  "comp-action-sheet": ["iOS action sheet", "Material bottom sheet"],
+  "comp-list": ["iOS grouped list", "Material list"],
+  "comp-menu": ["iOS pop-up menu", "Material menu"],
+  "comp-fab": ["iOS floating button", "Material FAB"],
+  "comp-searchbar": ["iOS search bar", "Material search bar"],
+  "comp-segmented": ["iOS segmented control", "Material segmented buttons"],
+  "comp-date-picker": ["iOS date wheels", "Material date picker"],
+  "comp-switch": ["iOS switch", "Material switch"],
+  "comp-time-picker": ["iOS time wheels", "Material time picker"],
+  "comp-stepper": ["iOS stepper", "Material icon buttons"],
+  "a2i-comp-fab": ["Material FAB", "iOS nav-bar button"],
+  "a2i-comp-searchbar": ["Material search bar", "iOS search field"],
+  "a2i-comp-dynamic-color": ["Dynamic color palette", "Fixed palette"],
+  "a2i-comp-dialog": ["Material dialog", "iOS alert"],
+  "a2i-comp-cards": ["Elevated cards", "Grouped backgrounds"],
+  "a2i-comp-list": ["Material list", "iOS grouped list"],
+  "a2i-comp-menu": ["Material menu", "iOS menu"],
+  "a2i-comp-switch": ["Material switch", "iOS switch"],
+  "a2i-comp-snackbar": ["Material snackbar", "iOS status indicator"],
+  "a2i-comp-buttons": ["Material buttons", "iOS buttons"],
+  "a2i-comp-pickers": ["Material date/time pickers", "iOS pickers"],
+  "touch-targets": ["44pt touch targets", "48dp touch targets"],
+  "layout-safe-area": ["iOS safe area layout", "Android edge-to-edge layout"],
+  "layout-status-bar": ["Opaque status bar", "Transparent status bar"],
+  "a2i-touch-targets": ["48dp touch targets", "44pt touch targets"],
+  "a2i-layout-edge": ["Edge-to-edge layout", "iOS safe area"],
+  "a2i-layout-statusbar": ["Transparent status bar", "Per-screen status bar style"],
+  "layout-gesture-insets": ["iOS edge gestures", "Android gesture insets"],
+  "motion-transitions": ["iOS transitions", "Material motion"],
+  "motion-duration": ["iOS durations", "Material motion tokens"],
+  "a2i-motion-transitions": ["Material transitions", "iOS parallax push/pop"],
+  "a2i-motion-tokens": ["Material motion tokens", "iOS animation curves"],
+  "motion-predictive-back": ["Custom swipe-back", "Predictive back gesture"],
+  "icon-symbols": ["SF Symbols", "Material Symbols"],
+  "icon-tab-sizing": ["Tint-only tab icons", "Material tab icons"],
+  "a2i-icon-symbols": ["Material Symbols", "SF Symbols"],
+  "a2i-icon-adaptive": ["Adaptive icon", "Full-bleed app icon"],
+  "a2i-icon-themed": ["Themed icon", "Full-color app icon"],
+};
+
 function groupByItem(
   findings: Finding[],
 ): { name: string; findings: Finding[] }[] {
@@ -181,10 +244,24 @@ function groupByItem(
       (a, b) =>
         regionCenterY(a.primary.region!) - regionCenterY(b.primary.region!),
     )
-    .map((g, i) => ({
-      name: `Item ${i + 1} — ${g.primary.title}`,
+    .map((g) => {
+      const pair = ITEM_NAMES[g.primary.id];
+      return {
+        base: pair ? `${pair[0]} to ${pair[1]}` : g.primary.title,
+        findings: g.findings,
+      };
+    });
+  // Two clusters on one screen can be the same conversion (two
+  // sheets); suffix repeats so headers stay distinguishable.
+  const seen = new Map<string, number>();
+  const named = itemGroups.map((g) => {
+    const n = (seen.get(g.base) ?? 0) + 1;
+    seen.set(g.base, n);
+    return {
+      name: n > 1 ? `${g.base} ${n}` : g.base,
       findings: g.findings,
-    }));
+    };
+  });
 
   const groups: { name: string; findings: Finding[] }[] = [];
   if (withoutRegion.length > 0) {
@@ -193,7 +270,7 @@ function groupByItem(
       findings: [...withoutRegion].sort(byCheckOrder),
     });
   }
-  groups.push(...itemGroups);
+  groups.push(...named);
   return groups;
 }
 

@@ -645,3 +645,25 @@ action, so it now takes the one treatment nothing else in the stack
 uses: bg-primary with primary-foreground text (near-black in the
 stock light theme, inverts in dark). The platform boxes stay quiet
 muted/accent reference fills.
+
+## 2026-10-13 (night) — Item groups get plain conversion names
+
+Founder: instead of "Item 1 — Modal presentation and dismissal",
+name the group for what the element is and what it becomes —
+"iOS sheet to Material bottom sheet". Group names now come from a
+plain-language pair map keyed by the primary finding's check id (all
+52 checks covered, each pair in its check's conversion order); a
+check with no pair falls back to its title. The "Item N —" prefix is
+gone everywhere (headers, sidebar index, copied checklist — all read
+from the same grouping). Two clusters with the same conversion on
+one screen suffix the repeat ("… 2"). General keeps its name.
+
+## 2026-10-13 (night) — Platform boxes: white with the FIX black as outline
+
+Founder: playing off the inverted FIX — the two platform boxes drop
+their light-gray fills for a white (card) surface with a thin
+outline in the same black as the FIX fill (border-primary, 1px like
+the card outlines). The pair now reads as one system: FIX = filled,
+references = outlined. Applies to both pattern boxes and icon boxes;
+source/target fills no longer differ (labels carry the distinction).
+In dark theme the primary token inverts and the pairing survives.
