@@ -634,7 +634,7 @@ export default function ResultsScreen({
 
               {markers.length > 0 && (
                 <div className="mb-8">
-                <Card className="py-0">
+                <Card className="rounded-lg py-0">
                   <CardContent className="px-3.5">
                 <Accordion
                   value={openMaps.has(si) ? ["map"] : []}

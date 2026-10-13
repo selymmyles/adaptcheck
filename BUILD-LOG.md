@@ -624,3 +624,14 @@ Founder: a divider between the item title (group header) and the
 findings cards. A stock Separator now sits under each group header,
 rendered only while the group is open (a collapsed group keeps just
 its header row). Findings keep their rhythm below it (mt-2.5).
+
+## 2026-10-13 (night) — Annotated screenshot card radius matches findings
+
+Founder spotted it from two screenshots: the finding items are
+rounded-lg (the theme radius, 10px) while stock Cards are
+rounded-xl (+4px) — side by side, the annotated screenshot card's
+corners were visibly rounder than every finding row around it. The
+map card now carries rounded-lg. (The summary and patterns Cards
+remain stock rounded-xl — they're page-level surfaces, not adjacent
+to findings; flagged to the founder, his call if they should match
+too.)
