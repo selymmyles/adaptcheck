@@ -107,8 +107,32 @@ def main() -> int:
         try:
             result = post_analysis(args.base_url, img)
         except urllib.error.HTTPError as e:
+            # Free-tier RPM is tight (~2 fresh analyses/min): a 502 whose
+            # body says "rate limit" gets ONE retry after a 65s pause.
+            body = ""
+            try: body = e.read().decode()[:400]
+            except Exception: pass
+            if e.code == 502 and "rate limit" in body:
+                print(f"{case['id']}: rate-limited, waiting 65s and retrying once...")
+                time.sleep(65)
+                try:
+                    result = post_analysis(args.base_url, img)
+                    scored = score_case(case, result)
+                    scored["seconds"] = round(time.time() - t0, 1)
+                    (raw_dir / f"{stamp}-{case['id']}.json").write_text(json.dumps(result, indent=1))
+                    results.append(scored)
+                    total_must += len(case.get("mustFlag", []))
+                    hit_must += len(scored["must_hit"])
+                    print(f"{case['id']}: {'FAIL' if scored['fail'] else 'PASS'} "
+                          f"({scored['findings_count']} findings, {scored['seconds']}s, after retry)")
+                    time.sleep(65)
+                    continue
+                except Exception as e2:
+                    results.append({"id": case["id"], "screen": case["screen"],
+                                    "fail": True, "error": f"retry failed: {type(e2).__name__}: {e2}"})
+                    continue
             results.append({"id": case["id"], "screen": case["screen"],
-                            "fail": True, "error": f"HTTP {e.code}: {e.read().decode()[:200]}"})
+                            "fail": True, "error": f"HTTP {e.code}: {body}"})
             continue
         except Exception as e:  # network, timeout, bad JSON
             results.append({"id": case["id"], "screen": case["screen"],
@@ -118,6 +142,8 @@ def main() -> int:
         scored = score_case(case, result)
         scored["seconds"] = round(time.time() - t0, 1)
         results.append(scored)
+        if scored["seconds"] > 3:  # a fresh generation happened; respect free RPM
+            time.sleep(65)
         total_must += len(case.get("mustFlag", []))
         hit_must += len(scored["must_hit"])
         print(f"{case['id']}: {'FAIL' if scored['fail'] else 'PASS'} "

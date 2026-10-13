@@ -807,3 +807,25 @@ and rotated into the worker's GEMINI_API_KEY secret via the dashboard.
 Trade-offs accepted: free daily quota (the site already tells users to
 wait when limited) and slower than Pro. Verification = the harness
 re-run on the free key.
+
+## 2026-10-13 — Harness first full results (free tier)
+
+Janus verified back up on the free key (the dashboard rotation had
+saved a version without deploying it; promoted via API). Harness run:
+2 of 4 cases scored, 2 died on the free-tier rate limit (the worker
+returns an honest "try again in a minute" — the free RPM ceiling is
+~2 fresh analyses/min; runner now paces cases and retries once).
+Both scored cases (dialog, receive) detected **ios-to-android** on
+Flash — matching the cached Pro-era result for the dialog screen,
+while the same-day browser QA on Pro produced android-to-ios. The
+model flips direction on LocalSend (Material design, iOS chrome)
+depending on model/encoding. All downstream "misses" in the report
+are artifacts of the direction split, not check quality — under its
+own direction each analysis is coherent (dialog → comp-alert, icon
+findings, type checks). Ruling needed from the founder: for a
+Material-designed app running on iOS, convert toward iOS (design-
+language reading, the "look native here" promise) or toward Android
+(chrome reading)? Recommendation: toward iOS — then pin it in the
+prompt (chrome decides the target platform; design language decides
+what needs fixing) and re-run. Watch item: the Receive analysis
+flagged no bottom-bar check under either direction.
