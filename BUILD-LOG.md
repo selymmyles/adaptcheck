@@ -575,3 +575,12 @@ His one correction: don't default closed. The state model inverted
 to match — ResultsScreen now tracks only the findings the user
 collapses, so findings are expanded by default and late-arriving
 results (retries) come up open too.
+
+## 2026-10-13 (night) — Accordion chevron to the right edge
+
+The collapsed-row chevron trailed the title text instead of sitting
+at the row's right edge: the stock trigger's header wrapper shrink-
+wraps its content inside the finding's header row, so the trigger
+never spanned the row. The header row now grows that wrapper
+([&>h3]:flex-1), letting the trigger — and its right-aligned
+chevron — span the full row width.

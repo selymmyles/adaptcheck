@@ -406,7 +406,7 @@ export default function FindingCard({
           trigger) + category badge + title. The finding's outline lives
           on the accordion item itself — never on a box inside the
           panel; that nesting is what GPU Chrome dropped (2026-10-13). */}
-      <div className="flex items-center gap-2 px-3.5">
+      <div className="flex items-center gap-2 px-3.5 [&>h3]:min-w-0 [&>h3]:flex-1">
         {number !== undefined &&
           (onLocate ? (
             <button
