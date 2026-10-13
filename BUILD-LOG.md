@@ -455,3 +455,18 @@ Two previews: 36cab641 (QA caught the dead indeterminate bar) →
 ecc78653 (verified: sliding segment renders, panel clean, findings
 read as bordered items). Branch only — production untouched, merge is
 still the founder's call.
+
+## 2026-10-13 (later) — The case of the vanishing side borders
+
+The founder reported the finding Items' side borders were absent in HIS
+Chrome while present in every QA capture — no flicker on resize, scaling
+and per-site zoom both verified 100% on his PC. Research found the bug
+class: Chromium's GPU-accelerated painting drops hairline borders on
+elements inside composited, overflow-hidden containers (the accordion
+panel); accordion-specific vanishing-border reports exist, and the
+documented workaround is drawing the line as an inset box-shadow,
+which paints with the element instead of as a border. The QA browser
+renders in software (VM), which is why it never reproduced. Fix: Card,
+the Item outline variant, and the findings panel now carry
+`ring-1 ring-inset ring-border` behind the border. Verification is the
+founder's own browser this time — preview ecc78653 superseded.
