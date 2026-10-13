@@ -27,7 +27,7 @@ export default function ScreenshotMap({
   onSelectMarker,
 }: ScreenshotMapProps) {
   return (
-    <figure className="overflow-hidden rounded-2xl border border-border bg-muted">
+    <figure className="overflow-hidden rounded-xl bg-muted">
       <div className="relative mx-auto w-fit max-w-full">
         <img
           src={imageUrl}
@@ -69,7 +69,7 @@ export default function ScreenshotMap({
           </div>
         ))}
       </div>
-      <figcaption className="border-t border-border bg-card px-4 py-2.5 text-xs text-muted-foreground">
+      <figcaption className="border-t border-border bg-card px-3.5 py-2.5 text-xs text-muted-foreground">
         Numbered markers point at each flagged element — tap a finding's number
         to pulse its marker.
       </figcaption>

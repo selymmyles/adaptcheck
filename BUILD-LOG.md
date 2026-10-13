@@ -606,3 +606,14 @@ a real accordion would nest every finding item inside another
 animated overflow-hidden panel, the exact configuration whose
 borders GPU Chrome dropped. Same interaction, no panel. Index jumps
 reopen a collapsed group before scrolling.
+
+## 2026-10-13 (night) — Annotated screenshot padding mirrors the findings
+
+Founder: decrease the annotated screenshot's padding and make it
+mirror the findings. The map card carried the stock Card spacing
+(16px) around an accordion, and the map figure had its own border —
+two frames, deep inset. Now: the Card's vertical padding is zeroed
+and its content inset is the findings' px-3.5, so the map header row
+sits exactly like a finding header row; the figure drops its own
+border (the Card's is the one frame now) and its radius matches the
+finding boxes (rounded-xl); the caption inset follows to px-3.5.
