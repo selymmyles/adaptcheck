@@ -741,3 +741,17 @@ stays mounted; sidebar jumps wait out the roll before scrolling).
 QA-verified: divider present under a settled collapsed group, roll
 both ways, jump-into-collapsed-group reopens + scrolls. (Groups
 remain house toggles, not Accordion panels — GPU border rule.)
+
+## 2026-10-13 (night) — Finding boxes become a grouped stack
+
+Founder (with a screenshot): nested boxes shouldn't match their
+container's radius 1:1, and the three boxes in a finding should read
+as one group — outer corners fuller, meeting corners small. Now:
+the finding item is rounded-lg (10px); the stack's outer corners
+take rounded-md (8px, one step down, concentric-style); corners
+where boxes meet take 4px (2px was tried first — read as sharp;
+his reference is ~half the outer radius, still rounded). Spacing
+unchanged: a tightened 2px internal gap was tried and reverted at
+his direction — he likes the original 8px separation; only the
+radii changed. The region-crop image takes the same step down
+(xl → md).
