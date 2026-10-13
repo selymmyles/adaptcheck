@@ -278,6 +278,25 @@ export default function ResultsScreen({
   const [closedFindings, setClosedFindings] = useState<ReadonlySet<string>>(
     new Set(),
   );
+  /** Item groups the user collapsed, keyed `${shot}:${groupName}`.
+   *  Groups are expanded by default too. Collapse uses the same house
+   *  toggle as the screenshot sections (button + conditional render),
+   *  NOT the Accordion component: a real accordion would nest the
+   *  finding items inside another animated panel — the exact nesting
+   *  whose borders GPU Chrome dropped. */
+  const [closedGroups, setClosedGroups] = useState<ReadonlySet<string>>(
+    new Set(),
+  );
+
+  const toggleGroup = (shot: number, name: string) => {
+    const key = `${shot}:${name}`;
+    setClosedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
   const toggleShot = (shot: number) => {
     setCollapsedShots((prev) => {
       const next = new Set(prev);
@@ -319,6 +338,19 @@ export default function ResultsScreen({
   const jumpToFinding = (shot: number, id: string) => {
     expandShot(shot);
     flashHighlight(shot, id);
+    // Reopen the finding's group first if the user collapsed it
+    // (instant — the group toggle mounts content immediately).
+    const result = items[shot]?.result;
+    const group = result
+      ? groupByItem(result.findings).find((g) =>
+          g.findings.some((f) => f.key === id),
+        )
+      : undefined;
+    let waited = false;
+    if (group && closedGroups.has(`${shot}:${group.name}`)) {
+      toggleGroup(shot, group.name);
+      waited = true;
+    }
     // If the user collapsed this finding, reopen it and give its
     // accordion time to expand before scrolling to it.
     const key = `${shot}:${id}`;
@@ -335,12 +367,16 @@ export default function ResultsScreen({
       }, 300);
       return;
     }
-    // Let the highlight apply before scrolling into view.
-    window.setTimeout(() => {
-      document
-        .getElementById(`finding-${shot}-${id}`)
-        ?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 30);
+    // Let the highlight apply (and a reopened group mount) before
+    // scrolling into view.
+    window.setTimeout(
+      () => {
+        document
+          .getElementById(`finding-${shot}-${id}`)
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      },
+      waited ? 120 : 30,
+    );
   };
 
   const jumpToScreenshot = (shot: number) => {
@@ -573,13 +609,8 @@ export default function ResultsScreen({
                   type="button"
                   onClick={() => toggleShot(si)}
                   aria-expanded={!collapsedShots.has(si)}
-                  className="flex flex-wrap items-center gap-3 text-left"
+                  className="flex w-full flex-wrap items-center gap-3 text-left"
                 >
-                  <ChevronDown
-                    className={`h-5 w-5 shrink-0 text-muted-foreground transition-transform ${collapsedShots.has(si) ? "" : "rotate-180"}`}
-                    strokeWidth={2.5}
-                    aria-hidden="true"
-                  />
                   <h2 className="text-xl font-semibold tracking-tight text-foreground">
                     {label}
                   </h2>
@@ -587,6 +618,11 @@ export default function ResultsScreen({
                   <span className="truncate text-sm text-muted-foreground">
                     {item.fileName}
                   </span>
+                  <ChevronDown
+                    className={`ml-auto h-5 w-5 shrink-0 text-muted-foreground transition-transform ${collapsedShots.has(si) ? "" : "rotate-180"}`}
+                    strokeWidth={2.5}
+                    aria-hidden="true"
+                  />
                 </button>
               </div>
               {!collapsedShots.has(si) && (
@@ -597,6 +633,8 @@ export default function ResultsScreen({
 
               {markers.length > 0 && (
                 <div className="mb-8">
+                <Card>
+                  <CardContent>
                 <Accordion
                   value={openMaps.has(si) ? ["map"] : []}
                   onValueChange={(v) =>
@@ -631,6 +669,8 @@ export default function ResultsScreen({
                     </AccordionContent>
                   </AccordionItem>
                 </Accordion>
+                  </CardContent>
+                </Card>
                 </div>
               )}
 
@@ -650,11 +690,23 @@ export default function ResultsScreen({
                   {groups.map((group) => (
                     <section key={group.name} aria-label={group.name}>
                       <h3 className="text-sm font-medium text-foreground">
-                        {group.name}
-                        <span className="ml-1.5 font-normal text-muted-foreground">
-                          {group.findings.length}
-                        </span>
+                        <button
+                          type="button"
+                          onClick={() => toggleGroup(si, group.name)}
+                          aria-expanded={!closedGroups.has(`${si}:${group.name}`)}
+                          className="flex w-full items-center text-left"
+                        >
+                          {group.name}
+                          <span className="ml-1.5 font-normal text-muted-foreground">
+                            {group.findings.length}
+                          </span>
+                          <ChevronDown
+                            className={`ml-auto h-4 w-4 shrink-0 text-muted-foreground transition-transform ${closedGroups.has(`${si}:${group.name}`) ? "" : "rotate-180"}`}
+                            aria-hidden="true"
+                          />
+                        </button>
                       </h3>
+                      {!closedGroups.has(`${si}:${group.name}`) && (
                       <Accordion
                         multiple
                         className="mt-2 gap-2.5"
@@ -699,6 +751,7 @@ export default function ResultsScreen({
                             </div>
                           ))}
                       </Accordion>
+                      )}
                     </section>
                   ))}
                 </div>

@@ -584,3 +584,25 @@ wraps its content inside the finding's header row, so the trigger
 never spanned the row. The header row now grows that wrapper
 ([&>h3]:flex-1), letting the trigger — and its right-aligned
 chevron — span the full row width.
+
+## 2026-10-13 (night) — Annotated screenshot gets a Card; section chevron right
+
+Two founder directions from his screenshots: (1) the annotated
+screenshot now lives inside a Card — the map accordion (header +
+panel) composes inside CardContent, so the map surface reads as a
+card like the other standalone surfaces; (2) the screenshot-section
+collapse chevron moved from the left of the "Screenshot N" header to
+the right edge (button is now full-width, chevron last with ml-auto)
+— every disclosure arrow in the results UI now sits on the right.
+
+## 2026-10-13 (night) — Item groups (and General) collapse too
+
+Founder: "give the items themselves an accordion — same with
+general." The groups (Item 1, Item 2, …, General) now collapse from
+their headers, chevron on the right, expanded by default. Deliberate
+implementation choice: groups use the screenshot-section house
+toggle (button + conditional render), not the Accordion component —
+a real accordion would nest every finding item inside another
+animated overflow-hidden panel, the exact configuration whose
+borders GPU Chrome dropped. Same interaction, no panel. Index jumps
+reopen a collapsed group before scrolling.
