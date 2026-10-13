@@ -794,3 +794,16 @@ instability on LocalSend (cached result ios-to-android; live QA the
 same day produced android-to-ios) — which direction a Material-
 designed app running on iOS converts to is the founder's call;
 recommendation: target the platform it runs on.
+
+## 2026-10-13 — Janus moves to the Gemini free tier
+
+Founder's call: no third top-up (Pro on prepaid burned $40 in under a
+week). Model: gemini-3.1-pro-preview → gemini-3.8-flash;
+PIPELINE_VERSION 20 → 21. The model change alone still 402'd — proven
+via the stored key directly: the old key's project is billing-attached,
+and billing projects get no free quota. Fix: a new API key created in
+AI Studio in a NEW project (janus-free, under myleslane00, no billing)
+and rotated into the worker's GEMINI_API_KEY secret via the dashboard.
+Trade-offs accepted: free daily quota (the site already tells users to
+wait when limited) and slower than Pro. Verification = the harness
+re-run on the free key.

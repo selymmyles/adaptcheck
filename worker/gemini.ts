@@ -26,7 +26,11 @@ import {
 // NOTE (2026-10-10): gemini-2.5-flash returns 404 for new API users ("no longer
 // available to new users" per Google); gemini-3.8-flash verified working with
 // vision on the free tier the same day. DO NOT revert to 2.5-flash.
-export const GEMINI_MODEL = "gemini-3.1-pro-preview";
+// NOTE (2026-10-13, founder's call): Pro on prepaid credits burned $40 in
+// under a week (incl. one runaway incident) — Janus runs on the FREE TIER
+// going forward. Model is gemini-3.8-flash (free-tier verified above).
+// Trade-off accepted: free daily quota + slower than Pro.
+export const GEMINI_MODEL = "gemini-3.8-flash";
 
 /**
  * Bump this whenever the prompt, taxonomy, or voting logic changes — it is
@@ -38,7 +42,7 @@ export const GEMINI_MODEL = "gemini-3.1-pro-preview";
  * 8 = FAB input-cluster -> Search Bar guidance; back-gesture + icon source order fixes,
  * 9 = Search Bar fix names the SearchView modal pattern.
  */
-export const PIPELINE_VERSION = 20;
+export const PIPELINE_VERSION = 21;
 
 export interface ModelRegion {
   x_min: number;
