@@ -22,7 +22,13 @@ import type {
   AnalysisDirection,
 } from "../lib/mockAnalysis";
 import { DIRECTION_META, CHECK_ORDER } from "../lib/taxonomy";
-import { ItemGroup } from "@/components/ui/item";
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemGroup,
+  ItemTitle,
+} from "@/components/ui/item";
 import FindingCard from "./FindingCard";
 import ScreenshotMap, { type MapMarker } from "./ScreenshotMap";
 import ContentIndex, { type IndexShot } from "./ContentIndex";
@@ -430,23 +436,23 @@ export default function ResultsScreen({
               </CardDescription>
             </CardHeader>
             <CardContent>
-            <ul className="space-y-3">
+            <ItemGroup>
               {patterns.map((p) => (
-                <li key={p.id} className="rounded-xl bg-muted p-4">
-                  <div className="flex items-baseline justify-between gap-3">
-                    <p className="text-sm font-semibold text-foreground">
-                      {p.title}
+                <Item key={p.id} variant="muted">
+                  <ItemContent>
+                    <ItemTitle>{p.title}</ItemTitle>
+                    <p className="text-[13px] leading-relaxed text-foreground">
+                      {p.fix}
                     </p>
-                    <p className="shrink-0 text-xs font-medium text-primary">
+                  </ItemContent>
+                  <ItemActions>
+                    <span className="text-xs font-medium text-primary">
                       {p.screens.size} of {items.length} screens
-                    </p>
-                  </div>
-                  <p className="mt-1 text-[13px] leading-relaxed text-foreground">
-                    {p.fix}
-                  </p>
-                </li>
+                    </span>
+                  </ItemActions>
+                </Item>
               ))}
-            </ul>
+            </ItemGroup>
             </CardContent>
           </Card>
           </div>

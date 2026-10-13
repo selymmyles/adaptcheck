@@ -50,7 +50,7 @@ the change here.
   founder's direction, `ui/card.tsx` uses `border border-border`
   instead of the ring so cards have a visible outline. This is a
   deliberate deviation from stock — do not "restore" the ring.
-  **Vanishing side borders (2026-10-13, open):** on the founder's
+  **Vanishing side borders (2026-10-13, RESOLVED — founder-verified):** on the founder's
   Windows/NVIDIA Chrome, hairline borders on elements inside the
   accordion panel (findings, which are Items) are dropped on the sides
   while rendering fine in software-rendered browsers — a known

@@ -493,3 +493,21 @@ simplify (no closed group to open before scrolling). The annotated-
 map accordion and the screenshot-section collapse toggle are separate
 mechanisms and stay. His browser is the verification: if the Items'
 side borders now render for him, the diagnosis is proven.
+
+## 2026-10-13 (night) — Vanishing borders: VERIFIED FIXED; patterns become Items
+
+The founder loaded the de-accordioned preview in his own Chrome:
+"yep all cards are fixed now." His diagnosis was the correct one —
+the group accordion's composited panel was eating the Items' side
+borders on GPU-accelerated rendering; outside it, they paint. Saga
+closed (two of my earlier explanations — border tint, sub-pixel
+flicker — were wrong; his screen was the ground truth throughout).
+
+Same night, same rule applied one level up: the "Fix once, apply
+everywhere" Card held card-looking rows (`rounded-xl bg-muted` list
+items). Per his direction they're now shadcn Items (ItemGroup +
+Item variant="muted" — the filled variant, closest to the old rows;
+title + fix in ItemContent, the "N of M screens" count in
+ItemActions). Standalone surfaces (summary, analyzing, error) remain
+Cards, per the standing rule: stands alone → Card; sits in a list →
+Item.
