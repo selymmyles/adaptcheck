@@ -714,3 +714,18 @@ for line length.
 
 Founder: "nvm go back" — hero is centered again, exactly as before
 the left-align change.
+
+## 2026-10-13 (night) — ui-foundation-shadcn MERGED and DEPLOYED
+
+Founder gave the merge call. The branch (28 commits ahead, 0 behind,
+base = old main 5409fd2) merged into main on GitHub as de46596.
+Production source (this tree) synced to the merged main, rebuilt
+(assets byte-identical to the final branch preview), and deployed
+with wrangler: janus.mylezlan3.workers.dev now serves the stock
+shadcn foundation build with the full founder-directed pass —
+findings as default-open accordion items, collapsible groups with
+plain conversion names, sidebar accordions at every level, annotated
+screenshot in a radius/padding-matched Card, inverted FIX boxes,
+and the "look native" hero copy. This tree is the canonical Janus
+source going forward; the janus-foundation clone is the merged
+branch's archive.
