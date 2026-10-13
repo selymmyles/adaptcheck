@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, X } from "lucide-react";
+import { Check, ChevronDown, Copy, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -234,6 +234,10 @@ function PatternBox({
 /**
  * Icon findings lead with the symbol itself: the rendered glyph, its exact
  * name, and a copy button for the code — not a paragraph describing it.
+ * The button is icon-only (founder direction 2026-10-13): it copies the
+ * exact paste-ready artifact for that platform — the SwiftUI snippet
+ * `Image(systemName: "…")` for SF Symbols, the bare name for Material —
+ * and says so via its accessible label / hover title, not face text.
  */
 function IconBox({
   platformLabel,
@@ -308,11 +312,17 @@ function IconBox({
             <Button
               type="button"
               variant="outline"
-              size="sm"
+              size="icon-sm"
               onClick={copy}
               className="ml-auto shrink-0"
+              aria-label={copied ? "Copied" : copyLabel}
+              title={copied ? "Copied" : copyLabel}
             >
-              {copied ? "Copied" : copyLabel}
+              {copied ? (
+                <Check aria-hidden="true" />
+              ) : (
+                <Copy aria-hidden="true" />
+              )}
             </Button>
           )}
         </div>

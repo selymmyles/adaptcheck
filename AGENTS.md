@@ -64,6 +64,11 @@ the change here.
   ResultsScreen renders groups as static headed sections (the
   annotated-map accordion and the screenshot collapse toggle are
   separate and stay).
+  **Icon copy button (2026-10-13):** icon findings already copied the
+  paste-ready artifact (SwiftUI snippet for SF Symbols, bare name for
+  Material); at his direction the button is now icon-only (Copy glyph,
+  Check on copied) — the platform meaning lives in the accessible
+  label / hover title, not face text.
 - **Findings are Items, not Cards.** FindingCard composes the stock
   `Item` primitives (`variant="outline"`, `size="sm"`) inside an
   `ItemGroup` — findings are items in a list, not cards within cards.

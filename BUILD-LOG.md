@@ -511,3 +511,14 @@ title + fix in ItemContent, the "N of M screens" count in
 ItemActions). Standalone surfaces (summary, analyzing, error) remain
 Cards, per the standing rule: stands alone → Card; sits in a list →
 Item.
+
+## 2026-10-13 (night) — Icon copy button goes icon-only
+
+The founder's standard for the icon copy button: a dev expects it to
+hand over the exact thing they'd paste into code to get the icon
+they're looking at — which it already did (SwiftUI snippet for SF
+Symbols, the bare name for Material). His refinement: say it in as
+little text as possible — ideally none. The labeled outline button
+("Copy SwiftUI" / "Copy name") is now an icon-only button (Copy glyph,
+swapping to a Check when copied); the words moved to the accessible
+label and hover title.
