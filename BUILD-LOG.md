@@ -703,3 +703,9 @@ not a translator.
 The QA text check caught the page <title> still carrying the old
 tagline ("See your design through the other platform's eyes"). Now
 "Janus — Look native on both platforms", matching the header.
+
+## 2026-10-13 (night) — Hero left-aligned
+
+Founder: the hero block (headline + sub) was centered; it's now
+left-aligned at the page column's edge, still capped at max-w-xl
+for line length.
