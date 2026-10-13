@@ -411,13 +411,13 @@ export default function FindingCard({
               onClick={onLocate}
               title="Show on screenshot"
               aria-label={`Show finding ${number} on the screenshot`}
-              className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground transition-transform hover:scale-110"
+              className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground transition-transform hover:scale-110"
             >
               {number}
             </button>
           ) : (
             <span
-              className="flex h-6 w-6 items-center justify-center rounded-full bg-muted text-[11px] font-bold text-muted-foreground"
+              className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[10px] font-bold text-muted-foreground"
               aria-hidden="true"
             >
               {number}

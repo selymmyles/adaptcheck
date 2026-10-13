@@ -533,3 +533,12 @@ fine. Crop padding is now proportional (35% of the region) with a
 floor of 28 per-mille units, so every crop carries a minimum ring of
 context around the flagged element. Applies to the lightbox too
 (same component).
+
+## 2026-10-13 (night) — Pin number matches the badge
+
+The numbered pin button beside the category badge was h-6 (24px)
+against the badge's h-5 (20px) — a small height mismatch in the
+finding header row. At the founder's direction ("same size as the
+badge, for cohesion") the number is now h-5 w-5 with the digit at
+10px, so the two sit at one height in the row. Applies to the muted
+non-button fallback too.
