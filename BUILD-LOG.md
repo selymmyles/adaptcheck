@@ -480,3 +480,16 @@ which the evidence supports: every element that loses its sides for
 him lives inside the results group accordion; every card that renders
 fine sits outside one. Removing the findings from the group accordion
 (static group sections instead) is teed up as his call.
+
+## 2026-10-13 (night) — Findings leave the accordion
+
+At the founder's direction, the results item-groups are no longer a
+shadcn Accordion: each group is now a static section (header + count +
+ItemGroup). The accordion panel — an overflow-hidden, height-animated,
+composited container — is the prime suspect in the vanishing-side-
+borders bug on GPU-accelerated Chrome, and every element he reported
+as fine sat outside one. Group collapsing goes away; index jumps
+simplify (no closed group to open before scrolling). The annotated-
+map accordion and the screenshot-section collapse toggle are separate
+mechanisms and stay. His browser is the verification: if the Items'
+side borders now render for him, the diagnosis is proven.

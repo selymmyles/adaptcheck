@@ -59,8 +59,11 @@ the change here.
   was tried and REVERTED at his direction (it read as a thickened
   border where both paint). His diagnosis: the accordion container is
   the culprit — cards outside accordions render fine for him.
-  Removing findings from the group accordion is the pending decision;
-  do not re-add the ring backing.
+  Do not re-add the ring backing. **Resolved the same night at his
+  direction: findings no longer live in the group accordion** —
+  ResultsScreen renders groups as static headed sections (the
+  annotated-map accordion and the screenshot collapse toggle are
+  separate and stay).
 - **Findings are Items, not Cards.** FindingCard composes the stock
   `Item` primitives (`variant="outline"`, `size="sm"`) inside an
   `ItemGroup` — findings are items in a list, not cards within cards.

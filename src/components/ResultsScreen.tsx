@@ -266,11 +266,6 @@ export default function ResultsScreen({
   );
   /** Shots whose annotated-screenshot accordion is open (closed by default). */
   const [openMaps, setOpenMaps] = useState<ReadonlySet<number>>(new Set());
-  /** Item groups the user collapsed, keyed `${shot}:${groupName}` (open by default). */
-  const [closedGroups, setClosedGroups] = useState<ReadonlySet<string>>(
-    new Set(),
-  );
-
   const toggleShot = (shot: number) => {
     setCollapsedShots((prev) => {
       const next = new Set(prev);
@@ -314,23 +309,9 @@ export default function ResultsScreen({
     flashHighlight(shot, id);
     // Let the highlight apply before scrolling into view.
     window.setTimeout(() => {
-      const el = document.getElementById(`finding-${shot}-${id}`);
-      // Open the item-group accordion first if the user collapsed it, and
-      // give its open animation time to finish before scrolling.
-      const group = el?.dataset.group;
-      const key = group ? `${shot}:${group}` : null;
-      if (key && closedGroups.has(key)) {
-        setClosedGroups((prev) => {
-          const next = new Set(prev);
-          next.delete(key);
-          return next;
-        });
-        window.setTimeout(() => {
-          el?.scrollIntoView({ behavior: "smooth", block: "center" });
-        }, 280);
-        return;
-      }
-      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+      document
+        .getElementById(`finding-${shot}-${id}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 30);
   };
 
@@ -637,43 +618,21 @@ export default function ResultsScreen({
               )}
 
               {groups.length > 0 && (
-                <div className="mb-8">
-                <Accordion
-                  multiple
-                  value={groups
-                    .filter((g) => !closedGroups.has(`${si}:${g.name}`))
-                    .map((g) => g.name)}
-                  onValueChange={(v) => {
-                    const open = new Set(v as string[]);
-                    setClosedGroups((prev) => {
-                      const next = new Set(prev);
-                      for (const g of groups) {
-                        const key = `${si}:${g.name}`;
-                        if (open.has(g.name)) next.delete(key);
-                        else next.add(key);
-                      }
-                      return next;
-                    });
-                  }}
-                >
+                <div className="mb-8 space-y-8">
                   {groups.map((group) => (
-                    <AccordionItem key={group.name} value={group.name}>
-                      <AccordionTrigger>
-                        <span>
-                          {group.name}
-                          <span className="ml-1.5 font-normal text-muted-foreground">
-                            {group.findings.length}
-                          </span>
+                    <section key={group.name} aria-label={group.name}>
+                      <h3 className="text-sm font-medium text-foreground">
+                        {group.name}
+                        <span className="ml-1.5 font-normal text-muted-foreground">
+                          {group.findings.length}
                         </span>
-                      </AccordionTrigger>
-                      <AccordionContent>
-                        <div className="pt-1">
+                      </h3>
+                      <div className="pt-2">
                           <ItemGroup>
                           {group.findings.map((f) => (
                             <div
                               key={f.key}
                               id={`finding-${si}-${f.key}`}
-                              data-group={group.name}
                               className={`scroll-mt-6 rounded-xl ${
                                 highlight?.shot === si &&
                                 highlight.id === f.key
@@ -695,11 +654,9 @@ export default function ResultsScreen({
                             </div>
                           ))}
                           </ItemGroup>
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
+                      </div>
+                    </section>
                   ))}
-                </Accordion>
                 </div>
               )}
                 </>
