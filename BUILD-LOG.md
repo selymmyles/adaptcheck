@@ -697,3 +697,9 @@ app look ported and gives the fix for each. Header tagline "See your
 design through the other platform's eyes" → "Look native on both
 platforms." Matches the standing product truth: Janus is a spotter,
 not a translator.
+
+## 2026-10-13 (night) — Browser tab title follows the new tagline
+
+The QA text check caught the page <title> still carrying the old
+tagline ("See your design through the other platform's eyes"). Now
+"Janus — Look native on both platforms", matching the header.
