@@ -49,6 +49,10 @@ export interface Finding {
   deepLink?: string;
   /** Counterpart name where no web page exists (e.g. the SF Symbol name). */
   counterpartName?: string;
+  /** Model-supplied element detail (e.g. icon name); sanitized before use. */
+  detail?: string;
+  /** True when the counterpart is an exact match, false when closest equivalent. */
+  counterpartExact?: boolean;
 }
 
 export interface AnalysisResult {
