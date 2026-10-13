@@ -1,10 +1,26 @@
 import { useEffect, useRef, useState } from "react";
+import { ChevronDown, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import type {
   Finding,
   FindingRegion,
   AnalysisDirection,
 } from "../lib/mockAnalysis";
 import { DIRECTION_META } from "../lib/taxonomy";
+
+/**
+ * The worker also sends these icon fields on findings at runtime, but they
+ * are not declared on the shared Finding type (pre-existing gap on main —
+ * the proper fix is adding them to src/lib/mockAnalysis.ts). Declared
+ * locally here so the UI typechecks without touching src/lib.
+ */
+type FindingWithIconFields = Finding & {
+  detail?: string;
+  counterpartExact?: boolean;
+};
 
 /**
  * Pick the citation most relevant to a platform, matched on URL host first
@@ -132,27 +148,16 @@ function CropLightbox({
       aria-modal="true"
       aria-label={alt}
     >
-      <button
+      <Button
         type="button"
+        variant="ghost"
+        size="icon-lg"
         onClick={onClose}
         aria-label="Close"
-        className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+        className="absolute right-4 top-4 rounded-full bg-white/10 text-white hover:bg-white/20 hover:text-white"
       >
-        <svg
-          className="h-5 w-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth={2}
-          stroke="currentColor"
-          aria-hidden="true"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M6 18L18 6M6 6l12 12"
-          />
-        </svg>
-      </button>
+        <X className="h-5 w-5" aria-hidden="true" />
+      </Button>
       <div onClick={(e) => e.stopPropagation()}>
         <RegionCrop
           imageUrl={imageUrl}
@@ -277,9 +282,9 @@ function IconBox({
           {platformLabel}
         </p>
         {closest && (
-          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800">
+          <Badge className="bg-amber-100 px-2 text-[11px] text-amber-800">
             Closest match
-          </span>
+          </Badge>
         )}
       </div>
       {iconName ? (
@@ -296,13 +301,15 @@ function IconBox({
             {iconName}
           </code>
           {copyText && (
-            <button
+            <Button
               type="button"
+              variant="outline"
+              size="sm"
               onClick={copy}
-              className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2.5 py-1.5 text-xs font-medium text-stone-600 transition-colors hover:bg-stone-50"
+              className="ml-auto shrink-0 rounded-lg border-stone-200 font-medium text-stone-600"
             >
               {copied ? "Copied" : copyLabel}
-            </button>
+            </Button>
           )}
         </div>
       ) : (
@@ -369,20 +376,20 @@ export default function FindingCard({
   // Icon findings name the exact symbols instead of describing them.
   const isIconFinding =
     finding.id === "icon-symbols" || finding.id === "a2i-icon-symbols";
+  const iconFields = finding as FindingWithIconFields;
   const sfName =
-    direction === "ios-to-android" ? finding.detail : finding.counterpartName;
+    direction === "ios-to-android" ? iconFields.detail : finding.counterpartName;
   const materialName =
-    direction === "ios-to-android" ? finding.counterpartName : finding.detail;
+    direction === "ios-to-android" ? finding.counterpartName : iconFields.detail;
   const closestCounterpart =
-    finding.counterpartExact === false && !!finding.counterpartName;
+    iconFields.counterpartExact === false && !!finding.counterpartName;
 
   return (
-    <article
-      className={`rounded-2xl border bg-white p-5 transition-shadow ${
-        active
-          ? "border-teal-500 shadow-lg shadow-teal-100"
-          : "border-stone-200"
-      }`}
+    <Card
+      className={cn(
+        "gap-0 rounded-2xl p-5 transition-shadow",
+        active && "shadow-lg shadow-teal-100 ring-2 ring-teal-500",
+      )}
     >
       {/* Header: number badge (pinned findings only) + category pill */}
       <div className="flex flex-wrap items-center gap-2">
@@ -405,9 +412,9 @@ export default function FindingCard({
               {number}
             </span>
           ))}
-        <span className="rounded-full bg-stone-100 px-2.5 py-0.5 text-xs font-medium text-stone-600">
+        <Badge variant="secondary" className="h-6 px-2.5 font-medium">
           {finding.category}
-        </span>
+        </Badge>
         {finding.unverified && (
           <span
             className="text-xs italic text-stone-400"
@@ -516,28 +523,19 @@ export default function FindingCard({
       {/* Screenshot crop, collapsed by default */}
       {finding.region && (
         <div className="mt-3">
-          <button
+          <Button
             type="button"
+            variant="ghost"
             onClick={() => setShowShot((v) => !v)}
             aria-expanded={showShot}
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-teal-700 hover:text-teal-800"
+            className="h-auto gap-1.5 p-0 font-medium text-primary hover:bg-transparent hover:text-primary-dark"
           >
-            <svg
+            <ChevronDown
               className={`h-4 w-4 transition-transform ${showShot ? "rotate-180" : ""}`}
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={2}
-              stroke="currentColor"
               aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M19.5 8.25l-7.5 7.5-7.5-7.5"
-              />
-            </svg>
+            />
             {showShot ? "Hide screenshot" : "Show screenshot"}
-          </button>
+          </Button>
           {showShot && (
             <div className="mt-2">
               <button
@@ -565,6 +563,6 @@ export default function FindingCard({
           onClose={() => setLightbox(false)}
         />
       )}
-    </article>
+    </Card>
   );
 }

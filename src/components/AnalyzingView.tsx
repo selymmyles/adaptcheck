@@ -1,4 +1,8 @@
 import { useEffect, useState } from "react";
+import { Check } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
 
 export type ItemStatus = "queued" | "analyzing" | "done" | "error";
 
@@ -38,23 +42,10 @@ function FileRow({ item }: { item: ProgressItem }) {
         </p>
         {item.status === "done" && (
           <span
-            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-teal-700 text-white"
+            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-white"
             aria-label="Done"
           >
-            <svg
-              className="h-3 w-3"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={3.5}
-              stroke="currentColor"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M4.5 12.75l6 6 9-13.5"
-              />
-            </svg>
+            <Check className="h-3 w-3" strokeWidth={3.5} aria-hidden="true" />
           </span>
         )}
         {item.status === "error" && (
@@ -66,9 +57,9 @@ function FileRow({ item }: { item: ProgressItem }) {
       {/* Per-file progress bar, LocalSend-style */}
       <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-stone-100">
         {item.status === "done" ? (
-          <div className="h-full w-full rounded-full bg-teal-700" />
+          <div className="h-full w-full rounded-full bg-primary" />
         ) : item.status === "analyzing" ? (
-          <div className="indeterminate-bar h-full w-1/3 rounded-full bg-teal-700" />
+          <div className="indeterminate-bar h-full w-1/3 rounded-full bg-primary" />
         ) : item.status === "error" ? (
           <div className="h-full w-full rounded-full bg-rose-400" />
         ) : null}
@@ -103,7 +94,7 @@ export default function AnalyzingView({ items }: AnalyzingViewProps) {
         }
         .indeterminate-bar { animation: indeterminate-slide 1.4s ease-in-out infinite; }
       `}</style>
-      <div className="rounded-2xl border border-stone-200 bg-white p-8">
+      <Card className="gap-0 rounded-2xl p-8">
         <p className="text-base font-medium text-stone-900">
           Analyzing {items.length === 1 ? "your screenshot" : `${items.length} screenshots`}
         </p>
@@ -116,27 +107,21 @@ export default function AnalyzingView({ items }: AnalyzingViewProps) {
             <FileRow key={item.fileName} item={item} />
           ))}
         </ol>
-        <div className="mt-8 border-t border-stone-100 pt-5">
+        <Separator className="mt-8 bg-stone-100" />
+        <div className="pt-5">
           <div className="flex items-baseline justify-between gap-3">
             <p className="text-sm font-medium text-stone-700">Total progress</p>
             <p className="text-xs text-stone-400">
               {done} of {items.length}
             </p>
           </div>
-          <div
-            className="mt-2 h-1.5 overflow-hidden rounded-full bg-stone-100"
-            role="progressbar"
-            aria-valuenow={Math.round(progress)}
-            aria-valuemin={0}
-            aria-valuemax={100}
-          >
-            <div
-              className="h-full rounded-full bg-teal-700 transition-all duration-700"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
+          <Progress
+            value={progress}
+            aria-label="Total progress"
+            className="mt-2 gap-0 [&_[data-slot=progress-track]]:h-1.5 [&_[data-slot=progress-indicator]]:transition-all [&_[data-slot=progress-indicator]]:duration-700"
+          />
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

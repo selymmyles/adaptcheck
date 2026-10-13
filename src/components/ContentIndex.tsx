@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ChevronDown } from "lucide-react";
 
 export interface IndexItem {
   name: string;
@@ -46,20 +47,11 @@ function IndexItemGroup({
             {item.findings.length}
           </span>
         </span>
-        <svg
+        <ChevronDown
           className={`h-3.5 w-3.5 shrink-0 text-stone-400 transition-transform ${open ? "rotate-180" : ""}`}
-          fill="none"
-          viewBox="0 0 24 24"
           strokeWidth={2.5}
-          stroke="currentColor"
           aria-hidden="true"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M19.5 8.25l-7.5 7.5-7.5-7.5"
-          />
-        </svg>
+        />
       </button>
       {open && (
         <ol className="mt-1 space-y-1">

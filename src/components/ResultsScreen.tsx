@@ -1,4 +1,9 @@
 import { useMemo, useState } from "react";
+import { Check, ChevronDown, Copy } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import type {
   AnalysisResult,
   Finding,
@@ -363,7 +368,7 @@ export default function ResultsScreen({
     <div className="flex items-start gap-6">
       <div className="mx-auto w-full max-w-3xl flex-1">
         {/* Summary header */}
-        <section className="rounded-2xl border border-stone-200 bg-white p-6">
+        <Card className="gap-0 rounded-2xl p-6">
           <p className="text-[15px] leading-relaxed text-stone-700">
             <span className="font-semibold text-stone-900">
               {totalFindings} {totalFindings === 1 ? "finding" : "findings"}
@@ -377,40 +382,37 @@ export default function ResultsScreen({
                 : ` — ${screensNeedingWork} of ${doneItems.length} screens need addressing; the rest already read native.`}
           </p>
           <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-            <button
+            <Button
               type="button"
               onClick={copyChecklist}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-800"
+              className="h-10 rounded-xl px-5 font-semibold"
             >
               {copied ? (
                 <>
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                  </svg>
+                  <Check aria-hidden="true" />
                   Copied to clipboard
                 </>
               ) : (
                 <>
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5" />
-                  </svg>
+                  <Copy aria-hidden="true" />
                   Copy checklist
                 </>
               )}
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="outline"
               onClick={onReset}
-              className="inline-flex items-center justify-center rounded-xl border border-stone-300 bg-white px-5 py-2.5 text-sm font-semibold text-stone-700 transition-colors hover:bg-stone-50"
+              className="h-10 rounded-xl border-stone-300 px-5 font-semibold text-stone-700"
             >
               Analyze more
-            </button>
+            </Button>
           </div>
-        </section>
+        </Card>
 
         {/* Cross-screen patterns: fix once, apply everywhere */}
         {patterns.length > 0 && (
-          <section className="mt-6 rounded-2xl border border-stone-200 bg-white p-6">
+          <Card className="mt-6 gap-0 rounded-2xl p-6">
             <h2 className="text-base font-semibold tracking-tight text-stone-900">
               Fix once, apply everywhere
             </h2>
@@ -435,7 +437,7 @@ export default function ResultsScreen({
                 </li>
               ))}
             </ul>
-          </section>
+          </Card>
         )}
 
         {/* Per-screenshot sections */}
@@ -450,14 +452,14 @@ export default function ResultsScreen({
                     {item.fileName}
                   </span>
                 </h2>
-                <div className="mt-3 rounded-2xl border border-stone-200 bg-white p-5">
+                <Card className="mt-3 gap-0 rounded-2xl p-5">
                   <div className="h-2 w-full overflow-hidden rounded-full bg-stone-100">
-                    <div className="h-full w-1/3 animate-pulse rounded-full bg-teal-700" />
+                    <div className="h-full w-1/3 animate-pulse rounded-full bg-primary" />
                   </div>
                   <p className="mt-3 text-sm text-stone-500">
                     Retrying analysis…
                   </p>
-                </div>
+                </Card>
               </section>
             );
           }
@@ -470,18 +472,21 @@ export default function ResultsScreen({
                     {item.fileName}
                   </span>
                 </h2>
-                <div className="mt-3 rounded-2xl border border-rose-200 bg-rose-50 p-5">
-                  <p className="text-sm text-rose-800">
+                <Alert
+                  variant="destructive"
+                  className="mt-3 rounded-2xl border-rose-200 bg-rose-50 p-5"
+                >
+                  <AlertDescription className="text-rose-800">
                     {item.error ?? "Analysis failed. Please try again."}
-                  </p>
-                  <button
+                  </AlertDescription>
+                  <Button
                     type="button"
                     onClick={() => onRetry(si)}
-                    className="mt-3 rounded-xl bg-rose-700 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-800"
+                    className="mt-3 h-9 rounded-xl bg-rose-700 px-4 font-semibold hover:bg-rose-800"
                   >
                     Retry this screenshot
-                  </button>
-                </div>
+                  </Button>
+                </Alert>
               </section>
             );
           }
@@ -525,26 +530,17 @@ export default function ResultsScreen({
                   aria-expanded={!collapsedShots.has(si)}
                   className="flex flex-wrap items-center gap-3 text-left"
                 >
-                  <svg
+                  <ChevronDown
                     className={`h-5 w-5 shrink-0 text-stone-400 transition-transform ${collapsedShots.has(si) ? "" : "rotate-180"}`}
-                    fill="none"
-                    viewBox="0 0 24 24"
                     strokeWidth={2.5}
-                    stroke="currentColor"
                     aria-hidden="true"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M19.5 8.25l-7.5 7.5-7.5-7.5"
-                    />
-                  </svg>
+                  />
                   <h2 className="text-xl font-semibold tracking-tight text-stone-900">
                     {label}
                   </h2>
-                  <span className="inline-flex items-center rounded-full bg-teal-700 px-3 py-1 text-xs font-semibold text-white">
+                  <Badge className="h-6 px-3 font-semibold">
                     {meta.arrow}
-                  </span>
+                  </Badge>
                   <span className="truncate text-sm text-stone-400">
                     {item.fileName}
                   </span>
@@ -560,20 +556,11 @@ export default function ResultsScreen({
                 <details id={`map-${si}`} className="mb-8 scroll-mt-6 group/map">
                   <summary className="mb-3 cursor-pointer list-none">
                     <span className="inline-flex items-center gap-2 text-sm font-semibold text-stone-700">
-                      <svg
+                      <ChevronDown
                         className="h-4 w-4 text-stone-400 transition-transform group-open/map:rotate-180"
-                        fill="none"
-                        viewBox="0 0 24 24"
                         strokeWidth={2.5}
-                        stroke="currentColor"
                         aria-hidden="true"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M19.5 8.25l-7.5 7.5-7.5-7.5"
-                        />
-                      </svg>
+                      />
                       Annotated screenshot
                       <span className="font-normal text-stone-400">
                         {markers.length} {markers.length === 1 ? "pin" : "pins"}
@@ -589,30 +576,23 @@ export default function ResultsScreen({
               )}
 
               {groups.length === 0 && (
-                <p className="rounded-2xl border border-stone-200 bg-white p-5 text-sm text-stone-500">
-                  No adaptation issues found — this screen already reads
-                  native on {meta.targetShort}.
-                </p>
+                <Card className="gap-0 rounded-2xl p-5">
+                  <p className="text-sm text-stone-500">
+                    No adaptation issues found — this screen already reads
+                    native on {meta.targetShort}.
+                  </p>
+                </Card>
               )}
 
               {groups.map((group) => (
                 <details key={group.name} open className="mb-8 group/acc">
                   <summary className="mb-3 cursor-pointer list-none">
                     <span className="inline-flex items-center gap-2 text-lg font-semibold tracking-tight text-stone-900">
-                      <svg
+                      <ChevronDown
                         className="h-4 w-4 text-stone-400 transition-transform group-open/acc:rotate-180"
-                        fill="none"
-                        viewBox="0 0 24 24"
                         strokeWidth={2.5}
-                        stroke="currentColor"
                         aria-hidden="true"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M19.5 8.25l-7.5 7.5-7.5-7.5"
-                        />
-                      </svg>
+                      />
                       {group.name}
                       <span className="text-sm font-medium text-stone-400">
                         {group.findings.length}

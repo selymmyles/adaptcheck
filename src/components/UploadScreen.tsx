@@ -1,4 +1,6 @@
 import { useRef, useState } from "react";
+import { Upload, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const ACCEPTED_TYPES = ["image/png", "image/jpeg", "image/webp"];
 const MAX_FILES = 10;
@@ -165,20 +167,11 @@ export default function UploadScreen({ onAnalyze }: UploadScreenProps) {
         />
         {picked.length === 0 ? (
           <>
-            <svg
+            <Upload
               className="mb-4 h-10 w-10 text-stone-400"
-              fill="none"
-              viewBox="0 0 24 24"
               strokeWidth={1.5}
-              stroke="currentColor"
               aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
-              />
-            </svg>
+            />
             <p className="text-base font-medium text-stone-900">
               Drop your screenshots here
             </p>
@@ -206,9 +199,9 @@ export default function UploadScreen({ onAnalyze }: UploadScreenProps) {
                       removeFile(i);
                     }}
                     aria-label={`Remove ${p.file.name}`}
-                    className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-sm leading-none text-white opacity-0 transition-opacity hover:bg-black/80 group-hover:opacity-100"
+                    className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity hover:bg-black/80 group-hover:opacity-100"
                   >
-                    ×
+                    <X className="h-3.5 w-3.5" aria-hidden="true" />
                   </button>
                   <p
                     className="truncate px-2 py-1.5 text-center text-[11px] text-stone-500"
@@ -234,16 +227,16 @@ export default function UploadScreen({ onAnalyze }: UploadScreenProps) {
         </p>
       )}
 
-      <button
+      <Button
         type="button"
         disabled={picked.length === 0}
         onClick={() => onAnalyze(picked.map((p) => p.file))}
-        className="mt-6 w-full rounded-xl bg-teal-700 px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-teal-800 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:text-stone-500"
+        className="mt-6 h-12 w-full rounded-xl px-6 text-base font-semibold disabled:bg-stone-300 disabled:text-stone-500 disabled:opacity-100"
       >
         {picked.length <= 1
           ? "Analyze screen"
           : `Analyze ${picked.length} screens`}
-      </button>
+      </Button>
       <p className="mt-3 text-center text-xs text-stone-400">
         Screenshots are sent securely for AI analysis and are never stored.
       </p>
