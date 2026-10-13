@@ -155,7 +155,7 @@ export default function UploadScreen({
           ToggleGroup, single-select; a click on the active item would
           deselect it, so empty changes are ignored (a target is always
           chosen). */}
-      <div className="mb-4 flex items-center justify-between gap-3">
+      <div className="mb-4 flex flex-col items-start gap-2">
         <p
           id="design-target-label"
           className="text-sm font-medium text-foreground"
