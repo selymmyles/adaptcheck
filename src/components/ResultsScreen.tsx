@@ -29,6 +29,7 @@ import {
   ItemGroup,
   ItemTitle,
 } from "@/components/ui/item";
+import { Separator } from "@/components/ui/separator";
 import FindingCard from "./FindingCard";
 import ScreenshotMap, { type MapMarker } from "./ScreenshotMap";
 import ContentIndex, { type IndexShot } from "./ContentIndex";
@@ -707,9 +708,11 @@ export default function ResultsScreen({
                         </button>
                       </h3>
                       {!closedGroups.has(`${si}:${group.name}`) && (
+                        <>
+                          <Separator className="mt-2" />
                       <Accordion
                         multiple
-                        className="mt-2 gap-2.5"
+                        className="mt-2.5 gap-2.5"
                         value={group.findings
                           .filter((f) => !closedFindings.has(`${si}:${f.key}`))
                           .map((f) => f.key)}
@@ -751,6 +754,7 @@ export default function ResultsScreen({
                             </div>
                           ))}
                       </Accordion>
+                        </>
                       )}
                     </section>
                   ))}

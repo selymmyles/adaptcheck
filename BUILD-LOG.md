@@ -617,3 +617,10 @@ and its content inset is the findings' px-3.5, so the map header row
 sits exactly like a finding header row; the figure drops its own
 border (the Card's is the one frame now) and its radius matches the
 finding boxes (rounded-xl); the caption inset follows to px-3.5.
+
+## 2026-10-13 (night) — Divider between group title and findings
+
+Founder: a divider between the item title (group header) and the
+findings cards. A stock Separator now sits under each group header,
+rendered only while the group is open (a collapsed group keeps just
+its header row). Findings keep their rhythm below it (mt-2.5).
