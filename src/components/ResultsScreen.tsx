@@ -9,7 +9,13 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import type {
   AnalysisResult,
   Finding,
@@ -395,7 +401,8 @@ export default function ResultsScreen({
     <div className="flex items-start gap-6">
       <div className="mx-auto w-full max-w-3xl flex-1">
         {/* Summary header */}
-        <Card className="gap-0 rounded-2xl p-6">
+        <Card>
+          <CardContent>
           <p className="text-[15px] leading-relaxed text-foreground">
             <span className="font-semibold text-foreground">
               {totalFindings} {totalFindings === 1 ? "finding" : "findings"}
@@ -409,11 +416,7 @@ export default function ResultsScreen({
                 : ` — ${screensNeedingWork} of ${doneItems.length} screens need addressing; the rest already read native.`}
           </p>
           <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-            <Button
-              type="button"
-              onClick={copyChecklist}
-              className="h-10 rounded-xl px-5 font-semibold"
-            >
+            <Button type="button" onClick={copyChecklist}>
               {copied ? (
                 <>
                   <Check aria-hidden="true" />
@@ -426,28 +429,26 @@ export default function ResultsScreen({
                 </>
               )}
             </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onReset}
-              className="h-10 rounded-xl border-border px-5 font-semibold text-foreground"
-            >
+            <Button type="button" variant="outline" onClick={onReset}>
               Analyze more
             </Button>
           </div>
+          </CardContent>
         </Card>
 
         {/* Cross-screen patterns: fix once, apply everywhere */}
         {patterns.length > 0 && (
-          <Card className="mt-6 gap-0 rounded-2xl p-6">
-            <h2 className="text-base font-semibold tracking-tight text-foreground">
-              Fix once, apply everywhere
-            </h2>
-            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              These patterns repeat across your screens — handle them globally
-              (theme, design system) instead of screen by screen.
-            </p>
-            <ul className="mt-4 space-y-3">
+          <div className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Fix once, apply everywhere</CardTitle>
+              <CardDescription>
+                These patterns repeat across your screens — handle them
+                globally (theme, design system) instead of screen by screen.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+            <ul className="space-y-3">
               {patterns.map((p) => (
                 <li key={p.id} className="rounded-xl bg-muted p-4">
                   <div className="flex items-baseline justify-between gap-3">
@@ -464,7 +465,9 @@ export default function ResultsScreen({
                 </li>
               ))}
             </ul>
+            </CardContent>
           </Card>
+          </div>
         )}
 
         {/* Per-screenshot sections */}
@@ -479,14 +482,18 @@ export default function ResultsScreen({
                     {item.fileName}
                   </span>
                 </h2>
-                <Card className="mt-3 gap-0 rounded-2xl p-5">
+                <div className="mt-3">
+                <Card>
+                  <CardContent>
                   <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
                     <div className="h-full w-1/3 animate-pulse rounded-full bg-primary" />
                   </div>
                   <p className="mt-3 text-sm text-muted-foreground">
                     Retrying analysis…
                   </p>
+                  </CardContent>
                 </Card>
+                </div>
               </section>
             );
           }
@@ -499,21 +506,22 @@ export default function ResultsScreen({
                     {item.fileName}
                   </span>
                 </h2>
-                <Alert
-                  variant="destructive"
-                  className="mt-3 rounded-2xl border-destructive/30 bg-destructive/10 p-5"
-                >
-                  <AlertDescription className="text-destructive">
+                <div className="mt-3">
+                <Alert variant="destructive">
+                  <AlertDescription>
                     {item.error ?? "Analysis failed. Please try again."}
                   </AlertDescription>
-                  <Button
-                    type="button"
-                    onClick={() => onRetry(si)}
-                    className="mt-3 h-9 rounded-xl bg-destructive px-4 font-semibold hover:bg-destructive"
-                  >
-                    Retry this screenshot
-                  </Button>
+                  <div className="mt-3">
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      onClick={() => onRetry(si)}
+                    >
+                      Retry this screenshot
+                    </Button>
+                  </div>
                 </Alert>
+                </div>
               </section>
             );
           }
@@ -565,9 +573,7 @@ export default function ResultsScreen({
                   <h2 className="text-xl font-semibold tracking-tight text-foreground">
                     {label}
                   </h2>
-                  <Badge className="h-6 px-3 font-semibold">
-                    {meta.arrow}
-                  </Badge>
+                  <Badge>{meta.arrow}</Badge>
                   <span className="truncate text-sm text-muted-foreground">
                     {item.fileName}
                   </span>
@@ -580,6 +586,7 @@ export default function ResultsScreen({
               </p>
 
               {markers.length > 0 && (
+                <div className="mb-8">
                 <Accordion
                   value={openMaps.has(si) ? ["map"] : []}
                   onValueChange={(v) =>
@@ -590,7 +597,6 @@ export default function ResultsScreen({
                       return next;
                     })
                   }
-                  className="mb-8"
                 >
                   <AccordionItem
                     value="map"
@@ -606,7 +612,7 @@ export default function ResultsScreen({
                         </span>
                       </span>
                     </AccordionTrigger>
-                    <AccordionContent className="[&_p:not(:last-child)]:mb-0">
+                    <AccordionContent>
                       <ScreenshotMap
                         imageUrl={item.imageUrl}
                         markers={markers}
@@ -615,18 +621,22 @@ export default function ResultsScreen({
                     </AccordionContent>
                   </AccordionItem>
                 </Accordion>
+                </div>
               )}
 
               {groups.length === 0 && (
-                <Card className="gap-0 rounded-2xl p-5">
+                <Card>
+                  <CardContent>
                   <p className="text-sm text-muted-foreground">
                     No adaptation issues found — this screen already reads
                     native on {meta.targetShort}.
                   </p>
+                  </CardContent>
                 </Card>
               )}
 
               {groups.length > 0 && (
+                <div className="mb-8">
                 <Accordion
                   multiple
                   value={groups
@@ -644,7 +654,6 @@ export default function ResultsScreen({
                       return next;
                     });
                   }}
-                  className="mb-8"
                 >
                   {groups.map((group) => (
                     <AccordionItem key={group.name} value={group.name}>
@@ -656,24 +665,25 @@ export default function ResultsScreen({
                           </span>
                         </span>
                       </AccordionTrigger>
-                      <AccordionContent className="[&_p:not(:last-child)]:mb-0">
+                      <AccordionContent>
                         <div className="space-y-3 pt-1">
                           {group.findings.map((f) => (
                             <div
                               key={f.key}
                               id={`finding-${si}-${f.key}`}
                               data-group={group.name}
-                              className="scroll-mt-6"
+                              className={`scroll-mt-6 rounded-xl ${
+                                highlight?.shot === si &&
+                                highlight.id === f.key
+                                  ? "ring-2 ring-ring"
+                                  : ""
+                              }`}
                             >
                               <FindingCard
                                 finding={f}
                                 direction={direction}
                                 number={numberByKey.get(f.key)}
                                 imageUrl={item.imageUrl}
-                                active={
-                                  highlight?.shot === si &&
-                                  highlight.id === f.key
-                                }
                                 onLocate={
                                   f.region
                                     ? () => locateOnMap(si, f.key)
@@ -687,6 +697,7 @@ export default function ResultsScreen({
                     </AccordionItem>
                   ))}
                 </Accordion>
+                </div>
               )}
                 </>
               )}

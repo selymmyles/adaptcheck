@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Check } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 
@@ -42,7 +42,7 @@ function FileRow({ item }: { item: ProgressItem }) {
         </p>
         {item.status === "done" && (
           <span
-            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-white"
+            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground"
             aria-label="Done"
           >
             <Check className="h-3 w-3" strokeWidth={3.5} aria-hidden="true" />
@@ -94,20 +94,23 @@ export default function AnalyzingView({ items }: AnalyzingViewProps) {
         }
         .indeterminate-bar { animation: indeterminate-slide 1.4s ease-in-out infinite; }
       `}</style>
-      <Card className="gap-0 rounded-2xl p-8">
+      <Card>
+        <CardContent>
         <p className="text-base font-medium text-foreground">
           Analyzing {items.length === 1 ? "your screenshot" : `${items.length} screenshots`}
         </p>
         <p className="mt-1 text-sm text-muted-foreground">
           Deep check takes 1–2 minutes per screenshot — every finding is
-          verified three times before it shows up.
+          cross-checked before it shows up.
         </p>
         <ol className="mt-6 space-y-5">
           {items.map((item) => (
             <FileRow key={item.fileName} item={item} />
           ))}
         </ol>
-        <Separator className="mt-8 bg-muted" />
+        <div className="mt-8">
+          <Separator />
+        </div>
         <div className="pt-5">
           <div className="flex items-baseline justify-between gap-3">
             <p className="text-sm font-medium text-foreground">Total progress</p>
@@ -115,12 +118,11 @@ export default function AnalyzingView({ items }: AnalyzingViewProps) {
               {done} of {items.length}
             </p>
           </div>
-          <Progress
-            value={progress}
-            aria-label="Total progress"
-            className="mt-2 gap-0 [&_[data-slot=progress-track]]:h-1.5 [&_[data-slot=progress-indicator]]:transition-all [&_[data-slot=progress-indicator]]:duration-700"
-          />
+          <div className="mt-2">
+            <Progress value={progress} aria-label="Total progress" />
+          </div>
         </div>
+        </CardContent>
       </Card>
     </div>
   );

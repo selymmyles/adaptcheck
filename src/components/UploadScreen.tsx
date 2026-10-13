@@ -231,7 +231,8 @@ export default function UploadScreen({ onAnalyze }: UploadScreenProps) {
         type="button"
         disabled={picked.length === 0}
         onClick={() => onAnalyze(picked.map((p) => p.file))}
-        className="mt-6 h-12 w-full rounded-xl px-6 text-base font-semibold disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100"
+        size="lg"
+        className="mt-6 w-full"
       >
         {picked.length <= 1
           ? "Analyze screen"

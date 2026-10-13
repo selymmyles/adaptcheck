@@ -2,8 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronDown, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import type {
   Finding,
   FindingRegion,
@@ -150,11 +154,11 @@ function CropLightbox({
     >
       <Button
         type="button"
-        variant="ghost"
+        variant="secondary"
         size="icon-lg"
         onClick={onClose}
         aria-label="Close"
-        className="absolute right-4 top-4 rounded-full bg-card/10 text-white hover:bg-card/20 hover:text-white"
+        className="absolute right-4 top-4"
       >
         <X className="h-5 w-5" aria-hidden="true" />
       </Button>
@@ -189,14 +193,14 @@ function PatternBox({
       className={
         tone === "source"
           ? "rounded-xl bg-muted p-3.5"
-          : "rounded-xl bg-accent/60 p-3.5"
+          : "rounded-xl bg-accent p-3.5"
       }
     >
       <p
         className={
           tone === "source"
             ? "text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
-            : "text-[11px] font-semibold uppercase tracking-wider text-primary/70"
+            : "text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
         }
       >
         {platformLabel}
@@ -216,7 +220,7 @@ function PatternBox({
           target="_blank"
           rel="noopener noreferrer"
           title={cite.label}
-          className="mt-2 inline-block text-xs font-medium text-primary underline decoration-teal-200 underline-offset-2 hover:decoration-teal-500"
+          className="mt-2 inline-block text-xs font-medium text-primary underline underline-offset-2"
         >
           source
         </a>
@@ -268,7 +272,7 @@ function IconBox({
       className={
         tone === "source"
           ? "rounded-xl bg-muted p-3.5"
-          : "rounded-xl bg-accent/60 p-3.5"
+          : "rounded-xl bg-accent p-3.5"
       }
     >
       <div className="flex items-center justify-between gap-2">
@@ -276,15 +280,13 @@ function IconBox({
           className={
             tone === "source"
               ? "text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
-              : "text-[11px] font-semibold uppercase tracking-wider text-primary/70"
+              : "text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
           }
         >
           {platformLabel}
         </p>
         {closest && (
-          <Badge className="bg-muted px-2 text-[11px] text-foreground">
-            Closest match
-          </Badge>
+          <Badge variant="secondary">Closest match</Badge>
         )}
       </div>
       {iconName ? (
@@ -297,7 +299,7 @@ function IconBox({
               onError={() => setImgOk(false)}
             />
           )}
-          <code className="rounded bg-card/70 px-2 py-1 font-mono text-sm font-semibold text-foreground">
+          <code className="rounded bg-card px-2 py-1 font-mono text-sm font-semibold text-foreground">
             {iconName}
           </code>
           {copyText && (
@@ -306,7 +308,7 @@ function IconBox({
               variant="outline"
               size="sm"
               onClick={copy}
-              className="ml-auto shrink-0 rounded-lg border-border font-medium text-foreground"
+              className="ml-auto shrink-0"
             >
               {copied ? "Copied" : copyLabel}
             </Button>
@@ -324,7 +326,7 @@ function IconBox({
           target="_blank"
           rel="noopener noreferrer"
           title={cite.label}
-          className="mt-1.5 inline-block text-xs font-medium text-primary underline decoration-teal-200 underline-offset-2 hover:decoration-teal-500"
+          className="mt-1.5 inline-block text-xs font-medium text-primary underline underline-offset-2"
         >
           source
         </a>
@@ -338,7 +340,6 @@ export default function FindingCard({
   direction,
   number,
   imageUrl,
-  active,
   onLocate,
 }: {
   finding: Finding;
@@ -348,8 +349,6 @@ export default function FindingCard({
   number?: number;
   /** Object URL of the screenshot this finding came from. */
   imageUrl: string;
-  /** Whether this card is the current jump/locate highlight target. */
-  active: boolean;
   /** Tap-to-locate on the screenshot map; null when the finding has no region. */
   onLocate: (() => void) | null;
 }) {
@@ -385,12 +384,8 @@ export default function FindingCard({
     iconFields.counterpartExact === false && !!finding.counterpartName;
 
   return (
-    <Card
-      className={cn(
-        "gap-0 rounded-2xl p-5 transition-shadow",
-        active && "shadow-lg shadow-teal-100 ring-2 ring-ring",
-      )}
-    >
+    <Card>
+      <CardHeader>
       {/* Header: number badge (pinned findings only) + category pill */}
       <div className="flex flex-wrap items-center gap-2">
         {number !== undefined &&
@@ -400,7 +395,7 @@ export default function FindingCard({
               onClick={onLocate}
               title="Show on screenshot"
               aria-label={`Show finding ${number} on the screenshot`}
-              className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-white transition-transform hover:scale-110"
+              className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground transition-transform hover:scale-110"
             >
               {number}
             </button>
@@ -412,9 +407,7 @@ export default function FindingCard({
               {number}
             </span>
           ))}
-        <Badge variant="secondary" className="h-6 px-2.5 font-medium">
-          {finding.category}
-        </Badge>
+        <Badge variant="secondary">{finding.category}</Badge>
         {finding.unverified && (
           <span
             className="text-xs italic text-muted-foreground"
@@ -425,13 +418,14 @@ export default function FindingCard({
         )}
       </div>
 
-      <h3 className="mt-2.5 text-base font-semibold tracking-tight text-foreground">
-        {finding.title}
-      </h3>
+      <CardTitle>{finding.title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+      <div className="space-y-3">
 
       {/* FIX */}
-      <div className="mt-3 rounded-xl bg-primary/[0.07] p-3.5">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-primary/70">
+      <div className="rounded-xl bg-muted p-3.5">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           Fix
         </p>
         <p className="mt-1 text-sm font-medium leading-relaxed text-foreground">
@@ -440,7 +434,6 @@ export default function FindingCard({
       </div>
 
       {/* Pattern boxes, stacked vertically — icon findings lead with the symbols */}
-      <div className="mt-3 space-y-3">
         {isIconFinding ? (
           <>
             <IconBox
@@ -518,17 +511,15 @@ export default function FindingCard({
             />
           </>
         )}
-      </div>
 
       {/* Screenshot crop, collapsed by default */}
       {finding.region && (
-        <div className="mt-3">
+        <div>
           <Button
             type="button"
             variant="ghost"
             onClick={() => setShowShot((v) => !v)}
             aria-expanded={showShot}
-            className="h-auto gap-1.5 p-0 font-medium text-primary hover:bg-transparent hover:text-primary-dark"
           >
             <ChevronDown
               className={`h-4 w-4 transition-transform ${showShot ? "rotate-180" : ""}`}
@@ -555,6 +546,8 @@ export default function FindingCard({
           )}
         </div>
       )}
+      </div>
+      </CardContent>
       {lightbox && finding.region && (
         <CropLightbox
           imageUrl={imageUrl}

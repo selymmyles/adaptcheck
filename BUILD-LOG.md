@@ -409,3 +409,14 @@ customization from there, one change at a time.
 - Verified: build clean, lint 0 errors; preview version 0d83458f serves
   the stock theme (primary oklch(20.5% 0 0), no teal hex in CSS).
 - Still unmerged/unpushed-to-production: branch `ui-foundation-shadcn`.
+
+## 2026-10-12 night — Out-of-the-box strip (branch)
+
+Founder: "completely strip everything, I want it out the box." Every
+shadcn component is now used exactly as shipped — no className
+overrides on Card/Badge/Button/Alert/Progress/Separator/Accordion.
+Finding cards compose from stock CardHeader/CardTitle/CardContent;
+the jump highlight ring moved to the results wrapper div; pattern
+boxes are uniform stock muted/accent; PatternBox link decorations and
+the dead `hover:text-primary-dark` reference removed. Build clean,
+lint 0 errors. Preview version 73f5f861.
