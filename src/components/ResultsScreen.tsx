@@ -22,6 +22,7 @@ import type {
   AnalysisDirection,
 } from "../lib/mockAnalysis";
 import { DIRECTION_META, CHECK_ORDER } from "../lib/taxonomy";
+import { ItemGroup } from "@/components/ui/item";
 import FindingCard from "./FindingCard";
 import ScreenshotMap, { type MapMarker } from "./ScreenshotMap";
 import ContentIndex, { type IndexShot } from "./ContentIndex";
@@ -666,7 +667,8 @@ export default function ResultsScreen({
                         </span>
                       </AccordionTrigger>
                       <AccordionContent>
-                        <div className="space-y-3 pt-1">
+                        <div className="pt-1">
+                          <ItemGroup>
                           {group.findings.map((f) => (
                             <div
                               key={f.key}
@@ -692,6 +694,7 @@ export default function ResultsScreen({
                               />
                             </div>
                           ))}
+                          </ItemGroup>
                         </div>
                       </AccordionContent>
                     </AccordionItem>

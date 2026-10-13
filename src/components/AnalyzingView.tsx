@@ -54,16 +54,23 @@ function FileRow({ item }: { item: ProgressItem }) {
           </span>
         )}
       </div>
-      {/* Per-file progress bar, LocalSend-style */}
-      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
-        {item.status === "done" ? (
-          <div className="h-full w-full rounded-full bg-primary" />
-        ) : item.status === "analyzing" ? (
-          <div className="indeterminate-bar h-full w-1/3 rounded-full bg-primary" />
-        ) : item.status === "error" ? (
-          <div className="h-full w-full rounded-full bg-destructive" />
-        ) : null}
-      </div>
+      {/* Per-file progress — stock Progress. No value while analyzing puts
+          the primitive in its indeterminate state; error rows carry their
+          state in text instead of a bar. */}
+      {item.status !== "error" && (
+        <div className="mt-2">
+          <Progress
+            value={
+              item.status === "done"
+                ? 100
+                : item.status === "analyzing"
+                  ? null
+                  : 0
+            }
+            aria-label={`Progress for ${item.fileName}`}
+          />
+        </div>
+      )}
       {item.status === "analyzing" && (
         <p className="mt-1.5 text-xs text-muted-foreground">{PHASES[phase]}</p>
       )}
@@ -87,13 +94,6 @@ export default function AnalyzingView({ items }: AnalyzingViewProps) {
 
   return (
     <div className="mx-auto w-full max-w-xl" aria-live="polite">
-      <style>{`
-        @keyframes indeterminate-slide {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(300%); }
-        }
-        .indeterminate-bar { animation: indeterminate-slide 1.4s ease-in-out infinite; }
-      `}</style>
       <Card>
         <CardContent>
         <p className="text-base font-medium text-foreground">

@@ -420,3 +420,38 @@ the jump highlight ring moved to the results wrapper div; pattern
 boxes are uniform stock muted/accent; PatternBox link decorations and
 the dead `hover:text-primary-dark` reference removed. Build clean,
 lint 0 errors. Preview version 73f5f861.
+
+## 2026-10-13 — Founder-directed UI pass: findings become Items
+
+The founder reviewed the stock build against the shadcn docs demos and
+directed a five-part pass, then amended it mid-flight:
+
+- **Findings are Items, not Cards** — "they are items within a card, not
+  a card within a card." FindingCard now composes the stock Item
+  primitives (outline variant, sm size) inside an ItemGroup; the FIX /
+  platform boxes inside were tightened (p-3.5 → p-3, stack space-y-3 →
+  space-y-2). Summary, patterns, and analyzing surfaces remain Cards.
+- **Card outline investigation:** the founder disputed that the docs
+  cards read clearer "because of the background." Verified by pulling
+  both sites' code: the stock Card edge is `ring-1 ring-foreground/10`
+  on Janus AND on ui.shadcn.com — identical class lists, no border at
+  all. The docs shot was a magnified crop plus the preview panel's own
+  real border. At his direction, `ui/card.tsx` now uses a real
+  `border border-border` so cards have a visible outline.
+- **Progress is stock everywhere** — the custom per-file bars and their
+  keyframes are deleted; per-file rows use Progress with value=null
+  (Base UI indeterminate). QA caught that the stock Progress file
+  leaves the indeterminate state completely unstyled (invisible bar),
+  so the primitive carries a documented functional patch:
+  data-indeterminate slide classes + a --animate-progress-indeterminate
+  theme token in index.css.
+- **Findings sidebar** follows the shadcn Tags scroll-area demo he
+  picked: bordered panel, "Findings" header over a hairline, and the
+  React Aria ScrollArea variant (aria-nova registry file) scrolling it.
+- **Source links** use the stock Button link variant (shadcn has no
+  link component/default link style).
+
+Two previews: 36cab641 (QA caught the dead indeterminate bar) →
+ecc78653 (verified: sliding segment renders, panel clean, findings
+read as bordered items). Branch only — production untouched, merge is
+still the founder's call.

@@ -44,7 +44,14 @@ function ProgressIndicator({
   return (
     <ProgressPrimitive.Indicator
       data-slot="progress-indicator"
-      className={cn("h-full bg-primary transition-all", className)}
+      className={cn(
+        // Functional patch (2026-10-13): the stock file leaves Base UI's
+        // indeterminate state (value=null) unstyled — an invisible bar.
+        // Base UI exposes data-indeterminate on the indicator for exactly
+        // this; the slide keyframes live in index.css as a theme token.
+        "h-full bg-primary transition-all data-indeterminate:w-1/3 data-indeterminate:animate-progress-indeterminate",
+        className
+      )}
       {...props}
     />
   )

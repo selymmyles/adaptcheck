@@ -128,3 +128,13 @@
     @apply font-sans;
     }
 }
+/* Functional addition (2026-10-13, recorded in AGENTS.md): keyframes for
+   the Progress indicator's indeterminate state. The stock theme ships no
+   animation for it; theme color/radius/font tokens above are unmodified. */
+@theme {
+    --animate-progress-indeterminate: progress-indeterminate 1.4s ease-in-out infinite;
+    @keyframes progress-indeterminate {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(300%); }
+    }
+}

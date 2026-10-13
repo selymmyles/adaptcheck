@@ -4,6 +4,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export interface IndexItem {
   name: string;
@@ -121,12 +122,19 @@ function IndexBody({
 export default function ContentIndex(props: ContentIndexProps) {
   return (
     <>
-      {/* Desktop sidebar — sticky within the results flex row */}
-      <aside className="sticky top-6 hidden max-h-[calc(100vh-3rem)] w-64 shrink-0 self-start overflow-y-auto rounded-2xl border border-border bg-card p-4 lg:block">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+      {/* Desktop sidebar — sticky within the results flex row. Panel
+          pattern after the shadcn Tags scroll-area demo (founder pick,
+          2026-10-13): bordered box, title header over a hairline, and the
+          React Aria ScrollArea variant doing the scrolling. */}
+      <aside className="sticky top-6 hidden max-h-[calc(100vh-3rem)] w-64 shrink-0 self-start overflow-hidden rounded-2xl border border-border bg-card lg:block">
+        <p className="border-b border-border px-4 py-3 text-sm font-semibold text-foreground">
           Findings
         </p>
-        <IndexBody {...props} />
+        <ScrollArea className="max-h-[calc(100vh-6rem)] overflow-x-hidden">
+          <div className="px-4 py-3">
+            <IndexBody {...props} />
+          </div>
+        </ScrollArea>
       </aside>
 
       {/* Mobile collapsible */}
@@ -134,9 +142,11 @@ export default function ContentIndex(props: ContentIndexProps) {
         <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-foreground">
           Findings index
         </summary>
-        <div className="border-t border-border px-4 py-3">
-          <IndexBody {...props} />
-        </div>
+        <ScrollArea className="max-h-[60vh] overflow-x-hidden border-t border-border">
+          <div className="px-4 py-3">
+            <IndexBody {...props} />
+          </div>
+        </ScrollArea>
       </details>
     </>
   );

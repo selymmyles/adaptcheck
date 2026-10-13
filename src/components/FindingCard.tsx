@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  Item,
+  ItemContent,
+  ItemFooter,
+  ItemHeader,
+  ItemTitle,
+} from "@/components/ui/item";
+import { cn } from "@/lib/utils";
 import type {
   Finding,
   FindingRegion,
@@ -192,8 +194,8 @@ function PatternBox({
     <div
       className={
         tone === "source"
-          ? "rounded-xl bg-muted p-3.5"
-          : "rounded-xl bg-accent p-3.5"
+          ? "rounded-xl bg-muted p-3"
+          : "rounded-xl bg-accent p-3"
       }
     >
       <p
@@ -220,7 +222,7 @@ function PatternBox({
           target="_blank"
           rel="noopener noreferrer"
           title={cite.label}
-          className="mt-2 inline-block text-xs font-medium text-primary underline underline-offset-2"
+          className={cn(buttonVariants({ variant: "link", size: "xs" }), "mt-1.5 h-auto px-0")}
         >
           source
         </a>
@@ -271,8 +273,8 @@ function IconBox({
     <div
       className={
         tone === "source"
-          ? "rounded-xl bg-muted p-3.5"
-          : "rounded-xl bg-accent p-3.5"
+          ? "rounded-xl bg-muted p-3"
+          : "rounded-xl bg-accent p-3"
       }
     >
       <div className="flex items-center justify-between gap-2">
@@ -326,7 +328,7 @@ function IconBox({
           target="_blank"
           rel="noopener noreferrer"
           title={cite.label}
-          className="mt-1.5 inline-block text-xs font-medium text-primary underline underline-offset-2"
+          className={cn(buttonVariants({ variant: "link", size: "xs" }), "mt-1 h-auto px-0")}
         >
           source
         </a>
@@ -384,8 +386,8 @@ export default function FindingCard({
     iconFields.counterpartExact === false && !!finding.counterpartName;
 
   return (
-    <Card>
-      <CardHeader>
+    <Item variant="outline" size="sm">
+      <ItemHeader>
       {/* Header: number badge (pinned findings only) + category pill */}
       <div className="flex flex-wrap items-center gap-2">
         {number !== undefined &&
@@ -418,13 +420,13 @@ export default function FindingCard({
         )}
       </div>
 
-      <CardTitle>{finding.title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-      <div className="space-y-3">
+      </ItemHeader>
+      <ItemContent>
+      <ItemTitle title={finding.title}>{finding.title}</ItemTitle>
+      <div className="mt-1.5 w-full space-y-2">
 
       {/* FIX */}
-      <div className="rounded-xl bg-muted p-3.5">
+      <div className="rounded-xl bg-muted p-3">
         <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           Fix
         </p>
@@ -512,9 +514,13 @@ export default function FindingCard({
           </>
         )}
 
+      </div>
+      </ItemContent>
+
       {/* Screenshot crop, collapsed by default */}
       {finding.region && (
-        <div>
+        <ItemFooter>
+        <div className="w-full">
           <Button
             type="button"
             variant="ghost"
@@ -545,9 +551,8 @@ export default function FindingCard({
             </div>
           )}
         </div>
+        </ItemFooter>
       )}
-      </div>
-      </CardContent>
       {lightbox && finding.region && (
         <CropLightbox
           imageUrl={imageUrl}
@@ -556,6 +561,6 @@ export default function FindingCard({
           onClose={() => setLightbox(false)}
         />
       )}
-    </Card>
+    </Item>
   );
 }
