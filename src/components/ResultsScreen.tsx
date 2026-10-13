@@ -1,5 +1,11 @@
 import { useMemo, useState } from "react";
 import { Check, ChevronDown, Copy } from "lucide-react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -251,6 +257,12 @@ export default function ResultsScreen({
   const [collapsedShots, setCollapsedShots] = useState<ReadonlySet<number>>(
     new Set(),
   );
+  /** Shots whose annotated-screenshot accordion is open (closed by default). */
+  const [openMaps, setOpenMaps] = useState<ReadonlySet<number>>(new Set());
+  /** Item groups the user collapsed, keyed `${shot}:${groupName}` (open by default). */
+  const [closedGroups, setClosedGroups] = useState<ReadonlySet<string>>(
+    new Set(),
+  );
 
   const toggleShot = (shot: number) => {
     setCollapsedShots((prev) => {
@@ -281,10 +293,13 @@ export default function ResultsScreen({
 
   const locateOnMap = (shot: number, id: string) => {
     flashHighlight(shot, id);
-    // The annotated screenshot is collapsed by default — open it first.
-    const map = document.getElementById(`map-${shot}`) as HTMLDetailsElement | null;
-    if (map && !map.open) map.open = true;
-    map?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    // The annotated screenshot accordion is closed by default — open it.
+    setOpenMaps((prev) => new Set(prev).add(shot));
+    window.setTimeout(() => {
+      document
+        .getElementById(`map-${shot}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }, 30);
   };
 
   const jumpToFinding = (shot: number, id: string) => {
@@ -293,9 +308,21 @@ export default function ResultsScreen({
     // Let the highlight apply before scrolling into view.
     window.setTimeout(() => {
       const el = document.getElementById(`finding-${shot}-${id}`);
-      // Open the category accordion first if the user collapsed it.
-      const details = el?.closest("details");
-      if (details && !details.open) details.open = true;
+      // Open the item-group accordion first if the user collapsed it, and
+      // give its open animation time to finish before scrolling.
+      const group = el?.dataset.group;
+      const key = group ? `${shot}:${group}` : null;
+      if (key && closedGroups.has(key)) {
+        setClosedGroups((prev) => {
+          const next = new Set(prev);
+          next.delete(key);
+          return next;
+        });
+        window.setTimeout(() => {
+          el?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 280);
+        return;
+      }
       el?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 30);
   };
@@ -369,8 +396,8 @@ export default function ResultsScreen({
       <div className="mx-auto w-full max-w-3xl flex-1">
         {/* Summary header */}
         <Card className="gap-0 rounded-2xl p-6">
-          <p className="text-[15px] leading-relaxed text-stone-700">
-            <span className="font-semibold text-stone-900">
+          <p className="text-[15px] leading-relaxed text-foreground">
+            <span className="font-semibold text-foreground">
               {totalFindings} {totalFindings === 1 ? "finding" : "findings"}
             </span>{" "}
             across {doneItems.length}{" "}
@@ -403,7 +430,7 @@ export default function ResultsScreen({
               type="button"
               variant="outline"
               onClick={onReset}
-              className="h-10 rounded-xl border-stone-300 px-5 font-semibold text-stone-700"
+              className="h-10 rounded-xl border-border px-5 font-semibold text-foreground"
             >
               Analyze more
             </Button>
@@ -413,25 +440,25 @@ export default function ResultsScreen({
         {/* Cross-screen patterns: fix once, apply everywhere */}
         {patterns.length > 0 && (
           <Card className="mt-6 gap-0 rounded-2xl p-6">
-            <h2 className="text-base font-semibold tracking-tight text-stone-900">
+            <h2 className="text-base font-semibold tracking-tight text-foreground">
               Fix once, apply everywhere
             </h2>
-            <p className="mt-1 text-sm leading-relaxed text-stone-500">
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
               These patterns repeat across your screens — handle them globally
               (theme, design system) instead of screen by screen.
             </p>
             <ul className="mt-4 space-y-3">
               {patterns.map((p) => (
-                <li key={p.id} className="rounded-xl bg-stone-50 p-4">
+                <li key={p.id} className="rounded-xl bg-muted p-4">
                   <div className="flex items-baseline justify-between gap-3">
-                    <p className="text-sm font-semibold text-stone-900">
+                    <p className="text-sm font-semibold text-foreground">
                       {p.title}
                     </p>
-                    <p className="shrink-0 text-xs font-medium text-teal-700">
+                    <p className="shrink-0 text-xs font-medium text-primary">
                       {p.screens.size} of {items.length} screens
                     </p>
                   </div>
-                  <p className="mt-1 text-[13px] leading-relaxed text-stone-600">
+                  <p className="mt-1 text-[13px] leading-relaxed text-foreground">
                     {p.fix}
                   </p>
                 </li>
@@ -446,17 +473,17 @@ export default function ResultsScreen({
           if (item.status === "analyzing") {
             return (
               <section key={label} id={`shot-${si}`} className="mt-8 scroll-mt-6">
-                <h2 className="text-lg font-semibold tracking-tight text-stone-900">
+                <h2 className="text-lg font-semibold tracking-tight text-foreground">
                   {label}
-                  <span className="ml-2 truncate text-sm font-normal text-stone-400">
+                  <span className="ml-2 truncate text-sm font-normal text-muted-foreground">
                     {item.fileName}
                   </span>
                 </h2>
                 <Card className="mt-3 gap-0 rounded-2xl p-5">
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-stone-100">
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
                     <div className="h-full w-1/3 animate-pulse rounded-full bg-primary" />
                   </div>
-                  <p className="mt-3 text-sm text-stone-500">
+                  <p className="mt-3 text-sm text-muted-foreground">
                     Retrying analysis…
                   </p>
                 </Card>
@@ -466,23 +493,23 @@ export default function ResultsScreen({
           if (item.status !== "done" || !item.result) {
             return (
               <section key={label} id={`shot-${si}`} className="mt-8 scroll-mt-6">
-                <h2 className="text-lg font-semibold tracking-tight text-stone-900">
+                <h2 className="text-lg font-semibold tracking-tight text-foreground">
                   {label}
-                  <span className="ml-2 truncate text-sm font-normal text-stone-400">
+                  <span className="ml-2 truncate text-sm font-normal text-muted-foreground">
                     {item.fileName}
                   </span>
                 </h2>
                 <Alert
                   variant="destructive"
-                  className="mt-3 rounded-2xl border-rose-200 bg-rose-50 p-5"
+                  className="mt-3 rounded-2xl border-destructive/30 bg-destructive/10 p-5"
                 >
-                  <AlertDescription className="text-rose-800">
+                  <AlertDescription className="text-destructive">
                     {item.error ?? "Analysis failed. Please try again."}
                   </AlertDescription>
                   <Button
                     type="button"
                     onClick={() => onRetry(si)}
-                    className="mt-3 h-9 rounded-xl bg-rose-700 px-4 font-semibold hover:bg-rose-800"
+                    className="mt-3 h-9 rounded-xl bg-destructive px-4 font-semibold hover:bg-destructive"
                   >
                     Retry this screenshot
                   </Button>
@@ -531,98 +558,136 @@ export default function ResultsScreen({
                   className="flex flex-wrap items-center gap-3 text-left"
                 >
                   <ChevronDown
-                    className={`h-5 w-5 shrink-0 text-stone-400 transition-transform ${collapsedShots.has(si) ? "" : "rotate-180"}`}
+                    className={`h-5 w-5 shrink-0 text-muted-foreground transition-transform ${collapsedShots.has(si) ? "" : "rotate-180"}`}
                     strokeWidth={2.5}
                     aria-hidden="true"
                   />
-                  <h2 className="text-xl font-semibold tracking-tight text-stone-900">
+                  <h2 className="text-xl font-semibold tracking-tight text-foreground">
                     {label}
                   </h2>
                   <Badge className="h-6 px-3 font-semibold">
                     {meta.arrow}
                   </Badge>
-                  <span className="truncate text-sm text-stone-400">
+                  <span className="truncate text-sm text-muted-foreground">
                     {item.fileName}
                   </span>
                 </button>
               </div>
               {!collapsedShots.has(si) && (
                 <>
-              <p className="mb-6 text-[15px] leading-relaxed text-stone-700">
+              <p className="mb-6 text-[15px] leading-relaxed text-foreground">
                 {result.summary}
               </p>
 
               {markers.length > 0 && (
-                <details id={`map-${si}`} className="mb-8 scroll-mt-6 group/map">
-                  <summary className="mb-3 cursor-pointer list-none">
-                    <span className="inline-flex items-center gap-2 text-sm font-semibold text-stone-700">
-                      <ChevronDown
-                        className="h-4 w-4 text-stone-400 transition-transform group-open/map:rotate-180"
-                        strokeWidth={2.5}
-                        aria-hidden="true"
-                      />
-                      Annotated screenshot
-                      <span className="font-normal text-stone-400">
-                        {markers.length} {markers.length === 1 ? "pin" : "pins"}
+                <Accordion
+                  value={openMaps.has(si) ? ["map"] : []}
+                  onValueChange={(v) =>
+                    setOpenMaps((prev) => {
+                      const next = new Set(prev);
+                      if ((v as string[]).includes("map")) next.add(si);
+                      else next.delete(si);
+                      return next;
+                    })
+                  }
+                  className="mb-8"
+                >
+                  <AccordionItem
+                    value="map"
+                    id={`map-${si}`}
+                    className="scroll-mt-6"
+                  >
+                    <AccordionTrigger>
+                      <span>
+                        Annotated screenshot
+                        <span className="ml-1.5 font-normal text-muted-foreground">
+                          {markers.length}{" "}
+                          {markers.length === 1 ? "pin" : "pins"}
+                        </span>
                       </span>
-                    </span>
-                  </summary>
-                  <ScreenshotMap
-                    imageUrl={item.imageUrl}
-                    markers={markers}
-                    onSelectMarker={(id) => jumpToFinding(si, id)}
-                  />
-                </details>
+                    </AccordionTrigger>
+                    <AccordionContent className="[&_p:not(:last-child)]:mb-0">
+                      <ScreenshotMap
+                        imageUrl={item.imageUrl}
+                        markers={markers}
+                        onSelectMarker={(id) => jumpToFinding(si, id)}
+                      />
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
               )}
 
               {groups.length === 0 && (
                 <Card className="gap-0 rounded-2xl p-5">
-                  <p className="text-sm text-stone-500">
+                  <p className="text-sm text-muted-foreground">
                     No adaptation issues found — this screen already reads
                     native on {meta.targetShort}.
                   </p>
                 </Card>
               )}
 
-              {groups.map((group) => (
-                <details key={group.name} open className="mb-8 group/acc">
-                  <summary className="mb-3 cursor-pointer list-none">
-                    <span className="inline-flex items-center gap-2 text-lg font-semibold tracking-tight text-stone-900">
-                      <ChevronDown
-                        className="h-4 w-4 text-stone-400 transition-transform group-open/acc:rotate-180"
-                        strokeWidth={2.5}
-                        aria-hidden="true"
-                      />
-                      {group.name}
-                      <span className="text-sm font-medium text-stone-400">
-                        {group.findings.length}
-                      </span>
-                    </span>
-                  </summary>
-                  <div className="space-y-3">
-                    {group.findings.map((f) => (
-                      <div
-                        key={f.key}
-                        id={`finding-${si}-${f.key}`}
-                        className="scroll-mt-6"
-                      >
-                        <FindingCard
-                          finding={f}
-                          direction={direction}
-                          number={numberByKey.get(f.key)}
-                          imageUrl={item.imageUrl}
-                          active={
-                            highlight?.shot === si && highlight.id === f.key
-                          }
-                          onLocate={
-                            f.region ? () => locateOnMap(si, f.key) : null
-                          }
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </details>
-              ))}
+              {groups.length > 0 && (
+                <Accordion
+                  multiple
+                  value={groups
+                    .filter((g) => !closedGroups.has(`${si}:${g.name}`))
+                    .map((g) => g.name)}
+                  onValueChange={(v) => {
+                    const open = new Set(v as string[]);
+                    setClosedGroups((prev) => {
+                      const next = new Set(prev);
+                      for (const g of groups) {
+                        const key = `${si}:${g.name}`;
+                        if (open.has(g.name)) next.delete(key);
+                        else next.add(key);
+                      }
+                      return next;
+                    });
+                  }}
+                  className="mb-8"
+                >
+                  {groups.map((group) => (
+                    <AccordionItem key={group.name} value={group.name}>
+                      <AccordionTrigger>
+                        <span>
+                          {group.name}
+                          <span className="ml-1.5 font-normal text-muted-foreground">
+                            {group.findings.length}
+                          </span>
+                        </span>
+                      </AccordionTrigger>
+                      <AccordionContent className="[&_p:not(:last-child)]:mb-0">
+                        <div className="space-y-3 pt-1">
+                          {group.findings.map((f) => (
+                            <div
+                              key={f.key}
+                              id={`finding-${si}-${f.key}`}
+                              data-group={group.name}
+                              className="scroll-mt-6"
+                            >
+                              <FindingCard
+                                finding={f}
+                                direction={direction}
+                                number={numberByKey.get(f.key)}
+                                imageUrl={item.imageUrl}
+                                active={
+                                  highlight?.shot === si &&
+                                  highlight.id === f.key
+                                }
+                                onLocate={
+                                  f.region
+                                    ? () => locateOnMap(si, f.key)
+                                    : null
+                                }
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              )}
                 </>
               )}
             </section>

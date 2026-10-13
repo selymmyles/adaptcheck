@@ -28,22 +28,19 @@ with pins on the screenshot.
   with raw Tailwind.
 - Style with the theme tokens (below), not one-off hex values.
 
-## Brand tokens
+## Theme tokens — STOCK DEFAULTS (founder direction, 2026-10-12)
 
-Defined as CSS variables in `src/index.css` (`:root`), mapped onto the
-shadcn theme. Use the semantic utilities (`bg-primary`, `text-foreground`,
-`bg-background`, `border-border`, …).
+`src/index.css` carries the **unmodified shadcn (base-nova) default
+theme**: neutral oklch palette, `--primary` near-black, `--radius`
+0.625rem, Geist Variable font. Use the semantic utilities (`bg-primary`,
+`text-foreground`, `bg-background`, `border-border`, …) and **never
+hardcode palette classes** (`teal-*`, `stone-*`, …) in app components.
 
-| Token | Value | Use |
-|---|---|---|
-| `--primary` | `#0f766e` (teal) | Brand accent: primary actions, progress, highlights |
-| `--primary-dark` | `#0b5e57` | Accent hover/pressed (`hover:bg-primary-dark`) |
-| `--foreground` | `#1c1917` | Ink: body text |
-| `--background` | `#fafaf9` | App background (cards/popovers are white) |
-| `--border` | `#e7e5e4` | Hairlines (stone-200) |
-| `--destructive` | `#e11d48` | Errors |
-| Font | Inter | `--font-sans` |
-| Radius | cards/panels ≈ 1rem (`rounded-2xl`), controls 0.75rem (`rounded-xl`) | |
+The previous Janus look (teal primary, Inter, stone palette) was
+AI-improvised styling, not the founder's design, and was deliberately
+reset. **Do not reintroduce brand customization on your own initiative.**
+The founder directs token changes one at a time; when he does, record
+the change here.
 
 ## Off-limits during UI work
 

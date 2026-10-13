@@ -106,7 +106,7 @@ function RegionCrop({
       aria-label={alt}
       className={
         className ??
-        "h-auto max-w-full rounded-xl border border-stone-200 bg-stone-100"
+        "h-auto max-w-full rounded-xl border border-border bg-muted"
       }
     />
   );
@@ -142,7 +142,7 @@ function CropLightbox({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/70 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
@@ -154,7 +154,7 @@ function CropLightbox({
         size="icon-lg"
         onClick={onClose}
         aria-label="Close"
-        className="absolute right-4 top-4 rounded-full bg-white/10 text-white hover:bg-white/20 hover:text-white"
+        className="absolute right-4 top-4 rounded-full bg-card/10 text-white hover:bg-card/20 hover:text-white"
       >
         <X className="h-5 w-5" aria-hidden="true" />
       </Button>
@@ -188,24 +188,24 @@ function PatternBox({
     <div
       className={
         tone === "source"
-          ? "rounded-xl bg-stone-50 p-3.5"
-          : "rounded-xl bg-teal-50/60 p-3.5"
+          ? "rounded-xl bg-muted p-3.5"
+          : "rounded-xl bg-accent/60 p-3.5"
       }
     >
       <p
         className={
           tone === "source"
-            ? "text-[11px] font-semibold uppercase tracking-wider text-stone-400"
-            : "text-[11px] font-semibold uppercase tracking-wider text-teal-800/70"
+            ? "text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
+            : "text-[11px] font-semibold uppercase tracking-wider text-primary/70"
         }
       >
         {platformLabel}
       </p>
-      <p className="mt-1 text-sm leading-relaxed text-stone-700">{pattern}</p>
+      <p className="mt-1 text-sm leading-relaxed text-foreground">{pattern}</p>
       {note && (
-        <p className="mt-1.5 text-xs text-stone-500">
+        <p className="mt-1.5 text-xs text-muted-foreground">
           Counterpart:{" "}
-          <code className="rounded bg-stone-100 px-1 py-0.5 font-mono text-[11px] text-stone-700">
+          <code className="rounded bg-muted px-1 py-0.5 font-mono text-[11px] text-foreground">
             {note}
           </code>
         </p>
@@ -216,7 +216,7 @@ function PatternBox({
           target="_blank"
           rel="noopener noreferrer"
           title={cite.label}
-          className="mt-2 inline-block text-xs font-medium text-teal-700 underline decoration-teal-200 underline-offset-2 hover:decoration-teal-500"
+          className="mt-2 inline-block text-xs font-medium text-primary underline decoration-teal-200 underline-offset-2 hover:decoration-teal-500"
         >
           source
         </a>
@@ -267,22 +267,22 @@ function IconBox({
     <div
       className={
         tone === "source"
-          ? "rounded-xl bg-stone-50 p-3.5"
-          : "rounded-xl bg-teal-50/60 p-3.5"
+          ? "rounded-xl bg-muted p-3.5"
+          : "rounded-xl bg-accent/60 p-3.5"
       }
     >
       <div className="flex items-center justify-between gap-2">
         <p
           className={
             tone === "source"
-              ? "text-[11px] font-semibold uppercase tracking-wider text-stone-400"
-              : "text-[11px] font-semibold uppercase tracking-wider text-teal-800/70"
+              ? "text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
+              : "text-[11px] font-semibold uppercase tracking-wider text-primary/70"
           }
         >
           {platformLabel}
         </p>
         {closest && (
-          <Badge className="bg-amber-100 px-2 text-[11px] text-amber-800">
+          <Badge className="bg-muted px-2 text-[11px] text-foreground">
             Closest match
           </Badge>
         )}
@@ -297,7 +297,7 @@ function IconBox({
               onError={() => setImgOk(false)}
             />
           )}
-          <code className="rounded bg-white/70 px-2 py-1 font-mono text-sm font-semibold text-stone-900">
+          <code className="rounded bg-card/70 px-2 py-1 font-mono text-sm font-semibold text-foreground">
             {iconName}
           </code>
           {copyText && (
@@ -306,25 +306,25 @@ function IconBox({
               variant="outline"
               size="sm"
               onClick={copy}
-              className="ml-auto shrink-0 rounded-lg border-stone-200 font-medium text-stone-600"
+              className="ml-auto shrink-0 rounded-lg border-border font-medium text-foreground"
             >
               {copied ? "Copied" : copyLabel}
             </Button>
           )}
         </div>
       ) : (
-        <p className="mt-2 text-sm italic text-stone-400">
+        <p className="mt-2 text-sm italic text-muted-foreground">
           Icon not identified — see the pattern below.
         </p>
       )}
-      <p className="mt-2 text-[13px] leading-relaxed text-stone-500">{pattern}</p>
+      <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">{pattern}</p>
       {cite && (
         <a
           href={cite.url}
           target="_blank"
           rel="noopener noreferrer"
           title={cite.label}
-          className="mt-1.5 inline-block text-xs font-medium text-teal-700 underline decoration-teal-200 underline-offset-2 hover:decoration-teal-500"
+          className="mt-1.5 inline-block text-xs font-medium text-primary underline decoration-teal-200 underline-offset-2 hover:decoration-teal-500"
         >
           source
         </a>
@@ -388,7 +388,7 @@ export default function FindingCard({
     <Card
       className={cn(
         "gap-0 rounded-2xl p-5 transition-shadow",
-        active && "shadow-lg shadow-teal-100 ring-2 ring-teal-500",
+        active && "shadow-lg shadow-teal-100 ring-2 ring-ring",
       )}
     >
       {/* Header: number badge (pinned findings only) + category pill */}
@@ -400,13 +400,13 @@ export default function FindingCard({
               onClick={onLocate}
               title="Show on screenshot"
               aria-label={`Show finding ${number} on the screenshot`}
-              className="flex h-6 w-6 items-center justify-center rounded-full bg-teal-700 text-[11px] font-bold text-white transition-transform hover:scale-110"
+              className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-white transition-transform hover:scale-110"
             >
               {number}
             </button>
           ) : (
             <span
-              className="flex h-6 w-6 items-center justify-center rounded-full bg-stone-200 text-[11px] font-bold text-stone-500"
+              className="flex h-6 w-6 items-center justify-center rounded-full bg-muted text-[11px] font-bold text-muted-foreground"
               aria-hidden="true"
             >
               {number}
@@ -417,7 +417,7 @@ export default function FindingCard({
         </Badge>
         {finding.unverified && (
           <span
-            className="text-xs italic text-stone-400"
+            className="text-xs italic text-muted-foreground"
             title={finding.unverifiedNote ?? "Community convention"}
           >
             Community convention
@@ -425,16 +425,16 @@ export default function FindingCard({
         )}
       </div>
 
-      <h3 className="mt-2.5 text-base font-semibold tracking-tight text-stone-900">
+      <h3 className="mt-2.5 text-base font-semibold tracking-tight text-foreground">
         {finding.title}
       </h3>
 
       {/* FIX */}
-      <div className="mt-3 rounded-xl bg-teal-700/[0.07] p-3.5">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-teal-800/70">
+      <div className="mt-3 rounded-xl bg-primary/[0.07] p-3.5">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-primary/70">
           Fix
         </p>
-        <p className="mt-1 text-sm font-medium leading-relaxed text-stone-800">
+        <p className="mt-1 text-sm font-medium leading-relaxed text-foreground">
           {finding.fix}
         </p>
       </div>

@@ -37,7 +37,7 @@ function FileRow({ item }: { item: ProgressItem }) {
   return (
     <li>
       <div className="flex items-center justify-between gap-3">
-        <p className="truncate text-sm font-medium text-stone-800">
+        <p className="truncate text-sm font-medium text-foreground">
           {item.fileName}
         </p>
         {item.status === "done" && (
@@ -49,29 +49,29 @@ function FileRow({ item }: { item: ProgressItem }) {
           </span>
         )}
         {item.status === "error" && (
-          <span className="shrink-0 text-xs font-medium text-rose-600">
+          <span className="shrink-0 text-xs font-medium text-destructive">
             Failed
           </span>
         )}
       </div>
       {/* Per-file progress bar, LocalSend-style */}
-      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-stone-100">
+      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
         {item.status === "done" ? (
           <div className="h-full w-full rounded-full bg-primary" />
         ) : item.status === "analyzing" ? (
           <div className="indeterminate-bar h-full w-1/3 rounded-full bg-primary" />
         ) : item.status === "error" ? (
-          <div className="h-full w-full rounded-full bg-rose-400" />
+          <div className="h-full w-full rounded-full bg-destructive" />
         ) : null}
       </div>
       {item.status === "analyzing" && (
-        <p className="mt-1.5 text-xs text-stone-400">{PHASES[phase]}</p>
+        <p className="mt-1.5 text-xs text-muted-foreground">{PHASES[phase]}</p>
       )}
       {item.status === "queued" && (
-        <p className="mt-1.5 text-xs text-stone-400">Waiting…</p>
+        <p className="mt-1.5 text-xs text-muted-foreground">Waiting…</p>
       )}
       {item.status === "error" && item.error && (
-        <p className="mt-1.5 text-xs text-rose-600">{item.error}</p>
+        <p className="mt-1.5 text-xs text-destructive">{item.error}</p>
       )}
     </li>
   );
@@ -95,10 +95,10 @@ export default function AnalyzingView({ items }: AnalyzingViewProps) {
         .indeterminate-bar { animation: indeterminate-slide 1.4s ease-in-out infinite; }
       `}</style>
       <Card className="gap-0 rounded-2xl p-8">
-        <p className="text-base font-medium text-stone-900">
+        <p className="text-base font-medium text-foreground">
           Analyzing {items.length === 1 ? "your screenshot" : `${items.length} screenshots`}
         </p>
-        <p className="mt-1 text-sm text-stone-500">
+        <p className="mt-1 text-sm text-muted-foreground">
           Deep check takes 1–2 minutes per screenshot — every finding is
           verified three times before it shows up.
         </p>
@@ -107,11 +107,11 @@ export default function AnalyzingView({ items }: AnalyzingViewProps) {
             <FileRow key={item.fileName} item={item} />
           ))}
         </ol>
-        <Separator className="mt-8 bg-stone-100" />
+        <Separator className="mt-8 bg-muted" />
         <div className="pt-5">
           <div className="flex items-baseline justify-between gap-3">
-            <p className="text-sm font-medium text-stone-700">Total progress</p>
-            <p className="text-xs text-stone-400">
+            <p className="text-sm font-medium text-foreground">Total progress</p>
+            <p className="text-xs text-muted-foreground">
               {done} of {items.length}
             </p>
           </div>

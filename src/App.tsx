@@ -98,19 +98,19 @@ export default function App() {
 
   return (
     <div className="min-h-screen">
-      <header className="border-b border-stone-200 bg-white">
+      <header className="border-b border-border bg-card">
         <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-4 sm:px-6">
           <div
-            className="flex h-9 w-9 items-center justify-center rounded-lg bg-teal-700 text-lg font-bold text-white"
+            className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-lg font-bold text-primary-foreground"
             aria-hidden="true"
           >
             A
           </div>
           <div>
-            <p className="text-base font-semibold tracking-tight text-stone-900">
+            <p className="text-base font-semibold tracking-tight text-foreground">
               Janus
             </p>
-            <p className="text-xs text-stone-500">
+            <p className="text-xs text-muted-foreground">
               See your design through the other platform's eyes.
             </p>
           </div>
@@ -121,10 +121,10 @@ export default function App() {
         {phase === "upload" && (
           <>
             <div className="mx-auto mb-8 max-w-xl text-center">
-              <h1 className="text-3xl font-semibold tracking-tight text-stone-900 sm:text-4xl">
+              <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
                 Will your design survive the other platform?
               </h1>
-              <p className="mt-3 text-[15px] leading-relaxed text-stone-600">
+              <p className="mt-3 text-[15px] leading-relaxed text-foreground">
                 Upload up to 10 app screenshots and get a checklist of
                 everything to change when porting between iOS and Android —
                 navigation, components, typography, motion, and more.
@@ -147,8 +147,8 @@ export default function App() {
         )}
       </main>
 
-      <footer className="border-t border-stone-200">
-        <p className="mx-auto max-w-5xl px-4 py-5 text-xs text-stone-400 sm:px-6">
+      <footer className="border-t border-border">
+        <p className="mx-auto max-w-5xl px-4 py-5 text-xs text-muted-foreground sm:px-6">
           Screenshots are sent securely to our AI analysis service and are
           never stored. Janus prototype.
         </p>

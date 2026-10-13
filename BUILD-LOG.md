@@ -389,3 +389,23 @@ PIPELINE_VERSION 20.
   Agreed to trial a regression harness LATER (saved corpus + encoded
   expectations from his red-pens; Muse runs it before deploys). Deferred
   by his call 2026-10-12 — not yet built.
+
+## 2026-10-12 night — Foundation reset to stock shadcn defaults (branch)
+
+Founder correction: the look the foundation rebuild preserved (teal,
+Inter, stone) was AI-improvised styling from the original generation,
+not his design. Direction: start from stock defaults; he directs token
+customization from there, one change at a time.
+
+- Theme reset to the exact shadcn base-nova defaults (harvested from a
+  fresh CLI scaffold, not memory): neutral oklch palette, primary
+  near-black, radius 0.625rem, Geist Variable font. `--primary-dark`
+  removed; ui primitives regenerated to stock; `accordion` added.
+- 125 hardcoded palette classes (teal/stone/rose/amber) across the app
+  components swept to semantic tokens.
+- Accordion conversions: findings-sidebar item groups, results item
+  groups, and the annotated-screenshot panel now use the stock shadcn
+  Accordion (controlled state wired into jump-to-finding / locate-on-map).
+- Verified: build clean, lint 0 errors; preview version 0d83458f serves
+  the stock theme (primary oklch(20.5% 0 0), no teal hex in CSS).
+- Still unmerged/unpushed-to-production: branch `ui-foundation-shadcn`.
