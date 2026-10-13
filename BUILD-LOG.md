@@ -522,3 +522,14 @@ little text as possible — ideally none. The labeled outline button
 ("Copy SwiftUI" / "Copy name") is now an icon-only button (Copy glyph,
 swapping to a Check when copied); the words moved to the accessible
 label and hover title.
+
+## 2026-10-13 (night) — Screenshot crops get breathing room
+
+"Some of these screenshots need the spacing tweaked" meant the region
+CROP inside a finding: for small regions (a lone chevron button) the
+flat 8% padding was a few pixels — the icon nearly touched the crop
+edges and looked cramped, while large regions (a toolbar) looked
+fine. Crop padding is now proportional (35% of the region) with a
+floor of 28 per-mille units, so every crop carries a minimum ring of
+context around the flagged element. Applies to the lightbox too
+(same component).

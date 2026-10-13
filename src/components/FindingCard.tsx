@@ -88,9 +88,13 @@ function RegionCrop({
     img.onload = () => {
       const iw = img.naturalWidth;
       const ih = img.naturalHeight;
-      // Region in image pixels, with 8% padding clamped to the image.
-      const padX = w * 0.08;
-      const padY = h * 0.08;
+      // Region in image pixels, padded and clamped to the image. The
+      // padding is proportional (35%) but floored in per-mille units:
+      // small regions (a lone icon button) got almost no absolute
+      // padding at a flat percentage and rendered cramped, the flagged
+      // element nearly touching the crop edges (founder, 2026-10-13).
+      const padX = Math.max(w * 0.35, 28);
+      const padY = Math.max(h * 0.35, 28);
       const sx = Math.max(0, ((region.x_min - padX) / 1000) * iw);
       const sy = Math.max(0, ((region.y_min - padY) / 1000) * ih);
       const sw = Math.min(iw - sx, ((w + padX * 2) / 1000) * iw);
