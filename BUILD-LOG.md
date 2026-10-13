@@ -542,3 +542,10 @@ finding header row. At the founder's direction ("same size as the
 badge, for cohesion") the number is now h-5 w-5 with the digit at
 10px, so the two sit at one height in the row. Applies to the muted
 non-button fallback too.
+
+## 2026-10-13 (night) — Copy button sits next to the icon name
+
+The icon copy button was pushed to the box's right edge (ml-auto),
+visually disconnected from the name it copies. At the founder's
+direction it now sits directly beside the icon name chip in the
+glyph row — glyph, name, copy — one glanceable unit.

@@ -318,7 +318,7 @@ function IconBox({
               variant="outline"
               size="icon-sm"
               onClick={copy}
-              className="ml-auto shrink-0"
+              className="shrink-0"
               aria-label={copied ? "Copied" : copyLabel}
               title={copied ? "Copied" : copyLabel}
             >
