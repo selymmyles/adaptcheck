@@ -686,3 +686,14 @@ screenshot opens as its analysis lands. The filename line under the
 header stays a jump link to that screenshot's section (the header
 click itself now toggles instead of jumping). Groups and findings
 inside are unchanged.
+
+## 2026-10-13 (night) — Hero copy reframed: spotter, not converter
+
+Founder: the copy should be about helping you pick out what needs
+fixing to make your app look native. Hero H1 "Will your design
+survive the other platform?" → "Find what needs fixing to make your
+app look native." Sub now: Janus picks out the patterns that make an
+app look ported and gives the fix for each. Header tagline "See your
+design through the other platform's eyes" → "Look native on both
+platforms." Matches the standing product truth: Janus is a spotter,
+not a translator.

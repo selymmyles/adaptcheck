@@ -111,7 +111,7 @@ export default function App() {
               Janus
             </p>
             <p className="text-xs text-muted-foreground">
-              See your design through the other platform's eyes.
+              Look native on both platforms.
             </p>
           </div>
         </div>
@@ -122,12 +122,13 @@ export default function App() {
           <>
             <div className="mx-auto mb-8 max-w-xl text-center">
               <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-                Will your design survive the other platform?
+                Find what needs fixing to make your app look native.
               </h1>
               <p className="mt-3 text-[15px] leading-relaxed text-foreground">
-                Upload up to 10 app screenshots and get a checklist of
-                everything to change when porting between iOS and Android —
-                navigation, components, typography, motion, and more.
+                Upload up to 10 screenshots of your iOS or Android app.
+                Janus picks out the patterns that make it look ported —
+                navigation, components, typography, motion, and more — and
+                gives you the fix for each one.
               </p>
             </div>
             <UploadScreen onAnalyze={handleAnalyze} />
