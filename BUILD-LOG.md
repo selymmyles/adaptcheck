@@ -775,3 +775,22 @@ to it. Version history is unaffected — it lives in git + Cloudflare's
 version list as before. Workflow addition: after every versions
 upload, refresh the KV pointer. Verified end-to-end: the stable
 address lands on the current build (200, current asset hashes).
+
+## 2026-10-13 — Regression harness built; first run finds a credit outage
+
+The deferred dogfood replacement is built (`harness/`): 4 LocalSend
+corpus screens, expectations encoded from the founder's red-pens
+(direction, must-flag / should-flag checks, min findings, the exact
+history → clock.arrow.circlepath pair), a stdlib runner, and markdown
+reports. First production run was blocked after one cached case:
+**Gemini returned 402 — the prepaid credits are depleted.** Fresh
+uploads to Janus fail right now; cached results still serve, which
+masks the outage. The spend guardrail's blind spot is proven: its KV
+ledger counts only successful analyses, so it reported $3.53 MTD /
+OK while the real balance (incl. the Oct 12 runaway) reached zero.
+Top-up needed (AI Studio, myleslane00). Owed: a real-balance probe
+for the guardrail. The one scored case surfaced direction
+instability on LocalSend (cached result ios-to-android; live QA the
+same day produced android-to-ios) — which direction a Material-
+designed app running on iOS converts to is the founder's call;
+recommendation: target the platform it runs on.
