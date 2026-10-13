@@ -30,7 +30,12 @@ function FileRow({ item }: { item: ProgressItem }) {
   useEffect(() => {
     if (item.status !== "analyzing") return;
     setPhase(0);
-    const t = setInterval(() => setPhase((p) => (p + 1) % PHASES.length), 4000);
+    // Stages advance and HOLD at the last one — progress only moves
+    // forward, never loops (founder call 2026-10-13).
+    const t = setInterval(
+      () => setPhase((p) => Math.min(p + 1, PHASES.length - 1)),
+      4000,
+    );
     return () => clearInterval(t);
   }, [item.status]);
 
@@ -54,9 +59,10 @@ function FileRow({ item }: { item: ProgressItem }) {
           </span>
         )}
       </div>
-      {/* Per-file progress — stock Progress. No value while analyzing puts
-          the primitive in its indeterminate state; error rows carry their
-          state in text instead of a bar. */}
+      {/* Per-file progress — stock Progress, always determinate: the fill
+          steps with the stage named below it (16% per stage, capped at 80%
+          while the file is in flight) and lands on 100% only when the file
+          actually finishes. No looping indeterminate animation. */}
       {item.status !== "error" && (
         <div className="mt-2">
           <Progress
@@ -64,7 +70,7 @@ function FileRow({ item }: { item: ProgressItem }) {
               item.status === "done"
                 ? 100
                 : item.status === "analyzing"
-                  ? null
+                  ? ((phase + 1) / PHASES.length) * 80
                   : 0
             }
             aria-label={`Progress for ${item.fileName}`}
@@ -89,7 +95,11 @@ function FileRow({ item }: { item: ProgressItem }) {
  * total-progress bar at the bottom. No apologies for slow AI.
  */
 export default function AnalyzingView({ items }: AnalyzingViewProps) {
-  const done = items.filter((i) => i.status === "done").length;
+  // Errors are finished work too — the total counts every settled file,
+  // so the bar reflects actual completed analyses.
+  const done = items.filter(
+    (i) => i.status === "done" || i.status === "error",
+  ).length;
   const progress = items.length > 0 ? (done / items.length) * 100 : 0;
 
   return (
@@ -100,8 +110,8 @@ export default function AnalyzingView({ items }: AnalyzingViewProps) {
           Analyzing {items.length === 1 ? "your screenshot" : `${items.length} screenshots`}
         </p>
         <p className="mt-1 text-sm text-muted-foreground">
-          Deep check takes 1–2 minutes per screenshot — every finding is
-          cross-checked before it shows up.
+          Deep check usually takes under a minute per screenshot — every
+          finding is cross-checked before it shows up.
         </p>
         <ol className="mt-6 space-y-5">
           {items.map((item) => (

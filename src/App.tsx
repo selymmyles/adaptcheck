@@ -2,7 +2,12 @@ import { useRef, useState } from "react";
 import UploadScreen from "./components/UploadScreen";
 import AnalyzingView from "./components/AnalyzingView";
 import ResultsScreen, { type ResultItem } from "./components/ResultsScreen";
-import { analyzeDesign, type AnalysisResult } from "./lib/mockAnalysis";
+import {
+  analyzeDesign,
+  type AnalysisResult,
+  type DirectionRequest,
+} from "./lib/mockAnalysis";
+import type { DesignTarget } from "./components/UploadScreen";
 
 type Phase = "upload" | "analyzing" | "results";
 
@@ -15,8 +20,17 @@ const delay = (ms: number) =>
 export default function App() {
   const [phase, setPhase] = useState<Phase>("upload");
   const [items, setItems] = useState<ResultItem[]>([]);
-  // Platform is always auto-detected per screenshot — no toggle.
-  const directionRequest = "auto" as const;
+  // The user names the design system they are matching (founder decision
+  // 2026-10-13: a half-fixed screen is ambiguous on purpose — only the
+  // user's intent knows which way the conversion runs). Auto stays the
+  // default for quick checks and mixed batches.
+  const [target, setTarget] = useState<DesignTarget>("auto");
+  const directionRequest: DirectionRequest =
+    target === "ios"
+      ? "android-to-ios"
+      : target === "android"
+        ? "ios-to-android"
+        : "auto";
   const filesRef = useRef<File[]>([]);
 
   const markItem = (
@@ -131,7 +145,11 @@ export default function App() {
                 gives you the fix for each one.
               </p>
             </div>
-            <UploadScreen onAnalyze={handleAnalyze} />
+            <UploadScreen
+              onAnalyze={handleAnalyze}
+              target={target}
+              onTargetChange={setTarget}
+            />
           </>
         )}
 

@@ -122,6 +122,32 @@ the change here.
   `--animate-progress-indeterminate` theme token at the end of
   `index.css`. Theme color/radius/font tokens remain unmodified.
 
+### Later the same day (founder-directed)
+
+- **Target picker restored — as a target, not a source.** The upload
+  screen carries a stock `ToggleGroup` (outline, joined) labeled
+  "Designing for": iOS / Android / Auto-detect (default). Founder's
+  reasoning: a screen halfway through conversion is ambiguous by
+  design — auto-detect cannot know whether the remaining foreign
+  patterns are the problem or the destination, so the user names the
+  design system they are matching BEFORE analysis. This supersedes
+  the auto-detect-only era. Picking a platform sends an explicit
+  direction to the API; Auto keeps per-screenshot detection.
+- **Picked files render as the stock `Attachment` component**
+  (vertical orientation: image media, title, remove action) — the
+  hand-rolled thumbnail cards are gone. The drop zone itself stays
+  custom (the registry has no dropzone).
+- **Progress is determinate.** AnalyzingView no longer uses the
+  indeterminate loop: the per-file fill steps with the stage named
+  under it (16% per stage, capped at 80% in flight, 100% only on
+  completion; stages advance and hold, never cycle back), and the
+  total bar counts errored files as finished work.
+- **Worker cache is namespaced by explicit direction**
+  (`analysis:<v>:<direction>:<hash>`; auto keeps the plain key) so an
+  auto result can never be served for an explicit target or the
+  reverse. Founder-directed product change; the worker edit was in
+  scope for it.
+
 ## Off-limits during UI work
 
 UI-only changes must not alter behavior or logic in:

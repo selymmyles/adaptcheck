@@ -829,3 +829,25 @@ language reading, the "look native here" promise) or toward Android
 prompt (chrome decides the target platform; design language decides
 what needs fixing) and re-run. Watch item: the Receive analysis
 flagged no bottom-bar check under either direction.
+
+## 2026-10-13 — Target picker, stock attachments, honest progress
+
+Founder's insight: a screen halfway through fixing is ambiguous on
+purpose — auto-detect reads the remaining Material patterns and may
+convert the user BACKWARD. Direction is intent, so the user now picks
+the design system they are matching before analysis: a stock
+ToggleGroup ("Designing for": iOS / Android / Auto-detect, Auto the
+default) on the upload screen; explicit picks send an explicit
+direction to the API. Worker cache namespaced by direction (an auto
+result can never again be served for an explicit target — proven
+live: the same Receive screenshot now holds two cached results,
+5 findings iOS-to-Android under auto, 9 findings Android-to-iOS
+under the explicit target). Picked files render as the stock
+Attachment component (vertical) instead of hand-rolled cards.
+Progress is determinate now: per-file fill steps with its named
+stage (capped at 80% in flight, 100% only when the file finishes),
+total counts errors as finished; the indeterminate loop is gone
+from the analyzing view. Free-tier caveat observed the same day:
+fresh generations that took 14–35 s in the morning ground for
+several minutes by midday under Google's free-tier throttling —
+the staged progress now waits honestly at its final stage.

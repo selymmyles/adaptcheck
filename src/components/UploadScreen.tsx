@@ -1,12 +1,29 @@
 import { useRef, useState } from "react";
 import { Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from "@/components/ui/toggle-group";
+import {
+  Attachment,
+  AttachmentActions,
+  AttachmentAction,
+  AttachmentContent,
+  AttachmentMedia,
+  AttachmentTitle,
+} from "@/components/ui/attachment";
+
+/** The design system the user is trying to match (target-first framing). */
+export type DesignTarget = "auto" | "ios" | "android";
 
 const ACCEPTED_TYPES = ["image/png", "image/jpeg", "image/webp"];
 const MAX_FILES = 10;
 
 interface UploadScreenProps {
   onAnalyze: (files: File[]) => void;
+  target: DesignTarget;
+  onTargetChange: (target: DesignTarget) => void;
 }
 
 interface PickedFile {
@@ -68,7 +85,11 @@ async function downscaleImage(file: File, maxDim = 1024): Promise<File> {
   return new File([blob], name, { type: "image/jpeg" });
 }
 
-export default function UploadScreen({ onAnalyze }: UploadScreenProps) {
+export default function UploadScreen({
+  onAnalyze,
+  target,
+  onTargetChange,
+}: UploadScreenProps) {
   const [picked, setPicked] = useState<PickedFile[]>([]);
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -128,6 +149,35 @@ export default function UploadScreen({ onAnalyze }: UploadScreenProps) {
 
   return (
     <div className="mx-auto w-full max-w-xl">
+      {/* Target picker (founder-directed 2026-10-13): the user names the
+          design system they are matching BEFORE analysis — a screen that
+          is halfway converted cannot be auto-detected honestly. Stock
+          ToggleGroup, single-select; a click on the active item would
+          deselect it, so empty changes are ignored (a target is always
+          chosen). */}
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <p
+          id="design-target-label"
+          className="text-sm font-medium text-foreground"
+        >
+          Designing for
+        </p>
+        <ToggleGroup
+          variant="outline"
+          spacing={0}
+          value={[target]}
+          onValueChange={(value) => {
+            const next = value[0];
+            if (next) onTargetChange(next as DesignTarget);
+          }}
+          aria-labelledby="design-target-label"
+        >
+          <ToggleGroupItem value="ios">iOS</ToggleGroupItem>
+          <ToggleGroupItem value="android">Android</ToggleGroupItem>
+          <ToggleGroupItem value="auto">Auto-detect</ToggleGroupItem>
+        </ToggleGroup>
+      </div>
+
       <div
         role="button"
         tabIndex={0}
@@ -181,37 +231,37 @@ export default function UploadScreen({ onAnalyze }: UploadScreenProps) {
           </>
         ) : (
           <>
-            <ul className="grid w-full grid-cols-5 gap-3">
+                        <div className="flex w-full flex-wrap justify-center gap-3">
               {picked.map((p, i) => (
-                <li
+                <Attachment
                   key={`${p.file.name}-${i}`}
-                  className="group relative overflow-hidden rounded-xl border border-border bg-card"
+                  orientation="vertical"
                 >
-                  <img
-                    src={p.preview}
-                    alt={`Screenshot ${i + 1} preview`}
-                    className="h-32 w-full object-cover"
-                  />
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeFile(i);
-                    }}
-                    aria-label={`Remove ${p.file.name}`}
-                    className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity hover:bg-black/80 group-hover:opacity-100"
-                  >
-                    <X className="h-3.5 w-3.5" aria-hidden="true" />
-                  </button>
-                  <p
-                    className="truncate px-2 py-1.5 text-center text-[11px] text-muted-foreground"
-                    title={p.file.name}
-                  >
-                    {p.file.name}
-                  </p>
-                </li>
+                  <AttachmentMedia variant="image">
+                    <img
+                      src={p.preview}
+                      alt={`Screenshot ${i + 1} preview`}
+                    />
+                  </AttachmentMedia>
+                  <AttachmentContent>
+                    <AttachmentTitle title={p.file.name}>
+                      {p.file.name}
+                    </AttachmentTitle>
+                  </AttachmentContent>
+                  <AttachmentActions>
+                    <AttachmentAction
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeFile(i);
+                      }}
+                      aria-label={`Remove ${p.file.name}`}
+                    >
+                      <X aria-hidden="true" />
+                    </AttachmentAction>
+                  </AttachmentActions>
+                </Attachment>
               ))}
-            </ul>
+            </div>
             <p className="mt-4 text-sm text-muted-foreground">
               Drop more, or click to{" "}
               <span className="font-medium text-primary underline">browse</span>{" "}

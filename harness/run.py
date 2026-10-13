@@ -23,7 +23,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 
-def post_analysis(base_url: str, image_path: Path) -> dict:
+def post_analysis(base_url: str, image_path: Path, direction: str = "auto") -> dict:
     boundary = "----harness" + uuid.uuid4().hex
     data = image_path.read_bytes()
     body = (
@@ -32,7 +32,7 @@ def post_analysis(base_url: str, image_path: Path) -> dict:
         f"Content-Type: image/png\r\n\r\n"
     ).encode() + data + (
         f"\r\n--{boundary}\r\n"
-        f'Content-Disposition: form-data; name="direction"\r\n\r\nauto\r\n'
+        f'Content-Disposition: form-data; name="direction"\r\n\r\n{direction}\r\n'
         f"--{boundary}--\r\n"
     ).encode()
     req = urllib.request.Request(
@@ -47,7 +47,7 @@ def post_analysis(base_url: str, image_path: Path) -> dict:
             "Accept": "application/json, text/plain, */*",
         },
     )
-    with urllib.request.urlopen(req, timeout=420) as r:
+    with urllib.request.urlopen(req, timeout=1200) as r:
         return json.loads(r.read())
 
 def score_case(case: dict, result: dict) -> dict:
@@ -105,7 +105,7 @@ def main() -> int:
         img = HERE / case["file"]
         t0 = time.time()
         try:
-            result = post_analysis(args.base_url, img)
+            result = post_analysis(args.base_url, img, case["direction"])
         except urllib.error.HTTPError as e:
             # Free-tier RPM is tight (~2 fresh analyses/min): a 502 whose
             # body says "rate limit" gets ONE retry after a 65s pause.
@@ -116,7 +116,7 @@ def main() -> int:
                 print(f"{case['id']}: rate-limited, waiting 65s and retrying once...")
                 time.sleep(65)
                 try:
-                    result = post_analysis(args.base_url, img)
+                    result = post_analysis(args.base_url, img, case["direction"])
                     scored = score_case(case, result)
                     scored["seconds"] = round(time.time() - t0, 1)
                     (raw_dir / f"{stamp}-{case['id']}.json").write_text(json.dumps(result, indent=1))

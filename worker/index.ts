@@ -171,7 +171,12 @@ async function handleAnalyze(
     // deterministic for the same input; the vote+judge pipeline below still
     // produces the best judgment for every NEW image. The pipeline version
     // in the key means prompt/taxonomy fixes are never masked by stale cache.
-    const cacheKey = `analysis:${PIPELINE_VERSION}:${await sha256Hex(bytes)}`;
+    // Explicit-direction results are namespaced: an image first analyzed
+    // as auto must never be served for an explicit target (or vice versa).
+    const cacheKey =
+      direction === "auto"
+        ? `analysis:${PIPELINE_VERSION}:${await sha256Hex(bytes)}`
+        : `analysis:${PIPELINE_VERSION}:${direction}:${await sha256Hex(bytes)}`;
     const cached = await env.janus_usage.get(cacheKey, "json");
     if (cached) return json(cached);
 
